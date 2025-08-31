@@ -1,0 +1,16 @@
+{
+  "cli": { "version": ">= 11.0.0" },
+  "build": {
+    "production": {
+      "android": { "buildType": "app-bundle" },
+      "autoIncrement": "version"
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json"
+      }
+    }
+  }
+}
