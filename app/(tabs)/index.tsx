@@ -1,9 +1,12 @@
 import FooterTabBar from "@/components/navigate/FooterTabBar";
 import AccountInfoScreen from "@/components/screens/account_screens/AccountInfoScreen";
 import AccountScreen from "@/components/screens/account_screens/AccountScreen";
-import BookingScreen from "@/components/screens/main_screens/BookingScreen";
-import DatePickerScreen from "@/components/screens/main_screens/DatePickerScreen";
+import DateSelectionScreen from "@/components/screens/main_screens/DateSelectionScreen";
+import DepartureScreen from "@/components/screens/main_screens/DepartureScreen";
+import DestinationScreen from "@/components/screens/main_screens/DestinationScreen";
 import MainScreen from "@/components/screens/main_screens/MainScreen";
+import SearchResultsScreen from "@/components/screens/main_screens/SearchResultsScreen";
+import SeatSelectionScreen from "@/components/screens/main_screens/SeatSelectionScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
@@ -59,7 +62,11 @@ function MainTabNavigator() {
         )}
       </Tab.Screen>
       <Tab.Screen name="AccountTab" options={{ tabBarLabel: "Tài khoản" }}>
-        {() => <AccountStackNavigator />}
+        {() => (
+          <MainLayout>
+            <AccountStackNavigator />
+          </MainLayout>
+        )}
       </Tab.Screen>
     </Tab.Navigator>
   );
@@ -74,9 +81,24 @@ function MainStackNavigator() {
         animation: "none", // Disable animations
       }}
     >
-      <MainStack.Screen name="BookingScreen" component={BookingScreen} />
       <MainStack.Screen name="MainScreen" component={MainScreen} />
-      <MainStack.Screen name="DatePickerScreen" component={DatePickerScreen} />
+      <MainStack.Screen
+        name="DateSelectionScreen"
+        component={DateSelectionScreen}
+      />
+      <MainStack.Screen
+        name="DestinationScreen"
+        component={DestinationScreen}
+      />
+      <MainStack.Screen name="DepartureScreen" component={DepartureScreen} />
+      <MainStack.Screen
+        name="SearchResultsScreen"
+        component={SearchResultsScreen}
+      />
+      <MainStack.Screen
+        name="SeatSelectionScreen"
+        component={SeatSelectionScreen}
+      />
     </MainStack.Navigator>
   );
 }
