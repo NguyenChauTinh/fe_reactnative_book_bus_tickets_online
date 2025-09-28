@@ -1,20 +1,24 @@
 import FooterTabBar from "@/components/navigate/FooterTabBar";
 import AccountInfoScreen from "@/components/screens/account_screens/AccountInfoScreen";
 import AccountScreen from "@/components/screens/account_screens/AccountScreen";
+import CustomerInfoScreen from "@/components/screens/main_screens/CustomerInfoScreen";
 import DateSelectionScreen from "@/components/screens/main_screens/DateSelectionScreen";
 import DepartureScreen from "@/components/screens/main_screens/DepartureScreen";
 import DestinationScreen from "@/components/screens/main_screens/DestinationScreen";
+import DropoffPointScreen from "@/components/screens/main_screens/DropoffPointScreen";
 import MainScreen from "@/components/screens/main_screens/MainScreen";
+import PaymentScreen from "@/components/screens/main_screens/PaymentScreen";
+import PickupPointScreen from "@/components/screens/main_screens/PickupPointScreen";
 import SearchResultsScreen from "@/components/screens/main_screens/SearchResultsScreen";
 import SeatSelectionScreen from "@/components/screens/main_screens/SeatSelectionScreen";
+import TripInfoScreen from "@/components/screens/main_screens/TripInfoScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
+import React from "react";
 import { StyleSheet } from "react-native";
-import { io } from "socket.io-client";
 import { SocketProvider } from "../../contexts/SocketContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,6 +33,21 @@ export type RootStackParamList = {
   Ticket: undefined;
   Notification: undefined;
   Account: undefined;
+  DateSelectionScreen: { departure: string; destination: string };
+  DestinationScreen: undefined;
+  DepartureScreen: { destinations: string[] };
+  SearchResultsScreen: {
+    departure: string;
+    destination: string;
+    date: string;
+  };
+  SeatSelectionScreen: { tripId: string };
+  CustomerInfoScreen: { tripId: string; selectedSeats: string[] };
+  DropoffPointScreen: { tripId: string; selectedSeats: string[] };
+  PickupPointScreen: { tripId: string; selectedSeats: string[] };
+  TripInfoScreen: { tripId: string };
+  AccountInfoScreen: undefined;
+  PaymentScreen: { tripId: string; selectedSeats: string[] };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -82,23 +101,6 @@ function MainStackNavigator() {
       }}
     >
       <MainStack.Screen name="MainScreen" component={MainScreen} />
-      <MainStack.Screen
-        name="DateSelectionScreen"
-        component={DateSelectionScreen}
-      />
-      <MainStack.Screen
-        name="DestinationScreen"
-        component={DestinationScreen}
-      />
-      <MainStack.Screen name="DepartureScreen" component={DepartureScreen} />
-      <MainStack.Screen
-        name="SearchResultsScreen"
-        component={SearchResultsScreen}
-      />
-      <MainStack.Screen
-        name="SeatSelectionScreen"
-        component={SeatSelectionScreen}
-      />
     </MainStack.Navigator>
   );
 }
@@ -153,28 +155,28 @@ function AccountStackNavigator() {
 }
 
 export default function App() {
-  useEffect(() => {
-    const setupSocket = async () => {
-      const userId = "1";
-      // const userId = await AsyncStorage.getItem("userId");
-      if (!userId) return;
+  // useEffect(() => {
+  //   const setupSocket = async () => {
+  //     const userId = "1";
+  //     // const userId = await AsyncStorage.getItem("userId");
+  //     if (!userId) return;
 
-      const socket = io("http://localhost:8081", {
-        query: { userId },
-        transports: ["websocket"],
-      });
+  //     const socket = io("http://localhost:8081", {
+  //       query: { userId },
+  //       transports: ["websocket"],
+  //     });
 
-      socket.on("connect", () => {
-        console.log("Socket connected");
-      });
+  //     socket.on("connect", () => {
+  //       console.log("Socket connected");
+  //     });
 
-      socket.on("disconnect", () => {
-        console.log("Socket disconnected");
-      });
-    };
+  //     socket.on("disconnect", () => {
+  //       console.log("Socket disconnected");
+  //     });
+  //   };
 
-    setupSocket();
-  }, []);
+  //   setupSocket();
+  // }, []);
 
   return (
     <SocketProvider>
@@ -206,6 +208,58 @@ export default function App() {
           component={AccountStackNavigator}
           options={{ headerShown: false }}
         />
+        {/* =========================== */}
+        {/* Main screen */}
+        <Stack.Screen
+          name="DateSelectionScreen"
+          component={DateSelectionScreen}
+        />
+        <Stack.Screen
+          name="DestinationScreen"
+          component={DestinationScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="DepartureScreen"
+          component={DepartureScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SearchResultsScreen"
+          component={SearchResultsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SeatSelectionScreen"
+          component={SeatSelectionScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CustomerInfoScreen"
+          component={CustomerInfoScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="DropoffPointScreen"
+          component={DropoffPointScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="PickupPointScreen"
+          component={PickupPointScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TripInfoScreen"
+          component={TripInfoScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="PaymentScreen"
+          component={PaymentScreen}
+          options={{ headerShown: false }}
+        />
+        {/* ================================ */}
       </Stack.Navigator>
     </SocketProvider>
   );
