@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
+import { useRef } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -23,38 +22,7 @@ export default function Calendar({
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
-  useEffect(() => {
-    let targetMonth = 0; // Default to current month (0-based index)
-
-    // If user has selected a departure date, scroll to that month
-    if (selectedDepartureDate) {
-      const dateMatch = selectedDepartureDate.match(
-        /(\d{2})\/(\d{2})\/(\d{4})/
-      );
-      if (dateMatch) {
-        const selectedMonth = Number.parseInt(dateMatch[2]);
-        const selectedYear = Number.parseInt(dateMatch[3]);
-
-        // Calculate month offset from the start month
-        const startMonth = currentMonth - 1;
-        const startYear = currentYear;
-        const monthDiff =
-          (selectedYear - startYear) * 12 + (selectedMonth - startMonth);
-
-        if (monthDiff >= 0 && monthDiff < 6) {
-          targetMonth = monthDiff;
-        }
-      }
-    }
-
-    const scrollPosition = targetMonth * 400; // Approximate height per month
-
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
-      }
-    }, 100);
-  }, [selectedDepartureDate]);
+  // Bỏ useEffect scroll khi chọn ngày - chỉ scroll khi mới vào giao diện
 
   const isInDateRange = (year, month, day) => {
     if (!isRoundTrip || !selectedDepartureDate || !selectedReturnDate)
@@ -84,9 +52,9 @@ export default function Calendar({
 
   const generateMonths = () => {
     const months = [];
-    const startMonth = currentMonth - 1; // 1 month in the past
+    const startMonth = currentMonth - 1;
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const monthOffset = startMonth + i;
       let month = ((monthOffset - 1) % 12) + 1;
       let year = currentYear + Math.floor((monthOffset - 1) / 12);
@@ -102,7 +70,6 @@ export default function Calendar({
         year,
       });
     }
-
     return months;
   };
 
@@ -124,15 +91,12 @@ export default function Calendar({
     const daysInMonth = new Date(year, month, 0).getDate();
     const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
     const adjustedFirstDay = firstDayOfMonth === 0 ? 7 : firstDayOfMonth;
-
     const days = [];
 
-    // Add empty cells for days before month starts
     for (let i = 1; i < adjustedFirstDay; i++) {
       days.push(<View key={`empty-${i}`} style={styles.dayButton} />);
     }
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDateObj = new Date(year, month - 1, day);
       const todayObj = new Date(currentYear, currentMonth - 1, currentDay);
@@ -181,7 +145,6 @@ export default function Calendar({
                 !selectedReturnDate
               ) {
                 if (compareDates(dateString, selectedDepartureDate) < 0) {
-                  // Selected date is earlier than departure, swap them
                   onReturnDateSelect(selectedDepartureDate);
                   onDepartureDateSelect(dateString);
                 } else {
@@ -212,8 +175,67 @@ export default function Calendar({
     return days;
   };
 
+  const handleLayout = () => {
+    console.log("Content rendered, scrolling to selected date...");
+
+    // Sử dụng timeout để đảm bảo component đã render xong
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        // Scroll to selected date if available, otherwise current month
+        const dateToScroll = selectedReturnDate || selectedDepartureDate;
+
+        if (dateToScroll) {
+          const dateMatch = dateToScroll.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+          if (dateMatch) {
+            const selectedMonth = Number.parseInt(dateMatch[2]);
+            const selectedYear = Number.parseInt(dateMatch[3]);
+
+            const startMonth = currentMonth - 1;
+            const startYear = currentYear;
+            const monthDiff =
+              (selectedYear - startYear) * 12 + (selectedMonth - startMonth);
+
+            if (monthDiff >= 0 && monthDiff < 7) {
+              // Tính toán vị trí scroll để title tháng hiển thị ở đầu
+              const monthTitleHeight = 50; // Chiều cao của title tháng
+              const scrollPosition = monthDiff * 400 - monthTitleHeight;
+              console.log(
+                "Scrolling to selected date position:",
+                scrollPosition
+              );
+              scrollViewRef.current.scrollTo({
+                x: 0,
+                y: Math.max(0, scrollPosition), // Đảm bảo không scroll âm
+                animated: false,
+              });
+              return;
+            }
+          }
+        }
+
+        // Fallback: scroll to current month với title hiển thị
+        const monthTitleHeight = 50;
+        const currentMonthPosition = Math.max(0, 0 * 400 - monthTitleHeight);
+        console.log(
+          "Scrolling to current month position:",
+          currentMonthPosition
+        );
+        scrollViewRef.current.scrollTo({
+          x: 0,
+          y: currentMonthPosition,
+          animated: false,
+        });
+      }
+    }, 200); // Tăng timeout để đảm bảo render hoàn tất
+  };
+
   return (
-    <ScrollView style={styles.container} ref={scrollViewRef}>
+    <ScrollView
+      ref={scrollViewRef}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ padding: 16 }}
+      onLayout={handleLayout}
+    >
       {months.map(({ name, month, year }) => (
         <View key={`${month}-${year}`}>
           <Text style={styles.monthTitle}>{name}</Text>
@@ -227,8 +249,9 @@ export default function Calendar({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  contentContainer: {
     padding: 16,
+    paddingBottom: 200, // để chắc chắn có khoảng trống để scroll
   },
   monthTitle: {
     fontSize: 18,

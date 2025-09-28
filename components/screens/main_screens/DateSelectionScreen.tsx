@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,16 +11,28 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Calendar from "../../components/Calendar";
 
-export default function DateSelectionScreen({ navigation, route }) {
+export default function DateSelectionScreen({ navigation, route }: any) {
   const {
     isRoundTrip: initialRoundTrip,
     departureDate,
     returnDate,
     onSelect,
   } = route.params;
+
+  // Tạo ngày hiện tại làm mặc định
+  const getCurrentDateString = () => {
+    const today = new Date();
+    const day = today.getDate().toString().padStart(2, "0");
+    const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    const year = today.getFullYear();
+    const dayOfWeek = today.getDay() || 7; // Chủ nhật = 7
+    return `T${dayOfWeek}, ${day}/${month}/${year}`;
+  };
+
   const [isRoundTrip, setIsRoundTrip] = useState(initialRoundTrip);
-  const [selectedDepartureDate, setSelectedDepartureDate] =
-    useState(departureDate);
+  const [selectedDepartureDate, setSelectedDepartureDate] = useState(
+    departureDate || getCurrentDateString()
+  );
   const [selectedReturnDate, setSelectedReturnDate] = useState(returnDate);
 
   const handleConfirm = () => {
@@ -100,7 +111,7 @@ export default function DateSelectionScreen({ navigation, route }) {
         </View>
       </View>
 
-      <ScrollView style={styles.content}>
+      <View style={styles.content}>
         <Calendar
           isRoundTrip={isRoundTrip}
           selectedDepartureDate={selectedDepartureDate}
@@ -108,7 +119,7 @@ export default function DateSelectionScreen({ navigation, route }) {
           onDepartureDateSelect={setSelectedDepartureDate}
           onReturnDateSelect={setSelectedReturnDate}
         />
-      </ScrollView>
+      </View>
 
       <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
         <Text style={styles.confirmButtonText}>Xác nhận</Text>
