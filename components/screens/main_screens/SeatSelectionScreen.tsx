@@ -277,9 +277,9 @@ export default function SeatSelectionScreen({ navigation, route }) {
   const [selectedCabin, setSelectedCabin] = useState(null);
 
   const is34SingleRooms = trip.busType.includes("34 Phòng");
-  const is24DoubleRooms = trip.busType.includes("Phòng Đôi 24");
-  const is22DoubleRooms = trip.busType.includes("Phòng Đôi 22");
-  const is32SingleRooms = trip.busType.includes("32 Phòng");
+  const is24DoubleRooms = trip.busType.includes("Limousine 24 phòng đôi");
+  const is22DoubleRooms = trip.busType.includes("Limousine 22 phòng đôi");
+  const is32SingleRooms = trip.busType.includes("Limousine 32 phòng đơn");
 
   const generateSeats = () => {
     if (is34SingleRooms) {

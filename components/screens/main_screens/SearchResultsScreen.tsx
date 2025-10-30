@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Image,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
 // SVG Icons
 const BackIcon = () => (
@@ -123,204 +124,165 @@ const BusStopIcon = () => (
 );
 
 export default function SearchResultsScreen({ navigation, route }) {
-  const { departureLocation, destination, departureDate } = route.params;
+  const { departureLocation, destination, departureDate, returnDate } =
+    route.params;
   const [showChangeModal, setShowChangeModal] = useState(false);
+  const [busTrips, setBusTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const busTrips = [
-    {
-      id: 1,
-      company: "Thiện Thiện Hương",
-      busType: "Limousine 34 Phòng...",
-      rating: 4.5,
-      reviews: 123,
-      departureTime: "11:00",
-      arrivalTime: "17:40",
-      duration: "6h 40p",
-      departureStation: "Văn phòng Sài Gòn",
-      arrivalStation: "Vp. Tân Châu",
-      price: "220.000đ",
-      seatsLeft: "15 chỗ trống",
-      features: ["Xác nhận chỗ ngay lập tức"],
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-lb4pd2mrRTHmxJQ2OcVAhUjF3malMT.png",
-    },
-    {
-      id: 2,
-      company: "Tân Niên",
-      busType: "Limousine Phòng Đôi 24...",
-      rating: 4.5,
-      reviews: 1806,
-      departureTime: "02:50",
-      arrivalTime: "08:25",
-      duration: "5h 35p",
-      departureStation: "Ngã 4 An Sương",
-      arrivalStation: "Bến xe Long Xuyên",
-      price: "350.000đ",
-      seatsLeft: "1 chỗ trống",
-      features: ["Trả tận nơi", "Xác nhận chỗ ngay lập tức"],
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-lb4pd2mrRTHmxJQ2OcVAhUjF3malMT.png",
-    },
-    {
-      id: 3,
-      company: "Phương Trang",
-      busType: "Limousine Phòng Đôi 22 chỗ có WC",
-      rating: 4.3,
-      reviews: 567,
-      departureTime: "14:30",
-      arrivalTime: "19:15",
-      duration: "4h 45p",
-      departureStation: "Bến xe Miền Tây",
-      arrivalStation: "Bến xe An Giang",
-      price: "350.000đ",
-      seatsLeft: "8 chỗ trống",
-      features: ["Có WC trên xe", "Xác nhận chỗ ngay lập tức"],
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-lb4pd2mrRTHmxJQ2OcVAhUjF3malMT.png",
-    },
-    {
-      id: 4,
-      company: "Hùng Cường",
-      busType: "Limousine 32 Phòng chỗ có WC",
-      rating: 4.3,
-      reviews: 567,
-      departureTime: "14:30",
-      arrivalTime: "19:15",
-      duration: "4h 45p",
-      departureStation: "Bến xe Miền Tây",
-      arrivalStation: "Bến xe An Giang",
-      price: "350.000đ",
-      seatsLeft: "8 chỗ trống",
-      features: ["Xác nhận chỗ ngay lập tức"],
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-lb4pd2mrRTHmxJQ2OcVAhUjF3malMT.png",
-    },
-  ];
+  useEffect(() => {
+    const fetchBusTrips = async () => {
+      setLoading(true);
+      try {
+        // Định dạng lại ngày tháng trước khi gọi API
+        const dateString = departureDate.split(", ")[1];
+        const dateObject = new Date(dateString);
+        const year = dateObject.getFullYear();
+        const month = String(dateObject.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0
+        const day = String(dateObject.getDate()).padStart(2, "0");
+        const formattedDate = `${year}-${month}-${day}`;
+
+        // const response =
+        //   await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
+        //     formattedDate, // <-- Sử dụng ngày đã được định dạng
+        //     departureLocation._id,
+        //     destination._id
+        //   );
+        const response =
+          await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
+            "2025-10-30", // <-- Gắn cứng ngày khởi hành
+            "68d2ad1eca0b6439f90517fe", // <-- Gắn cứng ID điểm đi
+            "68d2ae16ca0b6439f9051812" // <-- Gắn cứng ID điểm đến
+          );
+
+        console.log("Fetched bus trips:", response);
+        setBusTrips(response.data);
+      } catch (error) {
+        console.error("Error fetching bus trips:", error);
+      } finally {
+        setLoading(false); // <-- 2. Luôn tắt loading đi khi API hoàn tất
+      }
+    };
+
+    // Chỉ gọi khi các giá trị cần thiết đã có
+    if (departureDate && departureLocation?._id && destination?._id) {
+      fetchBusTrips();
+    }
+  }, [departureDate, departureLocation, destination]);
 
   const handleSeatSelection = (trip) => {
     navigation.navigate("SeatSelectionScreen", { trip });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>
-            {departureLocation} → {destination}
-          </Text>
-          <Text style={styles.headerSubtitle}>{departureDate}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setShowChangeModal(true)}
-          style={styles.changeButton}
-        >
-          <Text style={styles.changeButtonText}>Thay đổi</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Transport Tabs */}
-
-      {/* Filter Bar */}
-      <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
-          <FilterIcon />
-          <Text style={styles.filterText}>Lọc</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <SortIcon />
-          <Text style={styles.filterText}>Sắp xếp</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <TimeIcon />
-          <Text style={styles.filterText}>Giờ đi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <BusStopIcon />
-          <Text style={styles.filterText}>Nhà xe</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Bus Trip List */}
-      <ScrollView style={styles.tripList}>
-        {busTrips.map((trip) => (
-          <View key={trip.id} style={styles.tripCard}>
-            <View style={styles.tripHeader}>
-              <View style={styles.timeInfo}>
-                <Text style={styles.departureTime}>{trip.departureTime}</Text>
-                <Text style={styles.duration}>{trip.duration}</Text>
-                <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
-              </View>
-              <View style={styles.stationInfo}>
-                <Text style={styles.departureStation}>
-                  {trip.departureStation}
-                </Text>
-                <Text style={styles.arrivalStation}>{trip.arrivalStation}</Text>
-              </View>
-              <View style={styles.priceInfo}>
-                <Text style={styles.price}>{trip.price}</Text>
-                <Text style={styles.seatsLeft}>{trip.seatsLeft}</Text>
-              </View>
-            </View>
-
-            <View style={styles.companyInfo}>
-              <Image source={{ uri: trip.image }} style={styles.busImage} />
-              <View style={styles.companyDetails}>
-                <Text style={styles.companyName}>{trip.company}</Text>
-                <Text style={styles.busType}>{trip.busType}</Text>
-                <View style={styles.ratingContainer}>
-                  <StarIcon />
-                  <Text style={styles.rating}>{trip.rating}</Text>
-                  <Text style={styles.reviews}>({trip.reviews} đánh giá)</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.heartButton}>
-                <HeartIcon />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.features}>
-              {trip.features.map((feature, index) => (
-                <Text key={index} style={styles.featureText}>
-                  ⚡ {feature}
-                </Text>
-              ))}
-            </View>
-
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
             <TouchableOpacity
-              style={styles.selectSeatButton}
-              onPress={() => handleSeatSelection(trip)}
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
             >
-              <Text style={styles.selectSeatText}>Chọn chỗ</Text>
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowChangeModal(true)}
+              style={styles.changeButton}
+            >
+              <Text style={styles.changeButtonText}>Thay đổi</Text>
             </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
 
-      {/* Change Search Modal */}
-      {showChangeModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Thay đổi tìm kiếm</Text>
-              <TouchableOpacity onPress={() => setShowChangeModal(false)}>
-                <Text style={styles.closeButton}>Đóng</Text>
-              </TouchableOpacity>
-            </View>
-            {/* Add your search form here - similar to MainScreen */}
-            <Text style={styles.modalText}>
-              Modal content will be implemented here
-            </Text>
+          {/* Transport Tabs */}
+
+          {/* Filter Bar */}
+          <View style={styles.filterBar}>
+            <TouchableOpacity style={styles.filterButton}>
+              <FilterIcon />
+              <Text style={styles.filterText}>Lọc</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.filterButton}>
+              <SortIcon />
+              <Text style={styles.filterText}>Sắp xếp</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.filterButton}>
+              <TimeIcon />
+              <Text style={styles.filterText}>Giờ đi</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+
+          {/* Bus Trip List */}
+          <ScrollView style={styles.tripList}>
+            {busTrips.map((trip) => (
+              <View key={trip.id} style={styles.tripCard}>
+                {/* Hàng 1: Thông tin thời gian */}
+                <View style={styles.timeInfo}>
+                  <Text style={styles.departureTime}>{trip.departureTime}</Text>
+                  <Text style={styles.duration}>{trip.duration}</Text>
+                  <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
+                </View>
+
+                {/* Hàng 2: Thông tin điểm đi/đến */}
+                <View style={styles.stationInfo}>
+                  <Text style={styles.stationText} numberOfLines={1}>
+                    {trip.departureStation}
+                  </Text>
+                  <Text style={styles.arrowIcon}>→</Text>
+                  <Text style={styles.stationTextRight} numberOfLines={1}>
+                    {trip.arrivalStation}
+                  </Text>
+                </View>
+
+                {/* Hàng 3: Loại xe và Giá */}
+                <View style={styles.detailsAndPriceRow}>
+                  <Text style={styles.busType} numberOfLines={1}>
+                    {trip.busType}
+                  </Text>
+                  <View style={styles.priceInfo}>
+                    <Text style={styles.price}>{trip.price}</Text>
+                    <Text style={styles.seatsLeft}>{trip.seatsLeft}</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.selectSeatButton}
+                  onPress={() => handleSeatSelection(trip)}
+                >
+                  <Text style={styles.selectSeatText}>Chọn chỗ</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Change Search Modal */}
+          {showChangeModal && (
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Thay đổi tìm kiếm</Text>
+                  <TouchableOpacity onPress={() => setShowChangeModal(false)}>
+                    <Text style={styles.closeButton}>Đóng</Text>
+                  </TouchableOpacity>
+                </View>
+                {/* Add your search form here - similar to MainScreen */}
+                <Text style={styles.modalText}>
+                  Modal content will be implemented here
+                </Text>
+              </View>
+            </View>
+          )}
+        </SafeAreaView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -328,6 +290,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  detailsContainer: {
+    flex: 1, // Chiếm hết không gian có thể bên trái
+    marginRight: 8, // Tạo khoảng cách nhỏ với cột giá
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -440,12 +406,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   tripHeader: {
-    flexDirection: "row",
+    flexDirection: "row", // Giữ các item con (details và price) trên 1 hàng
+    justifyContent: "space-between", // Đẩy details sang trái, price sang phải
     marginBottom: 16,
   },
   timeInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginRight: 16,
+    marginBottom: 8,
   },
   departureTime: {
     fontSize: 18,
@@ -455,7 +424,6 @@ const styles = StyleSheet.create({
   duration: {
     fontSize: 12,
     color: "#666",
-    marginVertical: 4,
   },
   arrivalTime: {
     fontSize: 18,
@@ -463,8 +431,31 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   stationInfo: {
-    flex: 1,
-    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    marginBottom: 12,
+    backgroundColor: "#F7F9F9",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  stationText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1, // Để text tự co giãn và xuống dòng nếu cần
+  },
+
+  stationTextRight: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1, // Để text tự co giãn và xuống dòng nếu cần
+    textAlign: "right",
+  },
+  arrowIcon: {
+    marginHorizontal: 8,
+    color: "#666",
+    fontWeight: "bold",
   },
   departureStation: {
     fontSize: 14,
@@ -474,13 +465,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  // --- Hàng 3 ---
+  detailsAndPriceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  busType: {
+    fontSize: 14,
+    color: "#666",
+    flex: 1, // Cho phép co giãn để không bị đẩy ra ngoài
+    marginRight: 8, // Tạo khoảng cách với giá
+  },
   priceInfo: {
     alignItems: "flex-end",
   },
   price: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "#E74C3C", // Đổi màu giá cho nổi bật
   },
   seatsLeft: {
     fontSize: 12,

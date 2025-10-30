@@ -7,28 +7,28 @@ export default function SearchButton({
   returnDate,
   isRoundTrip,
   navigation,
-  onDateSelect, // Added onDateSelect prop to pass to DateSelection screen
-  onDepartureSelect, // Added onDepartureSelect prop
-  onDestinationSelect, // Added onDestinationSelect prop
+  onDateSelect,
+  onDepartureSelect,
+  onDestinationSelect,
 }) {
   const handleSearch = () => {
-    // Check departure location first
-    if (departureLocation != null && departureLocation.trim() === "") {
+    // SỬA Ở ĐÂY: Kiểm tra nếu điểm đi CHƯA có thì mới điều hướng
+    if (departureLocation == null) {
       navigation.navigate("DepartureScreen", {
         onSelect: onDepartureSelect,
       });
       return;
     }
 
-    // Check destination
-    if (destination != null && destination.trim() === "") {
+    // SỬA Ở ĐÂY: Kiểm tra nếu điểm đến CHƯA có thì mới điều hướng
+    if (destination == null) {
       navigation.navigate("DestinationScreen", {
         onSelect: onDestinationSelect,
       });
       return;
     }
 
-    // Check departure date
+    // Các kiểm tra bên dưới đã đúng logic
     if (departureDate == null || departureDate.trim() === "") {
       navigation.navigate("DateSelectionScreen", {
         departureLocation,
@@ -36,12 +36,11 @@ export default function SearchButton({
         departureDate,
         returnDate,
         isRoundTrip,
-        onSelect: onDateSelect, // Added missing onSelect parameter
+        onSelect: onDateSelect,
       });
       return;
     }
 
-    // Check return date for round trip
     if (isRoundTrip && (returnDate == null || returnDate.trim() === "")) {
       navigation.navigate("DateSelectionScreen", {
         departureLocation,
@@ -49,12 +48,12 @@ export default function SearchButton({
         departureDate,
         returnDate,
         isRoundTrip,
-        onSelect: onDateSelect, // Added missing onSelect parameter
+        onSelect: onDateSelect,
       });
       return;
     }
 
-    // All validation passed, proceed to search results
+    // Khi tất cả thông tin hợp lệ, đi đến màn hình kết quả
     navigation.navigate("SearchResultsScreen", {
       departureLocation,
       destination,

@@ -1,6 +1,13 @@
 import FooterTabBar from "@/components/navigate/FooterTabBar";
 import AccountInfoScreen from "@/components/screens/account_screens/AccountInfoScreen";
 import AccountScreen from "@/components/screens/account_screens/AccountScreen";
+import ForgotPassword from "@/components/screens/auth_screens/ForgotPassword";
+import Login from "@/components/screens/auth_screens/Login";
+import Register from "@/components/screens/auth_screens/Register";
+import ResetPassword from "@/components/screens/auth_screens/ResetPassword";
+import VerificationCode from "@/components/screens/auth_screens/VerificationCode";
+import VerificationCodeRegister from "@/components/screens/auth_screens/VerificationCodeRegister";
+import Welcome from "@/components/screens/auth_screens/Welcome";
 import CustomerInfoScreen from "@/components/screens/main_screens/CustomerInfoScreen";
 import DateSelectionScreen from "@/components/screens/main_screens/DateSelectionScreen";
 import DepartureScreen from "@/components/screens/main_screens/DepartureScreen";
@@ -15,6 +22,7 @@ import TripInfoScreen from "@/components/screens/main_screens/TripInfoScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
+
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -48,6 +56,23 @@ export type RootStackParamList = {
   TripInfoScreen: { tripId: string };
   AccountInfoScreen: undefined;
   PaymentScreen: { tripId: string; selectedSeats: string[] };
+  Welcome: undefined;
+  Login: undefined;
+  Register: undefined;
+  VerificationCode: {
+    phoneNumber: string;
+    firstname?: string;
+    surname?: string;
+    day?: string;
+    month?: string;
+    year?: string;
+    gender?: string;
+    email?: string;
+    password?: string;
+  };
+  ForgotPassword: undefined;
+  ResetPassword: { phoneNumber: string };
+  VerificationCodeRegister: { phoneNumber: string };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -181,12 +206,47 @@ export default function App() {
   return (
     <SocketProvider>
       <Stack.Navigator
-        initialRouteName="Main"
+        initialRouteName="Welcome"
         screenOptions={{
           headerShown: false,
           animation: "none", // Disable animations
         }}
       >
+        <Stack.Screen
+          name="Welcome"
+          component={Welcome}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Register"
+          component={Register}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="VerificationCode"
+          component={VerificationCode}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ForgotPassword"
+          component={ForgotPassword}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ResetPassword"
+          component={ResetPassword}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="VerificationCodeRegister"
+          component={VerificationCodeRegister}
+          options={{ headerShown: false }}
+        />
         {/* Main Tab Navigator */}
         <Stack.Screen
           name="Main"

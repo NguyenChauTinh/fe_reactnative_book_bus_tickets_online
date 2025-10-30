@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   StatusBar,
@@ -7,24 +8,38 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 import BackButton from "../../components/BackButton";
 import SearchInput from "../../components/SearchInput";
 import LocationIcon from "../../components/icons/LocationIcon";
 
-const locations = [
-  "Hà Nội",
-  "Đà Nẵng",
-  "Hồ Chí Minh",
-  "Ba Rịa-Vũng Tàu",
-  "Quy Nhơn - Bình Định",
-  "Nha Trang - Khánh Hòa",
-  "Đà Lạt - Lâm Đồng",
-];
-
 export default function DepartureScreen({ navigation, route }) {
   const { onSelect } = route.params;
+  const [locations, setLocations] = useState([]);
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        const response = await api_trip_schedule_service.getActiveDiaDiem();
+        console.log("Active locations:", response);
+
+        // ✅ Gán dữ liệu vào state
+        if (Array.isArray(response)) {
+          setLocations(response);
+        } else if (response?.data) {
+          // tuỳ theo response structure (Axios hoặc fetch)
+          setLocations(response.data);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách địa điểm:", error);
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   const handleLocationSelect = (location) => {
+    console.log("Location selected:", JSON.stringify(location, null, 2));
     onSelect(location);
     navigation.goBack();
   };
@@ -35,7 +50,7 @@ export default function DepartureScreen({ navigation, route }) {
       onPress={() => handleLocationSelect(item)}
     >
       <LocationIcon />
-      <Text style={styles.locationText}>{item}</Text>
+      <Text style={styles.locationText}>{item.tenDiaDiem}</Text>
     </TouchableOpacity>
   );
 
@@ -60,7 +75,9 @@ export default function DepartureScreen({ navigation, route }) {
         <FlatList
           data={locations}
           renderItem={renderLocationItem}
-          keyExtractor={(item) => item}
+          keyExtractor={(item, index) =>
+            item._id?.toString() || item.maDiaDiem || index.toString()
+          }
           style={styles.locationList}
         />
       </View>

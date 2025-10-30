@@ -12,20 +12,29 @@ import SearchButton from "../../components/SearchButton";
 
 export default function MainScreen({ navigation }) {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
-  const [departureLocation, setDepartureLocation] = useState("");
-  const [destination, setDestination] = useState("");
+  const [departureLocation, setDepartureLocation] = useState(null);
+  const [destination, setDestination] = useState(null);
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
+  // In MainScreen.tsx
   const handleDeparturePress = () => {
     navigation.navigate("DepartureScreen", {
-      onSelect: (location) => setDepartureLocation(location),
+      onSelect: (location) => {
+        // THÊM DÒNG NÀY ĐỂ KIỂM TRA
+        console.log("Location received for Departure:", location);
+        setDepartureLocation(location);
+      },
     });
   };
 
   const handleDestinationPress = () => {
     navigation.navigate("DestinationScreen", {
-      onSelect: (location) => setDestination(location),
+      onSelect: (location) => {
+        // THÊM DÒNG NÀY ĐỂ KIỂM TRA
+        console.log("Location received for Destination:", location);
+        setDestination(location);
+      },
     });
   };
 
@@ -53,6 +62,9 @@ export default function MainScreen({ navigation }) {
     setDestination(temp);
   };
 
+  console.log("Current Departure State:", departureLocation);
+  console.log("Current Destination State:", destination);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
@@ -62,8 +74,8 @@ export default function MainScreen({ navigation }) {
       <ScrollView style={styles.content}>
         <View style={styles.bookingCard}>
           <LocationSelector
-            departureLocation={departureLocation}
-            destination={destination}
+            departureLocation={departureLocation?.tenDiaDiem || ""}
+            destination={destination?.tenDiaDiem || ""}
             onDeparturePress={handleDeparturePress}
             onDestinationPress={handleDestinationPress}
             onSwap={handleSwapLocations}
