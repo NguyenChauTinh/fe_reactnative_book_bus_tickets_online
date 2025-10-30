@@ -43,6 +43,10 @@ export default function CustomerInfoScreen({ navigation, route }) {
     insuranceSelected,
     accidentInsuranceSelected,
     totalPrice,
+    departureLocation,
+    destination,
+    departureDate,
+    returnDate,
   } = route.params;
 
   const [customerInfo, setCustomerInfo] = useState({
@@ -67,6 +71,10 @@ export default function CustomerInfoScreen({ navigation, route }) {
       selectedDropoff,
       customerInfo,
       totalPrice,
+      departureLocation,
+      destination,
+      departureDate,
+      returnDate,
     });
   };
 
@@ -86,12 +94,11 @@ export default function CustomerInfoScreen({ navigation, route }) {
           <BackIcon />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hiệp Thành</Text>
-          <Text style={styles.headerSubtitle}>08:00 • T3, 23/09/2025</Text>
+          <Text style={styles.headerTitle}>
+            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+          </Text>
+          <Text style={styles.headerSubtitle}>{departureDate}</Text>
         </View>
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.detailsButtonText}>Chi tiết</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -113,11 +120,6 @@ export default function CustomerInfoScreen({ navigation, route }) {
           </View>
 
           <View style={styles.phoneInputGroup}>
-            <View style={styles.countryCodeContainer}>
-              <VietnamFlagIcon />
-              <Text style={styles.countryCode}>(+84)</Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
-            </View>
             <View style={styles.phoneInputContainer}>
               <Text style={styles.inputLabel}>Số điện thoại *</Text>
               <TextInput
@@ -168,9 +170,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
       <View style={styles.bottomBar}>
         <View style={styles.priceContainer}>
           <Text style={styles.priceLabel}>Tạm tính</Text>
-          <Text style={styles.totalPrice}>
-            {totalPrice.toLocaleString()}đ ▲
-          </Text>
+          <Text style={styles.totalPrice}>{totalPrice.toLocaleString()}đ</Text>
         </View>
         <TouchableOpacity
           style={[styles.continueButton]}

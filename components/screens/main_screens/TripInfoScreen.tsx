@@ -70,47 +70,44 @@ const HeartIcon = () => (
   </svg>
 );
 
-const ShieldIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-      stroke="#4CAF50"
-      strokeWidth="2"
-      fill="#4CAF50"
-      fillOpacity="0.1"
-    />
-  </svg>
-);
-
 export default function TripInfoScreen({ navigation, route }) {
-  const { trip, selectedSeats, selectedPickup, selectedDropoff, totalPrice } =
-    route.params;
-  const [customerInfo, setCustomerInfo] = useState({
-    name: "T Ng",
-    phone: "84372374650",
-    email: "chautinh05122@gmail.com",
-  });
-  const [insuranceSelected, setInsuranceSelected] = useState(false);
-  const [accidentInsuranceSelected, setAccidentInsuranceSelected] =
-    useState(false);
+  // --- BẮT ĐẦU THAY ĐỔI ---
+  const {
+    trip,
+    selectedSeats,
+    selectedPickup,
+    selectedDropoff,
+    customerInfo, // Lấy customerInfo từ màn hình trước
+    totalPrice,
+    departureLocation,
+    destination,
+    departureDate,
+  } = route.params;
 
-  // const totalPrice = selectedSeats.reduce(
-  //   (sum, seat) => sum + (seat.price || 0),
-  //   0
-  // );
-  const insurancePrice = insuranceSelected ? 20000 : 0;
-  const accidentInsurancePrice = accidentInsuranceSelected ? 25000 : 0;
-  const finalPrice = totalPrice + insurancePrice + accidentInsurancePrice;
+  const [insuranceSelected, setInsuranceSelected] = useState(false);
+
+  // Tính toán giá tiền cuối cùng
+  const insurancePrice = insuranceSelected ? 20000 * selectedSeats.length : 0; // Giá bảo hiểm nhân với số ghế
+  const finalPrice = totalPrice + insurancePrice;
+
+  // Lấy danh sách mã ghế
+  const seatNumbers = selectedSeats.map((seat) => seat.number).join(", ");
+  // --- KẾT THÚC THAY ĐỔI ---
 
   const handleContinue = () => {
     navigation.navigate("PaymentScreen", {
+      // Truyền tất cả dữ liệu cần thiết qua màn hình thanh toán
       trip,
       selectedSeats,
       selectedPickup,
       selectedDropoff,
+      customerInfo,
       insuranceSelected,
-      accidentInsuranceSelected,
       totalPrice,
+      finalPrice, // Truyền giá cuối cùng
+      departureLocation,
+      destination,
+      departureDate,
     });
   };
 
@@ -124,12 +121,11 @@ export default function TripInfoScreen({ navigation, route }) {
           <BackIcon />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hiệp Thành</Text>
-          <Text style={styles.headerSubtitle}>08:00 • T3, 23/09/2025</Text>
+          <Text style={styles.headerTitle}>
+            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+          </Text>
+          <Text style={styles.headerSubtitle}>{departureDate}</Text>
         </View>
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.detailsButtonText}>Chi tiết</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -140,11 +136,12 @@ export default function TripInfoScreen({ navigation, route }) {
         <View style={styles.tripInfoSection}>
           <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
 
+          {/* --- BẮT ĐẦU THAY ĐỔI --- */}
           <View style={styles.tripCard}>
             <View style={styles.tripHeader}>
               <View style={styles.tripDate}>
                 <BusIcon />
-                <Text style={styles.dateText}>T3, 23/09/2025</Text>
+                <Text style={styles.dateText}>{departureDate}</Text>
               </View>
               <TouchableOpacity>
                 <Text style={styles.detailsLink}>Chi tiết</Text>
@@ -156,13 +153,15 @@ export default function TripInfoScreen({ navigation, route }) {
                 <BusIcon />
               </View>
               <View style={styles.busDetails}>
-                <Text style={styles.busCompany}>Hiệp Thành</Text>
-                <Text style={styles.busType}>Limousine 34 phòng đơn</Text>
+                <Text style={styles.busCompany}>
+                  {trip.tuyenDuong?.tenTuyen || "Nhà xe"}
+                </Text>
+                <Text style={styles.busType}>{trip.busType}</Text>
                 <View style={styles.seatInfo}>
                   <PersonIcon />
-                  <Text style={styles.seatText}>1</Text>
+                  <Text style={styles.seatText}>{selectedSeats.length}</Text>
                   <SeatIcon />
-                  <Text style={styles.seatText}>B11</Text>
+                  <Text style={styles.seatText}>{seatNumbers}</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.favoriteButton}>
@@ -171,52 +170,80 @@ export default function TripInfoScreen({ navigation, route }) {
             </View>
 
             <View style={styles.routeInfo}>
+              {/* Điểm đón */}
               <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>08:00</Text>
+                <Text style={styles.routeTime}>{selectedPickup.time}</Text>
                 <View style={styles.routeIcon}>
                   <View style={styles.blueDot} />
                 </View>
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>Bến xe Miền Tây</Text>
+                  <Text style={styles.routeName}>{selectedPickup.name}</Text>
                   <Text style={styles.routeAddress}>
-                    395 Kinh Dương Vương, Phường An Lạc, Bình Tân, Hồ Chí Minh
+                    {selectedPickup.address}
                   </Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("PickupPointScreen", {
+                        trip,
+                        selectedPickup,
+                        selectedSeats,
+                        selectedDropoff,
+                        departureLocation,
+                        destination,
+                        departureDate,
+                      })
+                    }
+                  >
                     <Text style={styles.changeButton}>Thay đổi</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
+              {/* Điểm trả */}
               <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>13:00</Text>
+                <Text style={styles.routeTime}>{selectedDropoff.time}</Text>
                 <View style={styles.routeIcon}>
                   <View style={styles.redDot} />
                 </View>
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>Bến xe Tân Châu</Text>
+                  <Text style={styles.routeName}>{selectedDropoff.name}</Text>
                   <Text style={styles.routeAddress}>
-                    Trần Phú, Xã Tân An, Tân Châu, An Giang
+                    {selectedDropoff.address}
                   </Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("DropoffPointScreen", {
+                        trip,
+                        selectedDropoff,
+                        selectedSeats,
+                        selectedPickup,
+                        departureLocation,
+                        destination,
+                        departureDate,
+                      })
+                    }
+                  >
                     <Text style={styles.changeButton}>Thay đổi</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
+            {/* --- KẾT THÚC THAY ĐỔI --- */}
 
             <View style={styles.cancellationInfo}>
               <Text style={styles.cancellationText}>
-                🟢 Hủy miễn phí 00:00 • 23/09/2025 ⓘ
+                🟢 Hủy miễn phí 24 giờ trước khởi hành ⓘ
               </Text>
             </View>
           </View>
         </View>
 
+        {/* --- BẮT ĐẦU THAY ĐỔI --- */}
         <View style={styles.contactSection}>
           <View style={styles.contactHeader}>
             <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
-            <TouchableOpacity>
-              <Text style={styles.editButton}>Chính sửa</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.editButton}>Chỉnh sửa</Text>
             </TouchableOpacity>
           </View>
 
@@ -235,10 +262,10 @@ export default function TripInfoScreen({ navigation, route }) {
             </View>
           </View>
         </View>
+        {/* --- KẾT THÚC THAY ĐỔI --- */}
 
         <View style={styles.insuranceSection}>
           <Text style={styles.sectionTitle}>Tiện ích</Text>
-
           <TouchableOpacity
             style={styles.insuranceItem}
             onPress={() => setInsuranceSelected(!insuranceSelected)}
@@ -250,7 +277,8 @@ export default function TripInfoScreen({ navigation, route }) {
             </View>
             <View style={styles.insuranceDetails}>
               <Text style={styles.insuranceTitle}>
-                Bảo hiểm chuyến đi (+20.000đ/ghế)
+                Bảo hiểm chuyến đi (+
+                {(20000 * selectedSeats.length).toLocaleString()}đ)
               </Text>
               <Text style={styles.insuranceDescription}>
                 Được bồi thường lên đến 400.000.000đ/ghế{"\n"}
@@ -258,52 +286,15 @@ export default function TripInfoScreen({ navigation, route }) {
               </Text>
             </View>
           </TouchableOpacity>
-
-          <View style={styles.insuranceDetails}>
-            <View style={styles.insuranceCard}>
-              <Text style={styles.insuranceCardTitle}>Bảo hiểm tai nạn</Text>
-              <Text style={styles.insuranceCardDescription}>
-                Hỗ trợ viện phí lên đến 25 triệu đồng khi xảy ra tai nạn.
-              </Text>
-
-              <Text style={styles.policyTitle}>
-                Chính sách Hoàn Hủy chuyến đi
-              </Text>
-              <Text style={styles.policyDescription}>
-                Hoàn lại 100% tiền vé thực tế nếu chuyến đi bị hủy bởi các lý do
-                khách quan hoặc bất khả kháng về sức khỏe.
-              </Text>
-
-              <View style={styles.warningBox}>
-                <Text style={styles.warningText}>
-                  ⚠️ Chỉ áp dụng với ngân hàng Việt Nam
-                </Text>
-                <TouchableOpacity>
-                  <Text style={styles.detailsLink}>Chi tiết</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.insuranceSelectButton}
-                onPress={() =>
-                  setAccidentInsuranceSelected(!accidentInsuranceSelected)
-                }
-              >
-                <Text style={styles.insuranceSelectText}>
-                  Bồi thường trực tuyến nhanh chóng, dễ dàng
-                  <Text style={styles.detailsLink}>Chi tiết</Text>
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
+      {/* --- BẮT ĐẦU THAY ĐỔI --- */}
       <View style={styles.bottomBar}>
         <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tạm tính</Text>
+          <Text style={styles.priceLabel}>Tổng cộng</Text>
           <Text style={styles.totalPrice}>
-            {totalPrice.toLocaleString()}đ ▲
+            {finalPrice.toLocaleString()}đ ▲
           </Text>
         </View>
         <TouchableOpacity
@@ -313,6 +304,7 @@ export default function TripInfoScreen({ navigation, route }) {
           <Text style={styles.continueButtonText}>Tiếp tục</Text>
         </TouchableOpacity>
       </View>
+      {/* --- KẾT THÚC THAY ĐỔI --- */}
 
       <View style={styles.paymentNoteContainer}>
         <Text style={styles.paymentNoteText}>
@@ -352,15 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.9,
   },
-  detailsButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  detailsButtonText: {
-    color: "white",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
   progressContainer: {
     backgroundColor: "white",
     flexDirection: "row",
@@ -368,66 +351,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  progressStep: {
-    alignItems: "center",
-    flex: 1,
-  },
-  activeStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4A90E2",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  completedStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inactiveStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepNumber: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  inactiveStepNumber: {
-    color: "white",
-    fontSize: 12,
-  },
   activeStepText: {
     color: "#4A90E2",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
     textDecorationLine: "underline",
-  },
-  completedStepText: {
-    color: "#4CAF50",
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "bold",
-  },
-  inactiveStepText: {
-    color: "#ccc",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  progressLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 4,
   },
   content: {
     flex: 1,
@@ -529,7 +458,7 @@ const styles = StyleSheet.create({
   routeIcon: {
     alignItems: "center",
     marginHorizontal: 12,
-    paddingTop: 2,
+    paddingTop: 6,
   },
   blueDot: {
     width: 8,
@@ -652,61 +581,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
-  },
-  insuranceCard: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-  },
-  insuranceCardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  insuranceCardDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 16,
-  },
-  policyTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  policyDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  warningBox: {
-    backgroundColor: "#fff3cd",
-    padding: 12,
-    borderRadius: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  warningText: {
-    fontSize: 14,
-    color: "#856404",
-    flex: 1,
-  },
-  insuranceSelectButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  insuranceSelectText: {
-    fontSize: 14,
-    color: "white",
-    textAlign: "center",
   },
   bottomBar: {
     backgroundColor: "white",

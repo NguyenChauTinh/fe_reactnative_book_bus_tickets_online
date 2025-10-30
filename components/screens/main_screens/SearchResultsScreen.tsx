@@ -171,7 +171,13 @@ export default function SearchResultsScreen({ navigation, route }) {
   }, [departureDate, departureLocation, destination]);
 
   const handleSeatSelection = (trip) => {
-    navigation.navigate("SeatSelectionScreen", { trip });
+    navigation.navigate("SeatSelectionScreen", {
+      trip,
+      departureLocation,
+      destination,
+      departureDate,
+      returnDate,
+    });
   };
 
   return (
@@ -194,12 +200,6 @@ export default function SearchResultsScreen({ navigation, route }) {
               </Text>
               <Text style={styles.headerSubtitle}>{departureDate}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => setShowChangeModal(true)}
-              style={styles.changeButton}
-            >
-              <Text style={styles.changeButtonText}>Thay đổi</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Transport Tabs */}
