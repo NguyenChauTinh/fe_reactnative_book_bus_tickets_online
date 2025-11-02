@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -85,6 +86,7 @@ export default function TripInfoScreen({ navigation, route }) {
   } = route.params;
 
   const [insuranceSelected, setInsuranceSelected] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Tính toán giá tiền cuối cùng
   const insurancePrice = insuranceSelected ? 20000 * selectedSeats.length : 0; // Giá bảo hiểm nhân với số ghế
@@ -104,7 +106,7 @@ export default function TripInfoScreen({ navigation, route }) {
       customerInfo,
       insuranceSelected,
       totalPrice,
-      finalPrice, // Truyền giá cuối cùng
+      finalPrice,
       departureLocation,
       destination,
       departureDate,
@@ -112,206 +114,218 @@ export default function TripInfoScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>
-            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
-          </Text>
-          <Text style={styles.headerSubtitle}>{departureDate}</Text>
-        </View>
-      </View>
-
-      <View style={styles.progressContainer}>
-        <Text style={styles.activeStepText}>Thông tin chuyến đi</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.tripInfoSection}>
-          <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
-
-          {/* --- BẮT ĐẦU THAY ĐỔI --- */}
-          <View style={styles.tripCard}>
-            <View style={styles.tripHeader}>
-              <View style={styles.tripDate}>
-                <BusIcon />
-                <Text style={styles.dateText}>{departureDate}</Text>
-              </View>
-              <TouchableOpacity>
-                <Text style={styles.detailsLink}>Chi tiết</Text>
-              </TouchableOpacity>
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
             </View>
+          </View>
 
-            <View style={styles.busInfo}>
-              <View style={styles.busImage}>
-                <BusIcon />
-              </View>
-              <View style={styles.busDetails}>
-                <Text style={styles.busCompany}>
-                  {trip.tuyenDuong?.tenTuyen || "Nhà xe"}
-                </Text>
-                <Text style={styles.busType}>{trip.busType}</Text>
-                <View style={styles.seatInfo}>
-                  <PersonIcon />
-                  <Text style={styles.seatText}>{selectedSeats.length}</Text>
-                  <SeatIcon />
-                  <Text style={styles.seatText}>{seatNumbers}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.favoriteButton}>
-                <HeartIcon />
-              </TouchableOpacity>
-            </View>
+          <View style={styles.progressContainer}>
+            <Text style={styles.activeStepText}>Thông tin chuyến đi</Text>
+          </View>
 
-            <View style={styles.routeInfo}>
-              {/* Điểm đón */}
-              <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>{selectedPickup.time}</Text>
-                <View style={styles.routeIcon}>
-                  <View style={styles.blueDot} />
-                </View>
-                <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>{selectedPickup.name}</Text>
-                  <Text style={styles.routeAddress}>
-                    {selectedPickup.address}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("PickupPointScreen", {
-                        trip,
-                        selectedPickup,
-                        selectedSeats,
-                        selectedDropoff,
-                        departureLocation,
-                        destination,
-                        departureDate,
-                      })
-                    }
-                  >
-                    <Text style={styles.changeButton}>Thay đổi</Text>
+          <ScrollView style={styles.content}>
+            <View style={styles.tripInfoSection}>
+              <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
+
+              {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+              <View style={styles.tripCard}>
+                <View style={styles.tripHeader}>
+                  <View style={styles.tripDate}>
+                    <BusIcon />
+                    <Text style={styles.dateText}>{departureDate}</Text>
+                  </View>
+                  <TouchableOpacity>
+                    <Text style={styles.detailsLink}>Chi tiết</Text>
                   </TouchableOpacity>
                 </View>
+
+                <View style={styles.busInfo}>
+                  <View style={styles.busImage}>
+                    <BusIcon />
+                  </View>
+                  <View style={styles.busDetails}>
+                    <Text style={styles.busCompany}>
+                      {trip.tuyenDuong?.tenTuyen || "Nhà xe"}
+                    </Text>
+                    <Text style={styles.busType}>{trip.busType}</Text>
+                    <View style={styles.seatInfo}>
+                      <PersonIcon />
+                      <Text style={styles.seatText}>
+                        {selectedSeats.length}
+                      </Text>
+                      <SeatIcon />
+                      <Text style={styles.seatText}>{seatNumbers}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.routeInfo}>
+                  {/* Điểm đón */}
+                  <View style={styles.routeItem}>
+                    <Text style={styles.routeTime}>{selectedPickup.time}</Text>
+                    <View style={styles.routeIcon}>
+                      <View style={styles.blueDot} />
+                    </View>
+                    <View style={styles.routeDetails}>
+                      <Text style={styles.routeName}>
+                        {selectedPickup.name}
+                      </Text>
+                      <Text style={styles.routeAddress}>
+                        {selectedPickup.address}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("PickupPointScreen", {
+                            trip,
+                            selectedPickup,
+                            selectedSeats,
+                            selectedDropoff,
+                            departureLocation,
+                            destination,
+                            departureDate,
+                          })
+                        }
+                      >
+                        <Text style={styles.changeButton}>Thay đổi</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Điểm trả */}
+                  <View style={styles.routeItem}>
+                    <Text style={styles.routeTime}>{selectedDropoff.time}</Text>
+                    <View style={styles.routeIcon}>
+                      <View style={styles.redDot} />
+                    </View>
+                    <View style={styles.routeDetails}>
+                      <Text style={styles.routeName}>
+                        {selectedDropoff.name}
+                      </Text>
+                      <Text style={styles.routeAddress}>
+                        {selectedDropoff.address}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("DropoffPointScreen", {
+                            trip,
+                            selectedDropoff,
+                            selectedSeats,
+                            selectedPickup,
+                            departureLocation,
+                            destination,
+                            departureDate,
+                          })
+                        }
+                      >
+                        <Text style={styles.changeButton}>Thay đổi</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+                {/* --- KẾT THÚC THAY ĐỔI --- */}
+
+                <View style={styles.cancellationInfo}>
+                  <Text style={styles.cancellationText}>
+                    🟢 Hủy miễn phí 24 giờ trước khởi hành ⓘ
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+            <View style={styles.contactSection}>
+              <View style={styles.contactHeader}>
+                <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <Text style={styles.editButton}>Chỉnh sửa</Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Điểm trả */}
-              <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>{selectedDropoff.time}</Text>
-                <View style={styles.routeIcon}>
-                  <View style={styles.redDot} />
+              <View style={styles.contactInfo}>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Họ tên</Text>
+                  <Text style={styles.contactValue}>{customerInfo.name}</Text>
                 </View>
-                <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>{selectedDropoff.name}</Text>
-                  <Text style={styles.routeAddress}>
-                    {selectedDropoff.address}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("DropoffPointScreen", {
-                        trip,
-                        selectedDropoff,
-                        selectedSeats,
-                        selectedPickup,
-                        departureLocation,
-                        destination,
-                        departureDate,
-                      })
-                    }
-                  >
-                    <Text style={styles.changeButton}>Thay đổi</Text>
-                  </TouchableOpacity>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Điện thoại</Text>
+                  <Text style={styles.contactValue}>{customerInfo.phone}</Text>
+                </View>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Email</Text>
+                  <Text style={styles.contactValue}>{customerInfo.email}</Text>
                 </View>
               </View>
             </View>
             {/* --- KẾT THÚC THAY ĐỔI --- */}
 
-            <View style={styles.cancellationInfo}>
-              <Text style={styles.cancellationText}>
-                🟢 Hủy miễn phí 24 giờ trước khởi hành ⓘ
+            <View style={styles.insuranceSection}>
+              <Text style={styles.sectionTitle}>Tiện ích</Text>
+              <TouchableOpacity
+                style={styles.insuranceItem}
+                onPress={() => setInsuranceSelected(!insuranceSelected)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    insuranceSelected && styles.checkedBox,
+                  ]}
+                >
+                  {insuranceSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <View style={styles.insuranceDetails}>
+                  <Text style={styles.insuranceTitle}>
+                    Bảo hiểm chuyến đi (+
+                    {(20000 * selectedSeats.length).toLocaleString()}đ)
+                  </Text>
+                  <Text style={styles.insuranceDescription}>
+                    Được bồi thường lên đến 400.000.000đ/ghế{"\n"}
+                    Cung cấp bởi BAOVIET🏆 x 🛡️Saladin
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+
+          {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+          <View style={styles.bottomBar}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Tổng cộng</Text>
+              <Text style={styles.totalPrice}>
+                {finalPrice.toLocaleString()}đ ▲
               </Text>
             </View>
-          </View>
-        </View>
-
-        {/* --- BẮT ĐẦU THAY ĐỔI --- */}
-        <View style={styles.contactSection}>
-          <View style={styles.contactHeader}>
-            <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.editButton}>Chỉnh sửa</Text>
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
             </TouchableOpacity>
           </View>
+          {/* --- KẾT THÚC THAY ĐỔI --- */}
 
-          <View style={styles.contactInfo}>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Họ tên</Text>
-              <Text style={styles.contactValue}>{customerInfo.name}</Text>
-            </View>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Điện thoại</Text>
-              <Text style={styles.contactValue}>{customerInfo.phone}</Text>
-            </View>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Email</Text>
-              <Text style={styles.contactValue}>{customerInfo.email}</Text>
-            </View>
+          <View style={styles.paymentNoteContainer}>
+            <Text style={styles.paymentNoteText}>
+              Bạn sẽ chọn hình thức thanh toán ở bước tiếp theo
+            </Text>
           </View>
-        </View>
-        {/* --- KẾT THÚC THAY ĐỔI --- */}
-
-        <View style={styles.insuranceSection}>
-          <Text style={styles.sectionTitle}>Tiện ích</Text>
-          <TouchableOpacity
-            style={styles.insuranceItem}
-            onPress={() => setInsuranceSelected(!insuranceSelected)}
-          >
-            <View
-              style={[styles.checkbox, insuranceSelected && styles.checkedBox]}
-            >
-              {insuranceSelected && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <View style={styles.insuranceDetails}>
-              <Text style={styles.insuranceTitle}>
-                Bảo hiểm chuyến đi (+
-                {(20000 * selectedSeats.length).toLocaleString()}đ)
-              </Text>
-              <Text style={styles.insuranceDescription}>
-                Được bồi thường lên đến 400.000.000đ/ghế{"\n"}
-                Cung cấp bởi BAOVIET🏆 x 🛡️Saladin
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* --- BẮT ĐẦU THAY ĐỔI --- */}
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tổng cộng</Text>
-          <Text style={styles.totalPrice}>
-            {finalPrice.toLocaleString()}đ ▲
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
-      {/* --- KẾT THÚC THAY ĐỔI --- */}
-
-      <View style={styles.paymentNoteContainer}>
-        <Text style={styles.paymentNoteText}>
-          Bạn sẽ chọn hình thức thanh toán ở bước tiếp theo
-        </Text>
-      </View>
-    </SafeAreaView>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 

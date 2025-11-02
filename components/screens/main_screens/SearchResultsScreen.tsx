@@ -1,5 +1,6 @@
 "use client";
 
+import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
 // SVG Icons
 const BackIcon = () => (

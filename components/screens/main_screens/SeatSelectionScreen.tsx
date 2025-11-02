@@ -252,7 +252,7 @@ export default function SeatSelectionScreen({ navigation, route }) {
   // --- KẾT THÚC THAY ĐỔI ---
 
   const is24DoubleRooms = trip.busType.includes("Limousine 24 phòng đôi");
-  const is32SingleRooms = trip.busType.includes("Limousine 32 phòng đơn");
+  const is32SingleRooms = trip.busType.includes("Limousine 34 phòng đơn");
 
   // --- BẮT ĐẦU THAY ĐỔI ---
   const generateSeats = (tripData, occupiedList) => {

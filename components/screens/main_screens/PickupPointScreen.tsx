@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -73,6 +74,7 @@ export default function PickupPointScreen({ navigation, route }) {
   const [selectedPickup, setSelectedPickup] = useState(null);
   const [pickupPoints, setPickupPoints] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' = Sớm nhất, 'desc' = Muộn nhất
+  const [loading, setLoading] = useState(true);
 
   const toggleSortOrder = () => {
     setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
@@ -82,6 +84,7 @@ export default function PickupPointScreen({ navigation, route }) {
     // --- BẮT ĐẦU SỬA LỖI ---
     // Sửa lại `chiTietsTuyen` thành `chiTietTuyen`
     if (trip?.tuyenDuong?.chiTietTuyen) {
+      setLoading(true);
       // --- KẾT THÚC SỬA LỖI ---
       const departureTimeInMinutes = trip.gioKhoiHanh || 0;
 
@@ -102,6 +105,7 @@ export default function PickupPointScreen({ navigation, route }) {
           address: `Địa chỉ chi tiết cho: ${item.diaDiem.tenDiaDiem}`,
         };
       });
+      setLoading(false);
 
       setPickupPoints(formattedPoints);
     }
@@ -151,120 +155,129 @@ export default function PickupPointScreen({ navigation, route }) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>
-            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
-          </Text>
-          <Text style={styles.headerSubtitle}>{departureDate}</Text>
-        </View>
-      </View>
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
+            </View>
+          </View>
 
-      <View style={styles.progressContainer}>
-        <Text style={styles.activeStepText}>Chọn điểm đón</Text>
-      </View>
+          <View style={styles.progressContainer}>
+            <Text style={styles.activeStepText}>Chọn điểm đón</Text>
+          </View>
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <SearchIcon />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm điểm đón trong danh sách"
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-        </View>
-      </View>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <SearchIcon />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Tìm điểm đón trong danh sách"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+            </View>
+          </View>
 
-      <View style={styles.sortContainer}>
-        <TouchableOpacity onPress={toggleSortOrder} style={styles.sortButton}>
-          <Text style={styles.sortText}>Sắp xếp theo</Text>
-          <Text style={styles.sortValue}>
-            {sortOrder === "asc" ? "Sớm nhất ▼" : "Muộn nhất ▲"}
-          </Text>
-        </TouchableOpacity>
-        <View
-          style={{
-            flexDirection: "column",
-            alignItems: "center",
-            marginLeft: "auto",
-          }}
-        >
-          <Text style={styles.convenientText}>
-            Điểm đón nào thuận tiện nhất?
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.addressLink}>Nhập địa chỉ của bạn</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.noteContainer}>
-        <Text style={styles.noteText}>
-          *Lưu ý: Thời gian đón là dự kiến và có thể thay đổi.
-        </Text>
-      </View>
-
-      <ScrollView style={styles.pickupList}>
-        {sortedAndFilteredPickups.map((pickup) => (
-          <TouchableOpacity
-            key={pickup.id}
-            style={[
-              styles.pickupItem,
-              selectedPickup?.id === pickup.id && styles.selectedPickupItem,
-            ]}
-            onPress={() => handlePickupSelect(pickup)}
-          >
-            <View style={styles.pickupContent}>
-              <View style={styles.pickupTime}>
-                <LocationIcon />
-                <Text style={styles.timeText}>{pickup.time}</Text>
-              </View>
-              <View style={styles.pickupDetails}>
-                <Text style={styles.pickupName}>{pickup.name}</Text>
-                <Text style={styles.pickupAddress}>{pickup.address}</Text>
-              </View>
-              <TouchableOpacity style={styles.mapButton}>
-                <MapIcon />
-                <Text style={styles.mapButtonText}>Bản đồ</Text>
+          <View style={styles.sortContainer}>
+            <TouchableOpacity
+              onPress={toggleSortOrder}
+              style={styles.sortButton}
+            >
+              <Text style={styles.sortText}>Sắp xếp theo</Text>
+              <Text style={styles.sortValue}>
+                {sortOrder === "asc" ? "Sớm nhất ▼" : "Muộn nhất ▲"}
+              </Text>
+            </TouchableOpacity>
+            <View
+              style={{
+                flexDirection: "column",
+                alignItems: "center",
+                marginLeft: "auto",
+              }}
+            >
+              <Text style={styles.convenientText}>
+                Điểm đón nào thuận tiện nhất?
+              </Text>
+              <TouchableOpacity>
+                <Text style={styles.addressLink}>Nhập địa chỉ của bạn</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+          </View>
 
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tạm tính</Text>
-          <Text style={styles.totalPrice}>
-            {totalPrice.toLocaleString()}đ ▲
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            !selectedPickup && styles.disabledButton,
-          ]}
-          disabled={!selectedPickup}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.noteContainer}>
+            <Text style={styles.noteText}>
+              *Lưu ý: Thời gian đón là dự kiến và có thể thay đổi.
+            </Text>
+          </View>
 
-      <View style={styles.changeNoteContainer}>
-        <Text style={styles.changeNoteText}>
-          Dễ dàng thay đổi điểm đón trả sau khi đặt
-        </Text>
-      </View>
-    </SafeAreaView>
+          <ScrollView style={styles.pickupList}>
+            {sortedAndFilteredPickups.map((pickup) => (
+              <TouchableOpacity
+                key={pickup.id}
+                style={[
+                  styles.pickupItem,
+                  selectedPickup?.id === pickup.id && styles.selectedPickupItem,
+                ]}
+                onPress={() => handlePickupSelect(pickup)}
+              >
+                <View style={styles.pickupContent}>
+                  <View style={styles.pickupTime}>
+                    <LocationIcon />
+                    <Text style={styles.timeText}>{pickup.time}</Text>
+                  </View>
+                  <View style={styles.pickupDetails}>
+                    <Text style={styles.pickupName}>{pickup.name}</Text>
+                    <Text style={styles.pickupAddress}>{pickup.address}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.mapButton}>
+                    <MapIcon />
+                    <Text style={styles.mapButtonText}>Bản đồ</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.bottomBar}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Tạm tính</Text>
+              <Text style={styles.totalPrice}>
+                {totalPrice.toLocaleString()}đ ▲
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                !selectedPickup && styles.disabledButton,
+              ]}
+              disabled={!selectedPickup}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.changeNoteContainer}>
+            <Text style={styles.changeNoteText}>
+              Dễ dàng thay đổi điểm đón trả sau khi đặt
+            </Text>
+          </View>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 

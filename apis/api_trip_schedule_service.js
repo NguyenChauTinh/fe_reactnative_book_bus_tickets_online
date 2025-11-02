@@ -25,4 +25,16 @@ export const api_trip_schedule_service = {
       `/api/v1/chuyen-xe/theo-ngay-va-dia-diem?ngayKhoiHanh=${ngayKhoiHanh}&diemDiId=${diemDiId}&diemDenId=${diemDenId}`
     );
   },
+
+  getDiaDiemKetNoi: async (params) => {
+    const apiParams = {
+      type: params?.findType,
+      selectedId: params?.relatedId,
+    };
+    return ApiManager.get(
+      "trip_schedule_service",
+      "/api/v1/tuyen-duong/lay-dia-diem-ket-noi",
+      { params: apiParams }
+    );
+  },
 };

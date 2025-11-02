@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -55,6 +56,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
     email: "chautinh05122@gmail.com",
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
     setCustomerInfo((prev) => ({
@@ -85,107 +87,117 @@ export default function CustomerInfoScreen({ navigation, route }) {
     agreedToTerms;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>
-            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
-          </Text>
-          <Text style={styles.headerSubtitle}>{departureDate}</Text>
-        </View>
-      </View>
-
-      <View style={styles.progressContainer}>
-        <Text style={styles.activeStepText}>Nhập thông tin</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Tên người đi *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={customerInfo.name}
-              onChangeText={(value) => handleInputChange("name", value)}
-              placeholder="Nhập tên người đi"
-            />
-          </View>
-
-          <View style={styles.phoneInputGroup}>
-            <View style={styles.phoneInputContainer}>
-              <Text style={styles.inputLabel}>Số điện thoại *</Text>
-              <TextInput
-                style={styles.phoneInput}
-                value={customerInfo.phone}
-                onChangeText={(value) => handleInputChange("phone", value)}
-                placeholder="Nhập số điện thoại"
-                keyboardType="phone-pad"
-              />
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email để nhận thông tin vé *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={customerInfo.email}
-              onChangeText={(value) => handleInputChange("email", value)}
-              placeholder="Nhập email"
-              keyboardType="email-address"
-            />
+          <View style={styles.progressContainer}>
+            <Text style={styles.activeStepText}>Nhập thông tin</Text>
           </View>
 
-          <View style={styles.noticeContainer}>
-            <Text style={styles.noticeText}>
-              ✅ Thông tin đơn hàng sẽ được gửi đến số điện thoại và email bạn
-              cung cấp.
-            </Text>
-          </View>
+          <ScrollView style={styles.content}>
+            <View style={styles.formSection}>
+              <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
 
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              Bằng việc nhấn nút Tiếp tục, bạn đồng ý với{" "}
-              <TouchableOpacity>
-                <Text style={styles.termsLink}>
-                  Chính sách bảo mật thông tin
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Tên người đi *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={customerInfo.name}
+                  onChangeText={(value) => handleInputChange("name", value)}
+                  placeholder="Nhập tên người đi"
+                />
+              </View>
+
+              <View style={styles.phoneInputGroup}>
+                <View style={styles.phoneInputContainer}>
+                  <Text style={styles.inputLabel}>Số điện thoại *</Text>
+                  <TextInput
+                    style={styles.phoneInput}
+                    value={customerInfo.phone}
+                    onChangeText={(value) => handleInputChange("phone", value)}
+                    placeholder="Nhập số điện thoại"
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  Email để nhận thông tin vé *
                 </Text>
-              </TouchableOpacity>{" "}
-              và{" "}
-              <TouchableOpacity>
-                <Text style={styles.termsLink}>Quy chế</Text>
-              </TouchableOpacity>
+                <TextInput
+                  style={styles.textInput}
+                  value={customerInfo.email}
+                  onChangeText={(value) => handleInputChange("email", value)}
+                  placeholder="Nhập email"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.noticeContainer}>
+                <Text style={styles.noticeText}>
+                  ✅ Thông tin đơn hàng sẽ được gửi đến số điện thoại và email
+                  bạn cung cấp.
+                </Text>
+              </View>
+
+              <View style={styles.termsContainer}>
+                <Text style={styles.termsText}>
+                  Bằng việc nhấn nút Tiếp tục, bạn đồng ý với{" "}
+                  <TouchableOpacity>
+                    <Text style={styles.termsLink}>
+                      Chính sách bảo mật thông tin
+                    </Text>
+                  </TouchableOpacity>{" "}
+                  và{" "}
+                  <TouchableOpacity>
+                    <Text style={styles.termsLink}>Quy chế</Text>
+                  </TouchableOpacity>
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.bottomBar}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Tạm tính</Text>
+              <Text style={styles.totalPrice}>
+                {totalPrice.toLocaleString()}đ
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.continueButton]}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.paymentNoteContainer}>
+            <Text style={styles.paymentNoteText}>
+              Bạn có thể mua thêm tiện ích ở bước tiếp theo
             </Text>
           </View>
-        </View>
-      </ScrollView>
-
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tạm tính</Text>
-          <Text style={styles.totalPrice}>{totalPrice.toLocaleString()}đ</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.continueButton]}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.paymentNoteContainer}>
-        <Text style={styles.paymentNoteText}>
-          Bạn có thể mua thêm tiện ích ở bước tiếp theo
-        </Text>
-      </View>
-    </SafeAreaView>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 
