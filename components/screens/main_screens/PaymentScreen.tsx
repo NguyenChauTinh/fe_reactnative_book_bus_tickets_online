@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +14,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { WebView } from "react-native-webview";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
 import PaymentCountdown from "./PaymentCountdown";
 
@@ -69,6 +72,8 @@ const PaymentScreen = ({ navigation, route }) => {
 
   // State quản lý text trong ô input
   const [promoInputValue, setPromoInputValue] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState(null); // Lưu URL VNPAY trả về
+  const [showGateway, setShowGateway] = useState(false); // Hiển thị Modal WebView
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -157,9 +162,10 @@ const PaymentScreen = ({ navigation, route }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleContinue = async () => {
-    if (!selectedPaymentMethod) return;
-    setLoading(true);
+  const createTicketInDatabase = async (
+    paymentMethod,
+    vnpTransactionNo = null
+  ) => {
     const chiTietVe = selectedSeats.map((seat) => ({
       chuyenXe: trip._id,
       tenKhachHang: customerInfo.name,
@@ -171,23 +177,32 @@ const PaymentScreen = ({ navigation, route }) => {
       giaVeCoBan: seat.price,
       phuThu: 0,
       giamGia: 0,
-      hinhThucThanhToan: selectedPaymentMethod,
+      hinhThucThanhToan: paymentMethod,
       trangThaiChiTiet:
-        selectedPaymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
+        paymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
+      vnpTransactionNo: vnpTransactionNo, // Lưu mã giao dịch VNPAY nếu có
     }));
+
     const ticketPayload = {
       chiTiet: chiTietVe,
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
     };
+
     try {
       const response = await axios.post(
         "http://localhost:3005/api/v1/ve-xe",
         ticketPayload
       );
       if (response.data.success) {
-        Alert.alert("Thành công", "Đặt vé thành công!");
+        // Chỉ điều hướng khi tạo vé thành công
         navigation.navigate("BookingSuccessScreen", {
           ticketInfo: response.data.data,
+          trip,
+          departureLocation,
+          destination,
+          departureDate,
+          finalPrice,
+          discountAmount,
         });
       } else {
         Alert.alert(
@@ -200,13 +215,101 @@ const PaymentScreen = ({ navigation, route }) => {
         "Lỗi hệ thống",
         error.response?.data?.message || error.message
       );
-    } finally {
+    }
+  };
+
+  // --- BẮT ĐẦU THAY ĐỔI: Cập nhật hàm handleContinue ---
+  const handleContinue = async () => {
+    if (!selectedPaymentMethod) return;
+
+    // 1. Thanh toán khi lên xe (luồng cũ)
+    if (selectedPaymentMethod === "TAI_XE") {
+      setLoading(true);
+      await createTicketInDatabase("TAI_XE"); // Gọi hàm tạo vé với trạng thái DAT_CHO
       setLoading(false);
+    }
+
+    // 2. Thanh toán VNPAY (luồng mới)
+    if (selectedPaymentMethod === "VNPAY") {
+      setLoading(true);
+      try {
+        // Gọi backend của BẠN để lấy URL thanh toán
+        const response = await axios.post(
+          "http://localhost:3005/api/v1/payment/create-vnpay-url", // Endpoint này bạn sẽ tạo ở Bước 2
+          {
+            amount: finalPrice,
+            orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
+            // Gửi thêm ID chuyến, ID người dùng... nếu cần
+          }
+        );
+
+        if (response.data && response.data.paymentUrl) {
+          setPaymentUrl(response.data.paymentUrl);
+          setShowGateway(true); // Mở Modal WebView
+        } else {
+          Alert.alert("Lỗi", "Không thể tạo yêu cầu thanh toán VNPAY.");
+        }
+      } catch (error) {
+        Alert.alert(
+          "Lỗi hệ thống",
+          "Không thể kết nối đến máy chủ thanh toán."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleWebViewNavigationStateChange = (navState) => {
+    const { url } = navState;
+
+    // 1. Kiểm tra nếu VNPAY đã redirect về returnUrl
+    if (url.includes("http://localhost:3005/payment-return")) {
+      // Đây là URL bạn cấu hình ở Bước 2
+      setShowGateway(false); // Đóng WebView
+      setPaymentUrl(null);
+
+      // 2. Phân tích query params từ URL trả về
+      const params = new URLSearchParams(url.split("?")[1]);
+      const responseCode = params.get("vnp_ResponseCode");
+      const transactionNo = params.get("vnp_TransactionNo");
+
+      // 3. Thanh toán thành công
+      if (responseCode === "00") {
+        Alert.alert("Thành công", "Thanh toán VNPAY thành công!");
+        // Gọi hàm tạo vé VÀ lưu mã giao dịch
+        createTicketInDatabase("VNPAY", transactionNo);
+      } else {
+        // 4. Thanh toán thất bại hoặc bị hủy
+        Alert.alert(
+          "Thất bại",
+          "Thanh toán VNPAY không thành công hoặc đã bị hủy."
+        );
+      }
     }
   };
 
   return (
     <View style={styles.container}>
+      <Modal
+        visible={showGateway}
+        onRequestClose={() => setShowGateway(false)}
+        animationType="slide"
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <WebView
+            source={{ uri: paymentUrl }}
+            onNavigationStateChange={handleWebViewNavigationStateChange}
+            style={{ flex: 1 }}
+          />
+          <TouchableOpacity
+            style={styles.closeWebViewButton}
+            onPress={() => setShowGateway(false)}
+          >
+            <Text style={styles.closeWebViewText}>Đóng</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </Modal>
       {loading ? (
         <ActivityIndicator style={{ flex: 1 }} size="large" color="#0000ff" />
       ) : (
@@ -482,4 +585,14 @@ const styles = StyleSheet.create({
   },
   disabledButton: { backgroundColor: "#ccc" },
   continueButtonText: { color: "#333", fontSize: 16, fontWeight: "bold" },
+  closeWebViewButton: {
+    backgroundColor: "#E74C3C",
+    padding: 16,
+    alignItems: "center",
+  },
+  closeWebViewText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
