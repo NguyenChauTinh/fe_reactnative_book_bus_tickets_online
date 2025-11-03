@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 // Giả sử bạn có file api service này
 import { api_booking_service } from "../../../apis/api_booking_service";
+import BookingTimeline from "../main_screens/BookingTimeline";
 
 // SVG Icons (Giữ nguyên không thay đổi)
 const BackIcon = () => (
@@ -431,9 +432,7 @@ export default function SeatSelectionScreen({ navigation, route }) {
           </View>
 
           {/* Progress Steps */}
-          <View style={styles.progressContainer}>
-            <Text style={styles.activeStepText}>Chọn chỗ</Text>
-          </View>
+          <BookingTimeline currentStep={1} />
 
           {/* Notice */}
           <View style={styles.noticeContainer}>

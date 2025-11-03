@@ -71,7 +71,7 @@ export default function DateSelectionScreen({ navigation, route }: any) {
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Chọn ngày</Text>
-          <View style={styles.roundTripContainer}>
+          {/* <View style={styles.roundTripContainer}>
             <Text style={styles.roundTripLabel}>Khứ hồi</Text>
             <TouchableOpacity
               style={[styles.toggle, isRoundTrip && styles.toggleActive]}
@@ -84,7 +84,7 @@ export default function DateSelectionScreen({ navigation, route }: any) {
                 ]}
               />
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
 
         <View style={styles.dateHeader}>

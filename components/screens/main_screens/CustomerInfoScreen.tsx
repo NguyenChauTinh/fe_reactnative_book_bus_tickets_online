@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BookingTimeline from "../main_screens/BookingTimeline";
 
 // SVG Icons
 const BackIcon = () => (
@@ -107,9 +108,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
             </View>
           </View>
 
-          <View style={styles.progressContainer}>
-            <Text style={styles.activeStepText}>Nhập thông tin</Text>
-          </View>
+          <BookingTimeline currentStep={4} />
 
           <ScrollView style={styles.content}>
             <View style={styles.formSection}>

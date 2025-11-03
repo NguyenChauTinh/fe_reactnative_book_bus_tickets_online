@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BookingTimeline from "../main_screens/BookingTimeline";
 
 // SVG Icons (Giữ nguyên không thay đổi)
 const BackIcon = () => (
@@ -175,9 +176,7 @@ export default function PickupPointScreen({ navigation, route }) {
             </View>
           </View>
 
-          <View style={styles.progressContainer}>
-            <Text style={styles.activeStepText}>Chọn điểm đón</Text>
-          </View>
+          <BookingTimeline currentStep={2} />
 
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>

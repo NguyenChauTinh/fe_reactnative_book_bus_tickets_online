@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BookingTimeline from "../main_screens/BookingTimeline";
 
 // SVG Icons
 const BackIcon = () => (
@@ -134,9 +135,7 @@ export default function TripInfoScreen({ navigation, route }) {
             </View>
           </View>
 
-          <View style={styles.progressContainer}>
-            <Text style={styles.activeStepText}>Thông tin chuyến đi</Text>
-          </View>
+          <BookingTimeline currentStep={5} />
 
           <ScrollView style={styles.content}>
             <View style={styles.tripInfoSection}>

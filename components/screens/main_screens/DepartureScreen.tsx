@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   StatusBar,
@@ -14,14 +14,27 @@ import SearchInput from "../../components/SearchInput";
 import LocationIcon from "../../components/icons/LocationIcon";
 
 export default function DepartureScreen({ navigation, route }) {
-  const { onSelect } = route.params;
+  // ✅ THAY ĐỔI: Nhận thêm 'destinationId'
+  const { onSelect, destinationId } = route.params;
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await api_trip_schedule_service.getActiveDiaDiem();
-        console.log("Active locations:", response);
+        // ✅ THAY ĐỔI: Gọi API mới với tham số
+        const params = {
+          findType: "don", // Màn hình này tìm điểm ĐÓN
+          relatedId: destinationId, // ID của điểm ĐẾN đã chọn (hoặc null)
+        };
+
+        // Giả sử bạn đã tạo hàm 'getDiaDiemKetNoi' trong service
+        const response = await api_trip_schedule_service.getDiaDiemKetNoi(
+          params
+        );
+        console.log(
+          `Finding 'don' locations related to destination ${destinationId}:`,
+          response
+        );
 
         // ✅ Gán dữ liệu vào state
         if (Array.isArray(response)) {
@@ -31,12 +44,13 @@ export default function DepartureScreen({ navigation, route }) {
           setLocations(response.data);
         }
       } catch (error) {
-        console.error("Lỗi khi lấy danh sách địa điểm:", error);
+        console.error("Lỗi khi lấy danh sách địa điểm đón:", error);
       }
     };
 
     fetchLocation();
-  }, []);
+    // ✅ THAY ĐỔI: Thêm dependency
+  }, [destinationId]);
 
   const handleLocationSelect = (location) => {
     console.log("Location selected:", JSON.stringify(location, null, 2));

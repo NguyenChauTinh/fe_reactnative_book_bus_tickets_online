@@ -1,9 +1,10 @@
 "use client";
 
-import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,164 +12,213 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle, Path } from "react-native-svg";
+import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
-// SVG Icons
+// ====== ICONS (ĐÃ SỬA SANG REACT-NATIVE-SVG) ======
 const BackIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M15 18L9 12L15 6"
       stroke="white"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  </svg>
-);
-
-const BusIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <rect x="3" y="6" width="18" height="12" rx="2" fill="#4A90E2" />
-    <circle cx="7" cy="17" r="1" fill="#666" />
-    <circle cx="17" cy="17" r="1" fill="#666" />
-    <rect x="5" y="8" width="14" height="6" rx="1" fill="white" />
-  </svg>
-);
-
-const PlaneIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M21 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z"
-      fill="#666"
-    />
-  </svg>
-);
-
-const TrainIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <rect x="4" y="6" width="16" height="12" rx="2" fill="#666" />
-    <rect x="6" y="8" width="12" height="6" rx="1" fill="white" />
-    <circle cx="8" cy="17" r="1" fill="#666" />
-    <circle cx="16" cy="17" r="1" fill="#666" />
-  </svg>
-);
-
-const HeartIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M20.84 4.61C20.32 4.09 19.69 3.68 19 3.41C18.31 3.14 17.58 3 16.84 3C16.1 3 15.37 3.14 14.68 3.41C13.99 3.68 13.36 4.09 12.84 4.61L12 5.45L11.16 4.61C10.11 3.56 8.69 3 7.16 3C5.63 3 4.21 3.56 3.16 4.61C2.11 5.66 1.55 7.08 1.55 8.61C1.55 10.14 2.11 11.56 3.16 12.61L12 21.45L20.84 12.61C21.89 11.56 22.45 10.14 22.45 8.61C22.45 7.08 21.89 5.66 20.84 4.61Z"
-      stroke="#ccc"
-      strokeWidth="2"
-      fill="none"
-    />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-      fill="#FFD700"
-    />
-  </svg>
+  </Svg>
 );
 
 const FilterIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M3 6H21M7 12H17M10 18H14"
       stroke="#4A90E2"
       strokeWidth="2"
       strokeLinecap="round"
     />
-  </svg>
+  </Svg>
 );
 
 const SortIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M3 6H21M7 12H17M10 18H14"
       stroke="#4A90E2"
       strokeWidth="2"
       strokeLinecap="round"
     />
-  </svg>
+  </Svg>
 );
 
 const TimeIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" stroke="#4A90E2" strokeWidth="2" />
-    <path
+  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke="#4A90E2" strokeWidth="2" />
+    <Path
       d="M12 6V12L16 14"
       stroke="#4A90E2"
       strokeWidth="2"
       strokeLinecap="round"
     />
-  </svg>
+  </Svg>
 );
+// (Các icon khác)
+// ...
 
-const BusStopIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <rect
-      x="3"
-      y="6"
-      width="18"
-      height="12"
-      rx="2"
-      stroke="#4A90E2"
-      strokeWidth="2"
-      fill="none"
-    />
-    <circle cx="7" cy="17" r="1" fill="#4A90E2" />
-    <circle cx="17" cy="17" r="1" fill="#4A90E2" />
-  </svg>
-);
+// Helper
+const parsePrice = (priceStr) => {
+  if (typeof priceStr === "number") return priceStr;
+  if (typeof priceStr !== "string") return 0;
+  return Number(priceStr.replace(/[^\d]/g, ""));
+};
 
+// =============================================================
+// ✅ BƯỚC 1: CẬP NHẬT MẢNG GIỜ (CHIA THEO TỪNG TIẾNG)
+// =============================================================
+const generateTimeSlots = () => {
+  const slots = [{ label: "Tất cả (00:00+)", minutes: 0 }];
+  // Tạo mốc giờ từ 1:00 đến 23:00
+  for (let i = 1; i <= 23; i++) {
+    const hourString = String(i).padStart(2, "0");
+    slots.push({
+      label: `${hourString}:00+`,
+      minutes: i * 60, // Chuyển giờ sang phút
+    });
+  }
+  return slots;
+};
+
+const timeSlots = generateTimeSlots();
+
+const TimeFilterModal = ({ isVisible, onClose, onSelectTime, currentTime }) => {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <View
+          style={styles.modalContent}
+          onStartShouldSetResponder={() => true}
+        >
+          <Text style={styles.modalTitle}>Chọn giờ khởi hành</Text>
+          <ScrollView>
+            {timeSlots.map((slot) => {
+              const isSelected = slot.minutes === currentTime;
+              return (
+                <TouchableOpacity
+                  key={slot.label}
+                  style={[
+                    styles.timeSlotButton,
+                    isSelected && styles.timeSlotButtonSelected,
+                  ]}
+                  onPress={() => onSelectTime(slot.minutes)}
+                >
+                  <Text
+                    style={[
+                      styles.timeSlotText,
+                      isSelected && styles.timeSlotTextSelected,
+                    ]}
+                  >
+                    {slot.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>Đóng</Text>
+          </TouchableOpacity>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+};
+
+// =============================================================
+// ✅ BƯỚC 2: MÀN HÌNH CHÍNH (Không thay đổi logic)
+// =============================================================
 export default function SearchResultsScreen({ navigation, route }) {
   const { departureLocation, destination, departureDate, returnDate } =
     route.params;
-  const [showChangeModal, setShowChangeModal] = useState(false);
-  const [busTrips, setBusTrips] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
+  // State danh sách
+  const [allTrips, setAllTrips] = useState([]);
+  const [displayedTrips, setDisplayedTrips] = useState([]);
+
+  // State bộ lọc
+  const [sortCriteria, setSortCriteria] = useState("time_asc");
+  const [isTimeModalVisible, setIsTimeModalVisible] = useState(false);
+  const [timeFilter, setTimeFilter] = useState(0); // Mặc định là 0 (Tất cả)
+
+  // --- HÀM FETCH DỮ LIỆU ---
   useEffect(() => {
     const fetchBusTrips = async () => {
       setLoading(true);
       try {
-        // Định dạng lại ngày tháng trước khi gọi API
         const dateString = departureDate.split(", ")[1];
-        const dateObject = new Date(dateString);
-        const year = dateObject.getFullYear();
-        const month = String(dateObject.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0
-        const day = String(dateObject.getDate()).padStart(2, "0");
+        const parts = dateString.split("/");
+        const day = parts[0];
+        const month = parts[1];
+        const year = parts[2];
         const formattedDate = `${year}-${month}-${day}`;
 
-        // const response =
-        //   await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
-        //     formattedDate, // <-- Sử dụng ngày đã được định dạng
-        //     departureLocation._id,
-        //     destination._id
-        //   );
         const response =
           await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
-            "2025-10-30", // <-- Gắn cứng ngày khởi hành
-            "68d2ad1eca0b6439f90517fe", // <-- Gắn cứng ID điểm đi
-            "68d2ae16ca0b6439f9051812" // <-- Gắn cứng ID điểm đến
+            formattedDate,
+            departureLocation._id,
+            destination._id
           );
 
-        console.log("Fetched bus trips:", response);
-        setBusTrips(response.data);
+        console.log("Fetched bus trips:", response.data);
+        setAllTrips(response.data || []);
       } catch (error) {
         console.error("Error fetching bus trips:", error);
+        setAllTrips([]);
       } finally {
-        setLoading(false); // <-- 2. Luôn tắt loading đi khi API hoàn tất
+        setLoading(false);
       }
     };
 
-    // Chỉ gọi khi các giá trị cần thiết đã có
     if (departureDate && departureLocation?._id && destination?._id) {
       fetchBusTrips();
     }
   }, [departureDate, departureLocation, destination]);
+
+  // --- LOGIC LỌC VÀ SẮP XẾP ---
+  useEffect(() => {
+    let processedTrips = [...allTrips];
+
+    // 1. Lọc theo thời gian (>= mốc giờ đã chọn)
+    processedTrips = processedTrips.filter(
+      (trip) => trip.gioKhoiHanh >= timeFilter
+    );
+
+    // 2. Sắp xếp
+    switch (sortCriteria) {
+      case "price_asc":
+        processedTrips.sort(
+          (a, b) => parsePrice(a.price) - parsePrice(b.price)
+        );
+        break;
+      case "price_desc":
+        processedTrips.sort(
+          (a, b) => parsePrice(b.price) - parsePrice(a.price)
+        );
+        break;
+      case "time_asc":
+      default:
+        processedTrips.sort((a, b) => a.gioKhoiHanh - b.gioKhoiHanh);
+        break;
+    }
+
+    setDisplayedTrips(processedTrips);
+  }, [allTrips, sortCriteria, timeFilter]);
+
+  // --- CÁC HÀM XỬ LÝ (handlers) ---
 
   const handleSeatSelection = (trip) => {
     navigation.navigate("SeatSelectionScreen", {
@@ -180,120 +230,138 @@ export default function SearchResultsScreen({ navigation, route }) {
     });
   };
 
+  const handleSortPress = () => {
+    if (sortCriteria === "time_asc") setSortCriteria("price_asc");
+    else if (sortCriteria === "price_asc") setSortCriteria("price_desc");
+    else setSortCriteria("time_asc");
+  };
+
+  const handleTimePress = () => {
+    setIsTimeModalVisible(true);
+  };
+
+  const handleTimeSelect = (minutes) => {
+    setTimeFilter(minutes);
+    setIsTimeModalVisible(false);
+  };
+
+  const handleFilterPress = () => {
+    console.log("Mở modal lọc chi tiết...");
+  };
+
+  // --- RENDER ---
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={{ marginTop: 10 }}>Đang tải danh sách chuyến...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={{ flex: 1, justifyContent: "center" }}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
-      ) : (
-        <SafeAreaView style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <BackIcon />
-            </TouchableOpacity>
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
-                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
-              </Text>
-              <Text style={styles.headerSubtitle}>{departureDate}</Text>
-            </View>
-          </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <BackIcon />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+          </Text>
+          <Text style={styles.headerSubtitle}>{departureDate}</Text>
+        </View>
+      </View>
 
-          {/* Transport Tabs */}
+      {/* Filter Bar */}
+      <View style={styles.filterBar}>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={handleFilterPress}
+        >
+          <FilterIcon />
+          <Text style={styles.filterText}>Lọc</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton} onPress={handleSortPress}>
+          <SortIcon />
+          <Text style={styles.filterText}>Sắp xếp</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton} onPress={handleTimePress}>
+          <TimeIcon />
+          <Text style={styles.filterText}>Giờ đi</Text>
+        </TouchableOpacity>
+      </View>
 
-          {/* Filter Bar */}
-          <View style={styles.filterBar}>
-            <TouchableOpacity style={styles.filterButton}>
-              <FilterIcon />
-              <Text style={styles.filterText}>Lọc</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <SortIcon />
-              <Text style={styles.filterText}>Sắp xếp</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <TimeIcon />
-              <Text style={styles.filterText}>Giờ đi</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Bus Trip List */}
-          <ScrollView style={styles.tripList}>
-            {busTrips.map((trip) => (
-              <View key={trip.id} style={styles.tripCard}>
-                {/* Hàng 1: Thông tin thời gian */}
-                <View style={styles.timeInfo}>
-                  <Text style={styles.departureTime}>{trip.departureTime}</Text>
-                  <Text style={styles.duration}>{trip.duration}</Text>
-                  <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
-                </View>
-
-                {/* Hàng 2: Thông tin điểm đi/đến */}
-                <View style={styles.stationInfo}>
-                  <Text style={styles.stationText} numberOfLines={1}>
-                    {trip.departureStation}
-                  </Text>
-                  <Text style={styles.arrowIcon}>→</Text>
-                  <Text style={styles.stationTextRight} numberOfLines={1}>
-                    {trip.arrivalStation}
-                  </Text>
-                </View>
-
-                {/* Hàng 3: Loại xe và Giá */}
-                <View style={styles.detailsAndPriceRow}>
-                  <Text style={styles.busType} numberOfLines={1}>
-                    {trip.busType}
-                  </Text>
-                  <View style={styles.priceInfo}>
-                    <Text style={styles.price}>{trip.price}</Text>
-                    <Text style={styles.seatsLeft}>{trip.seatsLeft}</Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.selectSeatButton}
-                  onPress={() => handleSeatSelection(trip)}
-                >
-                  <Text style={styles.selectSeatText}>Chọn chỗ</Text>
-                </TouchableOpacity>
+      {/* Bus Trip List */}
+      <ScrollView style={styles.tripList}>
+        {displayedTrips.length > 0 ? (
+          displayedTrips.map((trip) => (
+            <View key={trip.id} style={styles.tripCard}>
+              <View style={styles.timeInfo}>
+                <Text style={styles.departureTime}>{trip.departureTime}</Text>
+                <Text style={styles.duration}>{trip.duration}</Text>
+                <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
               </View>
-            ))}
-          </ScrollView>
-
-          {/* Change Search Modal */}
-          {showChangeModal && (
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Thay đổi tìm kiếm</Text>
-                  <TouchableOpacity onPress={() => setShowChangeModal(false)}>
-                    <Text style={styles.closeButton}>Đóng</Text>
-                  </TouchableOpacity>
-                </View>
-                {/* Add your search form here - similar to MainScreen */}
-                <Text style={styles.modalText}>
-                  Modal content will be implemented here
+              <View style={styles.stationInfo}>
+                <Text style={styles.stationText} numberOfLines={1}>
+                  {trip.departureStation}
+                </Text>
+                <Text style={styles.arrowIcon}>→</Text>
+                <Text style={styles.stationTextRight} numberOfLines={1}>
+                  {trip.arrivalStation}
                 </Text>
               </View>
+              <View style={styles.detailsAndPriceRow}>
+                <Text style={styles.busType} numberOfLines={1}>
+                  {trip.busType}
+                </Text>
+                <View style={styles.priceInfo}>
+                  <Text style={styles.price}>{trip.price}</Text>
+                  <Text style={styles.seatsLeft}>{trip.seatsLeft}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.selectSeatButton}
+                onPress={() => handleSeatSelection(trip)}
+              >
+                <Text style={styles.selectSeatText}>Chọn chỗ</Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </SafeAreaView>
-      )}
-    </View>
+          ))
+        ) : (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>
+              Không tìm thấy chuyến xe nào phù hợp.
+            </Text>
+            <Text style={styles.noResultsSubText}>
+              Vui lòng thử thay đổi bộ lọc hoặc tìm ngày khác.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Render Modal */}
+      <TimeFilterModal
+        isVisible={isTimeModalVisible}
+        onClose={() => setIsTimeModalVisible(false)}
+        onSelectTime={handleTimeSelect}
+        currentTime={timeFilter}
+      />
+    </SafeAreaView>
   );
 }
 
+// =============================================================
+// ✅ BƯỚC 3: STYLES (ĐÃ THÊM STYLE CHO MODAL)
+// =============================================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-  },
-  detailsContainer: {
-    flex: 1, // Chiếm hết không gian có thể bên trái
-    marginRight: 8, // Tạo khoảng cách nhỏ với cột giá
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -318,57 +386,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     opacity: 0.9,
-  },
-  changeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  changeButtonText: {
-    color: "white",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
-  transportTabs: {
-    backgroundColor: "white",
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  activeTab: {
-    flex: 1,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "#4A90E2",
-    paddingBottom: 8,
-  },
-  inactiveTab: {
-    flex: 1,
-    alignItems: "center",
-    paddingBottom: 8,
-    position: "relative",
-  },
-  activeTabText: {
-    color: "#4A90E2",
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-  inactiveTabText: {
-    color: "#666",
-    marginTop: 4,
-  },
-  discountBadge: {
-    position: "absolute",
-    top: -8,
-    right: 20,
-    backgroundColor: "#ff4444",
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  discountText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "bold",
   },
   filterBar: {
     backgroundColor: "#2c5aa0",
@@ -405,11 +422,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  tripHeader: {
-    flexDirection: "row", // Giữ các item con (details và price) trên 1 hàng
-    justifyContent: "space-between", // Đẩy details sang trái, price sang phải
-    marginBottom: 16,
-  },
   timeInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -443,13 +455,12 @@ const styles = StyleSheet.create({
   stationText: {
     fontSize: 14,
     color: "#333",
-    flex: 1, // Để text tự co giãn và xuống dòng nếu cần
+    flex: 1,
   },
-
   stationTextRight: {
     fontSize: 14,
     color: "#333",
-    flex: 1, // Để text tự co giãn và xuống dòng nếu cần
+    flex: 1,
     textAlign: "right",
   },
   arrowIcon: {
@@ -457,15 +468,6 @@ const styles = StyleSheet.create({
     color: "#666",
     fontWeight: "bold",
   },
-  departureStation: {
-    fontSize: 14,
-    color: "#666",
-  },
-  arrivalStation: {
-    fontSize: 14,
-    color: "#666",
-  },
-  // --- Hàng 3 ---
   detailsAndPriceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -475,8 +477,8 @@ const styles = StyleSheet.create({
   busType: {
     fontSize: 14,
     color: "#666",
-    flex: 1, // Cho phép co giãn để không bị đẩy ra ngoài
-    marginRight: 8, // Tạo khoảng cách với giá
+    flex: 1,
+    marginRight: 8,
   },
   priceInfo: {
     alignItems: "flex-end",
@@ -484,62 +486,12 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#E74C3C", // Đổi màu giá cho nổi bật
+    color: "#E74C3C",
   },
   seatsLeft: {
     fontSize: 12,
     color: "#666",
     marginTop: 4,
-  },
-  companyInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  busImage: {
-    width: 60,
-    height: 40,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  companyDetails: {
-    flex: 1,
-  },
-  companyName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  busType: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 2,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  rating: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 4,
-    color: "#333",
-  },
-  reviews: {
-    fontSize: 12,
-    color: "#666",
-    marginLeft: 4,
-  },
-  heartButton: {
-    padding: 8,
-  },
-  features: {
-    marginBottom: 16,
-  },
-  featureText: {
-    fontSize: 12,
-    color: "#4A90E2",
-    marginBottom: 4,
   },
   selectSeatButton: {
     backgroundColor: "#FFD700",
@@ -552,42 +504,98 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  noResultsContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 50,
   },
-  modalContent: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 20,
-    width: "90%",
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  modalTitle: {
+  noResultsText: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
   },
-  closeButton: {
-    fontSize: 16,
-    color: "#4A90E2",
-    textDecorationLine: "underline",
-  },
-  modalText: {
-    fontSize: 16,
+  noResultsSubText: {
+    fontSize: 14,
     color: "#666",
+    marginTop: 8,
     textAlign: "center",
   },
+
+  // --- Style cho Modal ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 22,
+    paddingBottom: 30, // Thêm padding dưới cho an toàn
+    maxHeight: "70%", // Tăng chiều cao tối đa
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  timeSlotButton: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  timeSlotButtonSelected: {
+    backgroundColor: "#E6F0FA",
+    borderRadius: 8,
+    borderBottomColor: "#E6F0FA", // Ẩn đường gạch khi được chọn
+  },
+  timeSlotText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+  },
+  timeSlotTextSelected: {
+    color: "#4A90E2",
+    fontWeight: "bold",
+  },
+  closeButton: {
+    backgroundColor: "#4A90E2",
+    borderRadius: 8,
+    paddingVertical: 14,
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
+  // (Các style rác chưa dùng đến)
+  detailsContainer: {},
+  changeButton: {},
+  changeButtonText: {},
+  transportTabs: {},
+  activeTab: {},
+  inactiveTab: {},
+  activeTabText: {},
+  inactiveTabText: {},
+  discountBadge: {},
+  discountText: {},
+  tripHeader: {},
+  companyInfo: {},
+  busImage: {},
+  companyDetails: {},
+  companyName: {},
+  ratingContainer: {},
+  rating: {},
+  reviews: {},
+  heartButton: {},
+  features: {},
+  featureText: {},
+  departureStation: {},
+  arrivalStation: {},
 });

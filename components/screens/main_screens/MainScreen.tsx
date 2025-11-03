@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,24 +17,34 @@ export default function MainScreen({ navigation }) {
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  // In MainScreen.tsx
   const handleDeparturePress = () => {
     navigation.navigate("DepartureScreen", {
       onSelect: (location) => {
-        // THÊM DÒNG NÀY ĐỂ KIỂM TRA
         console.log("Location received for Departure:", location);
         setDepartureLocation(location);
+
+        // ✅ THAY ĐỔI: Bỏ comment dòng này.
+        // Khi chọn điểm đi mới, ta phải xóa điểm đến cũ
+        // vì nó có thể không còn hợp lệ.
+        setDestination(null);
       },
+
+      // ✅ THAY ĐỔI: Xóa ID điểm đến.
+      // Luôn gửi `null` để DepartureScreen luôn tải danh sách đầy đủ.
+      destinationId: null,
     });
   };
 
   const handleDestinationPress = () => {
     navigation.navigate("DestinationScreen", {
       onSelect: (location) => {
-        // THÊM DÒNG NÀY ĐỂ KIỂM TRA
         console.log("Location received for Destination:", location);
         setDestination(location);
       },
+
+      // ✅ GIỮ NGUYÊN: Vẫn gửi ID của điểm đi.
+      // Logic này đúng: chọn điểm đi sẽ lọc điểm đến.
+      departureId: departureLocation?._id,
     });
   };
 
@@ -58,6 +70,10 @@ export default function MainScreen({ navigation }) {
     const temp = departureLocation;
     setDepartureLocation(destination);
     setDestination(temp);
+
+    // ✅ CÂN NHẮC: Sau khi swap, điểm đến mới (temp)
+    // có thể không hợp lệ. Bạn có thể muốn reset nó.
+    // setDestination(null); // (Tùy chọn)
   };
 
   console.log("Current Departure State:", departureLocation);
