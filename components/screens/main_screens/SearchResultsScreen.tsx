@@ -164,7 +164,7 @@ export default function SearchResultsScreen({ navigation, route }) {
     };
   });
 
-  // --- HÀM FETCH DỮ LIỆU ---
+  // --- HÀM FETCH DỮ LIỆU (Giữ nguyên) ---
   useEffect(() => {
     const fetchBusTrips = async () => {
       setLoading(true);
@@ -200,53 +200,56 @@ export default function SearchResultsScreen({ navigation, route }) {
   useEffect(() => {
     let processedTrips = [...allTrips];
 
-    // ✅ --- THAY ĐỔI Ở ĐÂY --- ✅
     // 1. Lọc các chuyến sắp chạy (nếu là hôm nay)
     if (todayInfo.isSearchingForToday) {
-      // Tính thời gian lọc: giờ hiện tại + 60 phút
       const filterTime = todayInfo.currentMinutes + 60;
-
       console.log(
         `Đang lọc chuyến xe cho HÔM NAY. Giờ hiện tại: ${todayInfo.currentMinutes} phút. Chỉ hiển thị chuyến sau: ${filterTime} phút.`
       );
 
-      // Giữ lại các chuyến có giờ khởi hành LỚN HƠN mốc thời gian lọc
-      // (trip.gioKhoiHanh > filterTime)
-      // Ví dụ: Giờ hiện tại 06:59 (419 phút). filterTime = 479. Chuyến 08:00 (480 phút) -> 480 > 479 -> HIỂN THỊ.
-      // Ví dụ: Giờ hiện tại 07:00 (420 phút). filterTime = 480. Chuyến 08:00 (480 phút) -> 480 > 480 -> ẨN.
-      processedTrips = processedTrips.filter(
-        (trip) => trip.gioKhoiHanh > filterTime
-      );
+      processedTrips = processedTrips.filter((trip) => {
+        const tripDate = trip.ngayKhoiHanh.split("T")[0];
+        if (tripDate !== todayInfo.todayString) {
+          return true; // Giữ lại (vì là ngày tương lai)
+        }
+        return trip.gioKhoiHanh > filterTime; // Lọc chuyến của hôm nay
+      });
     }
-    // ✅ --- KẾT THÚC THAY ĐỔI --- ✅
 
     // 2. Lọc theo mốc giờ (do người dùng chọn trong modal)
     processedTrips = processedTrips.filter(
       (trip) => trip.gioKhoiHanh >= timeFilter
     );
 
+    // ✅ --- BẮT ĐẦU SỬA LỖI SẮP XẾP --- ✅
     // 3. Sắp xếp
-    switch (sortCriteria) {
-      case "price_asc":
-        processedTrips.sort(
-          (a, b) => parsePrice(a.price) - parsePrice(b.price)
-        );
-        break;
-      case "price_desc":
-        processedTrips.sort(
-          (a, b) => parsePrice(b.price) - parsePrice(a.price)
-        );
-        break;
-      case "time_asc":
-      default:
-        processedTrips.sort((a, b) => a.gioKhoiHanh - b.gioKhoiHanh);
-        break;
-    }
+    processedTrips.sort((a, b) => {
+      // BƯỚC A: Sắp xếp theo NGÀY KHỞI HÀNH trước (Tăng dần)
+      // Chuyển "2025-11-03T00:00:00.000Z" thành đối tượng Date để so sánh
+      const dateA = new Date(a.ngayKhoiHanh);
+      const dateB = new Date(b.ngayKhoiHanh);
+
+      if (dateA < dateB) return -1;
+      if (dateA > dateB) return 1;
+
+      // BƯỚC B: Nếu cùng ngày, mới sắp xếp theo tiêu chí phụ (sortCriteria)
+      switch (sortCriteria) {
+        case "price_asc":
+          return parsePrice(a.price) - parsePrice(b.price);
+        case "price_desc":
+          return parsePrice(b.price) - parsePrice(a.price);
+        case "time_asc":
+        default:
+          // Giờ khởi hành (sớm nhất)
+          return a.gioKhoiHanh - b.gioKhoiHanh;
+      }
+    });
+    // ✅ --- KẾT THÚC SỬA LỖI SẮP XẾP --- ✅
 
     setDisplayedTrips(processedTrips);
   }, [allTrips, sortCriteria, timeFilter, todayInfo]);
 
-  // --- CÁC HÀM XỬ LÝ (handlers) ---
+  // --- CÁC HÀM XỬ LÝ (handlers) (Giữ nguyên) ---
   const handleSeatSelection = (trip) => {
     navigation.navigate("SeatSelectionScreen", {
       trip,
@@ -276,7 +279,7 @@ export default function SearchResultsScreen({ navigation, route }) {
     console.log("Mở modal lọc chi tiết...");
   };
 
-  // --- RENDER ---
+  // --- RENDER (Giữ nguyên) ---
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
