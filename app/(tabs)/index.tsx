@@ -8,6 +8,7 @@ import ResetPassword from "@/components/screens/auth_screens/ResetPassword";
 import VerificationCode from "@/components/screens/auth_screens/VerificationCode";
 import VerificationCodeRegister from "@/components/screens/auth_screens/VerificationCodeRegister";
 import Welcome from "@/components/screens/auth_screens/Welcome";
+import BookingSuccessScreen from "@/components/screens/main_screens/BookingSuccessScreen";
 import CustomerInfoScreen from "@/components/screens/main_screens/CustomerInfoScreen";
 import DateSelectionScreen from "@/components/screens/main_screens/DateSelectionScreen";
 import DepartureScreen from "@/components/screens/main_screens/DepartureScreen";
@@ -56,6 +57,7 @@ export type RootStackParamList = {
   TripInfoScreen: { tripId: string };
   AccountInfoScreen: undefined;
   PaymentScreen: { tripId: string; selectedSeats: string[] };
+  BookingSuccessScreen: {};
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
@@ -317,6 +319,11 @@ export default function App() {
         <Stack.Screen
           name="PaymentScreen"
           component={PaymentScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="BookingSuccessScreen"
+          component={BookingSuccessScreen}
           options={{ headerShown: false }}
         />
         {/* ================================ */}

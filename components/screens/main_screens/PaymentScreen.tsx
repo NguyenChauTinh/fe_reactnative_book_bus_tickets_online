@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,21 +13,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+// ✅ SỬA 1: Import thêm Path, Rect, Circle và Svg
 import Svg, { Path } from "react-native-svg";
+import { WebView } from "react-native-webview";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
 import PaymentCountdown from "./PaymentCountdown";
 
-// --- ICONS (Không thay đổi) ---
+// --- ICONS (✅ SỬA LẠI BackIcon) ---
 const BackIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M15 18L9 12L15 6"
       stroke="white"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  </svg>
+  </Svg>
 );
 const BusIcon = ({ size = 30, color = "#007AFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -66,9 +70,9 @@ const PaymentScreen = ({ navigation, route }) => {
   const [selectedPromoLine, setSelectedPromoLine] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
-
-  // State quản lý text trong ô input
   const [promoInputValue, setPromoInputValue] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [showGateway, setShowGateway] = useState(false);
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -76,7 +80,8 @@ const PaymentScreen = ({ navigation, route }) => {
       try {
         const response = await api_promotion_service.timKhuyenMaiApDung(
           trip.ngayKhoiHanh,
-          trip.gioKhoiHanh
+          trip.gioKhoiHanh,
+          selectedSeats.length
         );
         if (response.success) setPromotions(response.data || []);
       } catch (error) {
@@ -90,6 +95,7 @@ const PaymentScreen = ({ navigation, route }) => {
   }, [trip]);
 
   const applicablePromos = useMemo(() => {
+    // ... (Giữ nguyên logic)
     const applicable = [];
     promotions.forEach((campaign) => {
       campaign.lines.forEach((line) => {
@@ -110,7 +116,7 @@ const PaymentScreen = ({ navigation, route }) => {
   }, [promotions, selectedSeats.length]);
 
   const filteredPromos = useMemo(() => {
-    // Nếu có khuyến mãi đã được chọn, và người dùng chưa gõ gì khác, thì không cần lọc
+    // ... (Giữ nguyên logic)
     if (
       selectedPromoLine &&
       promoInputValue ===
@@ -118,7 +124,6 @@ const PaymentScreen = ({ navigation, route }) => {
     ) {
       return applicablePromos;
     }
-    // Lọc dựa trên nội dung người dùng đang gõ
     if (!promoInputValue) return applicablePromos;
     return applicablePromos.filter(
       (promo) =>
@@ -129,6 +134,7 @@ const PaymentScreen = ({ navigation, route }) => {
     );
   }, [applicablePromos, promoInputValue, selectedPromoLine]);
 
+  // ✅ SỬA 2: Lấy 'discountAmount' từ useMemo để dùng bên dưới
   const { discountAmount, finalPrice } = useMemo(() => {
     let discount = 0;
     if (selectedPromoLine) {
@@ -157,37 +163,76 @@ const PaymentScreen = ({ navigation, route }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleContinue = async () => {
-    if (!selectedPaymentMethod) return;
-    setLoading(true);
-    const chiTietVe = selectedSeats.map((seat) => ({
-      chuyenXe: trip._id,
-      tenKhachHang: customerInfo.name,
-      soDienThoai: customerInfo.phone,
-      email: customerInfo.email,
-      maChoNgoi: seat.number,
-      diemDon: selectedPickup.name,
-      diemTra: selectedDropoff.name,
-      giaVeCoBan: seat.price,
-      phuThu: 0,
-      giamGia: 0,
-      hinhThucThanhToan: selectedPaymentMethod,
-      trangThaiChiTiet:
-        selectedPaymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
-    }));
+  const createTicketInDatabase = async (
+    paymentMethod,
+    vnpTransactionNo = null
+  ) => {
+    // --- BẮT ĐẦU LOGIC CHIA GIẢM GIÁ (LÀM TRÒN 3 SỐ) ---
+    const numTickets = selectedSeats.length;
+    let discountDistributed = 0; // Số tiền đã chia
+
+    // Tính số tiền giảm giá cho 1 vé (làm tròn 3 chữ số)
+    // Ví dụ: 10000 / 3 = 3333.3333... -> 3333.333
+    const discountPerTicket =
+      Math.round((discountAmount / numTickets) * 1000) / 1000;
+    // --- KẾT THÚC LOGIC CHIA GIẢM GIÁ ---
+
+    const chiTietVe = selectedSeats.map((seat, index) => {
+      let ticketDiscount = 0;
+
+      // Nếu không phải vé cuối cùng
+      if (index < numTickets - 1) {
+        ticketDiscount = discountPerTicket; // 3333.333
+        discountDistributed += ticketDiscount; // Cộng dồn
+      } else {
+        // Vé cuối cùng sẽ nhận phần còn lại để đảm bảo tổng chính xác
+        // Ví dụ: 10000 - (3333.333 * 2) = 10000 - 6666.666 = 3333.334
+        ticketDiscount = discountAmount - discountDistributed;
+
+        // Làm tròn vé cuối cùng này lại 3 chữ số (nếu cần)
+        ticketDiscount = Math.round(ticketDiscount * 1000) / 1000;
+      }
+
+      return {
+        chuyenXe: trip._id,
+        tenKhachHang: customerInfo.name,
+        soDienThoai: customerInfo.phone,
+        email: customerInfo.email,
+        maChoNgoi: seat.number,
+        diemDon: selectedPickup.name,
+        diemTra: selectedDropoff.name,
+        giaVeCoBan: seat.price,
+        phuThu: 0,
+        giamGia: ticketDiscount, // Gán tiền giảm giá đã chia
+        hinhThucThanhToan: null,
+        trangThaiChiTiet:
+          paymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
+        vnpTransactionNo: vnpTransactionNo,
+      };
+    });
+
     const ticketPayload = {
       chiTiet: chiTietVe,
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
+      hinhThucThanhToan: null,
+      nhanVienTao: "690471e2292bcd0f56f104e8",
     };
+
     try {
+      setLoading(true);
       const response = await axios.post(
         "http://localhost:3005/api/v1/ve-xe",
         ticketPayload
       );
       if (response.data.success) {
-        Alert.alert("Thành công", "Đặt vé thành công!");
         navigation.navigate("BookingSuccessScreen", {
           ticketInfo: response.data.data,
+          trip,
+          departureLocation,
+          destination,
+          departureDate,
+          finalPrice,
+          discountAmount,
         });
       } else {
         Alert.alert(
@@ -205,8 +250,87 @@ const PaymentScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleContinue = async () => {
+    if (!selectedPaymentMethod) return;
+
+    if (selectedPaymentMethod === "TAI_XE") {
+      setLoading(true);
+      await createTicketInDatabase("TAI_XE");
+      setLoading(false);
+    }
+
+    if (selectedPaymentMethod === "VNPAY") {
+      setLoading(true);
+      try {
+        const response = await axios.post(
+          "http://localhost:3005/api/v1/payment/create-vnpay-url",
+          {
+            amount: finalPrice,
+            orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
+          }
+        );
+
+        if (response.data && response.data.paymentUrl) {
+          setPaymentUrl(response.data.paymentUrl);
+          setShowGateway(true);
+        } else {
+          Alert.alert("Lỗi", "Không thể tạo yêu cầu thanh toán VNPAY.");
+        }
+      } catch (error) {
+        Alert.alert(
+          "Lỗi hệ thống",
+          "Không thể kết nối đến máy chủ thanh toán."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleWebViewNavigationStateChange = (navState) => {
+    const { url } = navState;
+
+    if (url.includes("http://localhost:3005/payment-return")) {
+      setShowGateway(false);
+      setPaymentUrl(null);
+
+      const params = new URLSearchParams(url.split("?")[1]);
+      const responseCode = params.get("vnp_ResponseCode");
+      const transactionNo = params.get("vnp_TransactionNo");
+
+      if (responseCode === "00") {
+        Alert.alert("Thành công", "Thanh toán VNPAY thành công!");
+        createTicketInDatabase("VNPAY", transactionNo);
+      } else {
+        Alert.alert(
+          "Thất bại",
+          "Thanh toán VNPAY không thành công hoặc đã bị hủy."
+        );
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
+      <Modal
+        visible={showGateway}
+        onRequestClose={() => setShowGateway(false)}
+        animationType="slide"
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <WebView
+            source={{ uri: paymentUrl }}
+            onNavigationStateChange={handleWebViewNavigationStateChange}
+            style={{ flex: 1 }}
+          />
+          <TouchableOpacity
+            style={styles.closeWebViewButton}
+            onPress={() => setShowGateway(false)}
+          >
+            <Text style={styles.closeWebViewText}>Đóng</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </Modal>
       {loading ? (
         <ActivityIndicator style={{ flex: 1 }} size="large" color="#0000ff" />
       ) : (
@@ -248,19 +372,20 @@ const PaymentScreen = ({ navigation, route }) => {
                   value={promoInputValue}
                   onChangeText={(text) => {
                     setPromoInputValue(text);
-                    if (selectedPromoLine) setSelectedPromoLine(null);
+                    if (selectedPromoLine) {
+                      setSelectedPromoLine(null);
+                    }
                     if (!isDropdownOpen) setIsDropdownOpen(true);
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => {
-                    // Dùng timeout để cho phép sự kiện onPress của item trong list chạy trước
                     setTimeout(() => {
                       setIsDropdownOpen(false);
-                      // Nếu không có khuyến mãi nào được chọn, xóa text để placeholder hiện ra
+
                       if (!selectedPromoLine) {
                         setPromoInputValue("");
                       }
-                    }, 150);
+                    }, 200);
                   }}
                 />
                 <TouchableOpacity
@@ -482,4 +607,14 @@ const styles = StyleSheet.create({
   },
   disabledButton: { backgroundColor: "#ccc" },
   continueButtonText: { color: "#333", fontSize: 16, fontWeight: "bold" },
+  closeWebViewButton: {
+    backgroundColor: "#E74C3C",
+    padding: 16,
+    alignItems: "center",
+  },
+  closeWebViewText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });

@@ -1,8 +1,7 @@
-"use client";
-
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,43 +10,65 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BookingTimeline from "../main_screens/BookingTimeline";
+// ✅ 2. Import Svg và các thành phần
+import Svg, { Circle, Path } from "react-native-svg";
 
-// SVG Icons (Giữ nguyên không thay đổi)
+// ✅ 3. Sửa lại các component SVG
 const BackIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M15 18L9 12L15 6"
       stroke="white"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  </svg>
+  </Svg>
 );
 
 const SearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <circle cx="11" cy="11" r="8" stroke="#999" strokeWidth="2" />
-    <path d="m21 21-4.35-4.35" stroke="#999" strokeWidth="2" />
-  </svg>
+  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <Circle cx="11" cy="11" r="8" stroke="#999" strokeWidth="2" />
+    <Path d="m21 21-4.35-4.35" stroke="#999" strokeWidth="2" />
+  </Svg>
 );
 
 const LocationIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="3" fill="#E53E3E" />
-    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="#E53E3E" strokeWidth="2" />
-  </svg>
+  <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="3" fill="#E53E3E" />
+    <Path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="#E53E3E" strokeWidth="2" />
+  </Svg>
 );
 
 const MapIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+  <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+       {" "}
+    <Path
+      d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" // Đây là đường viền của bản đồ
       stroke="#4A90E2"
       strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
-    <polyline points="14,2 14,8 20,8" stroke="#4A90E2" strokeWidth="2" />
-  </svg>
+       {" "}
+    <Path
+      d="M8 2v16" // Đây là đường gấp ở giữa
+      stroke="#4A90E2"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+       {" "}
+    <Path
+      d="M16 6v16" // Đây là đường gấp ở giữa
+      stroke="#4A90E2"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+     {" "}
+  </Svg>
 );
 
 // --- BẮT ĐẦU THAY ĐỔI ---
@@ -167,6 +188,15 @@ export default function DropoffPointScreen({ navigation, route }) {
     0
   );
 
+  const handleShowMap = (address) => {
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://maps.google.com/?q=${encodedAddress}`;
+
+    Linking.openURL(url).catch((err) =>
+      console.error("Không thể mở bản đồ", err)
+    );
+  };
+
   return (
     <View style={{ flex: 1, justifyContent: "center" }}>
       {loading ? (
@@ -188,9 +218,7 @@ export default function DropoffPointScreen({ navigation, route }) {
             </View>
           </View>
 
-          <View style={styles.progressContainer}>
-            <Text style={styles.activeStepText}>Chọn điểm trả</Text>
-          </View>
+          <BookingTimeline currentStep={3} />
 
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>
@@ -256,7 +284,10 @@ export default function DropoffPointScreen({ navigation, route }) {
                     <Text style={styles.dropoffName}>{dropoff.name}</Text>
                     <Text style={styles.dropoffAddress}>{dropoff.address}</Text>
                   </View>
-                  <TouchableOpacity style={styles.mapButton}>
+                  <TouchableOpacity
+                    style={styles.mapButton}
+                    onPress={() => handleShowMap(dropoff.address)}
+                  >
                     <MapIcon />
                     <Text style={styles.mapButtonText}>Bản đồ</Text>
                   </TouchableOpacity>

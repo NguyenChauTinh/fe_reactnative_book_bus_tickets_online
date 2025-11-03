@@ -1,15 +1,20 @@
-"use client"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import CalendarIcon from "./icons/CalendarIcon"
-import Switch from "./Switch"
+"use client";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import CalendarIcon from "./icons/CalendarIcon";
 
-export default function DateSelector({ isRoundTrip, setIsRoundTrip, departureDate, returnDate, onDatePress }) {
+export default function DateSelector({
+  isRoundTrip,
+  setIsRoundTrip,
+  departureDate,
+  returnDate,
+  onDatePress,
+}) {
   return (
     <View style={styles.container}>
-      <View style={styles.roundTripContainer}>
+      {/* <View style={styles.roundTripContainer}>
         <Text style={styles.roundTripLabel}>Khứ hồi</Text>
         <Switch value={isRoundTrip} onValueChange={setIsRoundTrip} />
-      </View>
+      </View> */}
 
       <TouchableOpacity style={styles.dateRow} onPress={onDatePress}>
         <CalendarIcon />
@@ -32,7 +37,7 @@ export default function DateSelector({ isRoundTrip, setIsRoundTrip, departureDat
         </>
       )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -74,4 +79,4 @@ const styles = StyleSheet.create({
     backgroundColor: "#ECF0F1",
     marginLeft: 40,
   },
-})
+});

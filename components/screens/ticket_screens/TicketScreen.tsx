@@ -17,7 +17,6 @@ interface Ticket {
   route: string;
   time: string;
   date: string;
-  company: string;
   ticketNumber: string;
   price: string;
 }
@@ -30,7 +29,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → Đà Lạt",
     time: "08:00",
     date: "20/12/2024",
-    company: "Phương Trang",
     ticketNumber: "50H-123.45",
     price: "180.000đ",
   },
@@ -40,7 +38,6 @@ const mockTickets: Ticket[] = [
     route: "Hà Nội → Hải Phòng",
     time: "14:30",
     date: "22/12/2024",
-    company: "Hoàng Long",
     ticketNumber: "30A-678.90",
     price: "120.000đ",
   },
@@ -50,7 +47,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → Vũng Tàu",
     time: "07:15",
     date: "25/12/2024",
-    company: "Cô Gái Vũng Tàu",
     ticketNumber: "64B-234.56",
     price: "85.000đ",
   },
@@ -60,7 +56,6 @@ const mockTickets: Ticket[] = [
     route: "Đà Nẵng → Hội An",
     time: "10:45",
     date: "28/12/2024",
-    company: "Hạnh Café",
     ticketNumber: "43D-567.89",
     price: "45.000đ",
   },
@@ -70,7 +65,6 @@ const mockTickets: Ticket[] = [
     route: "Hà Nội → Sapa",
     time: "22:30",
     date: "30/12/2024",
-    company: "Sapa Express",
     ticketNumber: "20E-890.12",
     price: "280.000đ",
   },
@@ -81,7 +75,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → Cần Thơ",
     time: "09:15",
     date: "10/12/2024",
-    company: "Mai Linh",
     ticketNumber: "92B-456.78",
     price: "150.000đ",
   },
@@ -91,7 +84,6 @@ const mockTickets: Ticket[] = [
     route: "Đà Nẵng → Huế",
     time: "16:45",
     date: "05/12/2024",
-    company: "Thành Bưởi",
     ticketNumber: "43C-789.12",
     price: "90.000đ",
   },
@@ -101,7 +93,6 @@ const mockTickets: Ticket[] = [
     route: "Hà Nội → Ninh Bình",
     time: "06:30",
     date: "28/11/2024",
-    company: "Hoàng Long",
     ticketNumber: "18F-345.67",
     price: "95.000đ",
   },
@@ -111,7 +102,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → Phan Thiết",
     time: "13:20",
     date: "22/11/2024",
-    company: "Sinh Tourist",
     ticketNumber: "77G-678.90",
     price: "110.000đ",
   },
@@ -121,7 +111,6 @@ const mockTickets: Ticket[] = [
     route: "Hà Nội → Hạ Long",
     time: "08:45",
     date: "15/11/2024",
-    company: "Kumho Samco",
     ticketNumber: "25H-901.23",
     price: "130.000đ",
   },
@@ -131,7 +120,6 @@ const mockTickets: Ticket[] = [
     route: "Đà Nẵng → Quy Nhon",
     time: "11:30",
     date: "08/11/2024",
-    company: "Phương Trang",
     ticketNumber: "56I-234.56",
     price: "160.000đ",
   },
@@ -142,7 +130,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "15/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-365.72",
     price: "210.000đ",
   },
@@ -152,7 +139,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "16/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-151.59",
     price: "210.000đ",
   },
@@ -162,7 +148,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "17/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "67B-017.05",
     price: "210.000đ",
   },
@@ -172,7 +157,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "15/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-365.72",
     price: "210.000đ",
   },
@@ -182,7 +166,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "16/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-151.59",
     price: "210.000đ",
   },
@@ -192,7 +175,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "17/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "67B-017.05",
     price: "210.000đ",
   },
@@ -202,7 +184,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "15/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-365.72",
     price: "210.000đ",
   },
@@ -212,7 +193,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "16/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "50H-151.59",
     price: "210.000đ",
   },
@@ -222,7 +202,6 @@ const mockTickets: Ticket[] = [
     route: "Hồ Chí Minh → An Giang",
     time: "21:00",
     date: "17/08/2025",
-    company: "Hiệp Thành",
     ticketNumber: "67B-017.05",
     price: "210.000đ",
   },
@@ -302,10 +281,6 @@ const TicketScreen: React.FC = () => {
           <View style={styles.routeInfo}>
             <Text style={styles.routeText}>{ticket.route}</Text>
             <View style={styles.companyRow}>
-              <View>
-                <Text style={styles.companyLabel}>Nhà xe</Text>
-                <Text style={styles.companyText}>{ticket.company}</Text>
-              </View>
               <View>
                 <Text style={styles.ticketLabel}>Biển số xe</Text>
                 <Text style={styles.ticketText}>{ticket.ticketNumber}</Text>
