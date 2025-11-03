@@ -1,36 +1,41 @@
-import axios from 'axios';
-import { ApiManager } from './ApiManager';
+import createApiManager from "./Api_Manager.js";
 
-const BASE_URL = 'http://localhost:3002';
+// const API_BASE_URL =
+//   'http://localhost:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.10:3002/api/v1";
 
-export const Api_Auth = {
-    login: async (data) => {
-        return ApiManager.post('authService', 'api/v1/auth/sign-in', data);
-    },
-    generate_token: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/generate-token', data);
-    },
-    resent_otp: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/resent-otp', data);
-    },
-    signUp: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/sign-up', data);
-    },
-    create_account: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/create-account', data);
-    },
-    logout: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/sign-out', data);
-    },
-    forgotPassword: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/forgot-password', data);
-    },
-    verifyOTP: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/verify-otp', data);
-    },
-    updateNewPassword: async (data) => {
-        return ApiManager.post('authService','api/v1/auth/update-password', data);
-    }
+console.log("API_BASE_URL == ", API_BASE_URL);
 
+const apiClient = createApiManager(API_BASE_URL);
 
+export const Api_Auth_Customer = {
+  requestRegisterOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/register/request-otp", data);
+  },
+
+  completeRegistration: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/register/complete", data);
+  },
+
+  requestLoginOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/login/request-otp", data);
+  },
+
+  verifyLoginOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/login/verify", data);
+  },
+
+  logout: async () => {
+    return apiClient.post("/tai-khoan-khach-hang/logout");
+  },
+};
+
+export const Api_KhachHang = {
+  getMyProfile: async () => {
+    return apiClient.get("/khach-hang/profile/me");
+  },
+
+  updateMyProfile: async (data) => {
+    return apiClient.put("/khach-hang/profile/me", data);
+  },
 };

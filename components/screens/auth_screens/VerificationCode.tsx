@@ -1,21 +1,37 @@
-"use client";
-
-import CustomButton from "@/components/button/CustomButton";
 import { Ionicons } from "@expo/vector-icons";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type React from "react";
-import { useRef, useState } from "react";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput as RNTextInput,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
-// import { Api_Auth } from "../../../apis/api_auth";
+import { Api_Auth_Customer } from "../../../apis/api_auth.js";
+
+// --- Định nghĩa màu sắc (Nhất quán với các file khác) ---
+const COLORS = {
+  primaryBlue: "#007AFF",
+  headerBlue: "#2A8CFF",
+  buttonBlue: "#0D47A1",
+  white: "#FFFFFF",
+  black: "#000000",
+  lightGray: "#F5F5F5",
+  mediumGray: "#DDDDDD",
+  darkGray: "#888888",
+  textPrimary: "#333333",
+  textSecondary: "#666666",
+  dangerRed: "#FF3B30",
+};
 
 type RootStackParamList = {
   Main: undefined;
@@ -32,239 +48,325 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
   navigation,
   route,
 }) => {
-  const { phoneNumber = "(+84) 372 374 650" } = route.params || {};
-  const [verificationCode, setVerificationCode] = useState<string[]>(
-    Array(6).fill("")
-  );
-  const inputRefs = useRef<Array<TextInput | null>>(Array(6).fill(null));
-  const { firstname, surname, day, month, year, gender, email, password } =
+  const { phoneNumber, fromScreen, fullName, email, dob, gender } =
     route.params || {};
 
-  const handleCodeChange = (text: string, index: number) => {
-    if (text.length <= 1) {
-      const newCode = [...verificationCode];
-      newCode[index] = text;
-      setVerificationCode(newCode);
+  const [code, setCode] = useState<string[]>(Array(6).fill(""));
+  const [focusedInput, setFocusedInput] = useState(0);
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const inputRefs = useRef<Array<RNTextInput | null>>(Array(6).fill(null));
 
-      // Move to next input if current input is filled
-      if (text.length === 1 && index < 5) {
-        inputRefs.current[index + 1]?.focus();
-      }
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  // --- Logic đếm ngược ---
+  useEffect(() => {
+    if (canResend) return;
+
+    if (timer === 0) {
+      setCanResend(true);
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setTimer((t) => t - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [timer, canResend]);
+
+  // --- Xử lý nhập mã ---
+  const handleCodeChange = (text: string, index: number) => {
+    if (text.length > 1) {
+      const pastedCode = text.slice(0, 6).split("");
+      setCode(pastedCode.concat(Array(6 - pastedCode.length).fill("")));
+      inputRefs.current[pastedCode.length - 1]?.focus();
+      return;
+    }
+
+    const newCode = [...code];
+    newCode[index] = text;
+    setCode(newCode);
+
+    // Tự động chuyển sang ô tiếp theo
+    if (text.length === 1 && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
+  // --- Xử lý phím Backspace ---
   const handleKeyPress = (e: any, index: number) => {
-    // Move to previous input on backspace if current input is empty
-    if (
-      e.nativeEvent.key === "Backspace" &&
-      index > 0 &&
-      !verificationCode[index]
-    ) {
+    if (e.nativeEvent.key === "Backspace" && index > 0 && !code[index]) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
+  // --- Định dạng thời gian ---
+  const formatTime = (seconds: number) => {
+    const remainingSeconds = seconds % 60;
+    return `00:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
+  const handleResend = async () => {
+    if (isResending) return;
+    setIsResending(true);
+
+    try {
+      if (fromScreen === "register") {
+        await Api_Auth_Customer.requestRegisterOtp({
+          soDienThoai: phoneNumber,
+        });
+      } else {
+        await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phoneNumber });
+      }
+
+      Alert.alert("Thành công", "Mã xác thực mới đã được gửi.");
+      setCanResend(false);
+      setTimer(60);
+    } catch (error: any) {
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Không thể gửi lại mã."
+      );
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleContinue = async () => {
-    const code = verificationCode.join("");
-    if (code.length !== 6) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ mã xác thực");
+    const otpCode = code.join("");
+    if (otpCode.length !== 6) {
+      Alert.alert("Lỗi", "Vui lòng nhập đủ 6 số xác thực");
       return;
     }
+    if (isLoading) return;
+    setIsLoading(true);
 
-    // TODO: Verify the code with your API
-    console.log("Verification code:", code);
-
-    // Simulate API call
-    const data = { phone: phoneNumber, otp: code };
     try {
-      if (firstname) {
-        const data = {
-          phone: phoneNumber,
-          otp: code,
-          firstname,
-          surname,
-          day,
-          month,
-          year,
-          gender,
-          email,
-          password,
+      if (fromScreen === "register") {
+        const payload = {
+          hoVaTen: fullName,
+          soDienThoai: phoneNumber,
+          email: email,
+          ngaySinh: dob,
+          gioiTinh: gender,
+          otp: otpCode,
         };
-        console.log("Data = ", data);
 
-        // const response = await Api_Auth.create_account(data);
-        Alert.alert("Đăng kí thành công");
+        await Api_Auth_Customer.completeRegistration(payload);
+
+        Alert.alert("Thành công", "Đăng ký tài khoản thành công!");
         navigation.replace("Login");
       } else {
-        // const response = await Api_Auth.generate_token(data);
-        // await AsyncStorage.setItem("token", response.data.token);
-        // Alert.alert("Xác thực thành công", response.data.token);
-        // await AsyncStorage.setItem("phone", phoneNumber);
-        // await AsyncStorage.setItem("userId", response.data.user.userId);
-        // console.log("Response = ", response.data);
-        // console.log("Token = ", response.data.token);
-        // console.log("UserId = ", response.data.user.userId);
+        const payload = {
+          soDienThoai: phoneNumber,
+          otp: otpCode,
+        };
 
-        // Navigate to next screen on success
+        const response = await Api_Auth_Customer.verifyLoginOtp(payload);
+        const { token } = response;
         navigation.replace("Main");
+
+        // TODO: Lưu  vào AsyncStorage
+        // await AsyncStorage.setItem('token', token);
+        console.log("Đăng nhập thành công, Token:", token);
+
+        // Alert.alert('Thành công', 'Đăng nhập thành công!');
       }
-    } catch (err) {
-      Alert.alert("Lỗi", "Mã xác thực không đúng hoặc đã hết hạn!");
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        "Mã xác thực không đúng hoặc đã hết hạn!";
+
+      Alert.alert("Lỗi", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons
-              name="arrow-back-outline"
-              size={28}
-              color="#fff"
-              style={styles.backIcon}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Nhập mã xác thực</Text>
-        </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.headerBlue} />
 
-        <View style={styles.bodyContainer}>
-          <Text style={styles.warningText}>
-            Vui lòng không chia sẻ mã xác thực để tránh mất tài khoản
-          </Text>
+      {/* --- Header (Giống Login) --- */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Nhập mã xác thực</Text>
+      </View>
 
-          <View style={styles.iconContainer}>
-            <View style={styles.iconCircle}>
-              <Ionicons
-                name="phone-portrait-outline"
-                size={40}
-                color="#1E90FF"
-              />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoiding}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* --- Phần thân (Form) --- */}
+          <View style={styles.body}>
+            <Text style={styles.infoText}>
+              Nhập mã xác thực được gửi đến số
+              <Text style={{ fontWeight: "bold" }}>
+                {" "}
+                +84
+                {phoneNumber.startsWith("0")
+                  ? phoneNumber.substring(1)
+                  : phoneNumber}{" "}
+              </Text>
+              qua tin nhắn Zalo
+            </Text>
+
+            {/* --- Ô nhập mã OTP --- */}
+            <View style={styles.codeInputContainer}>
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => (inputRefs.current[index] = ref)}
+                  style={[
+                    styles.codeInput,
+                    focusedInput === index && styles.codeInputFocused,
+                  ]}
+                  value={code[index]}
+                  onChangeText={(text) => handleCodeChange(text, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                  onFocus={() => setFocusedInput(index)}
+                  onBlur={() => setFocusedInput(-1)}
+                  keyboardType="number-pad"
+                  maxLength={6} // Cho phép dán
+                  textAlign="center"
+                />
+              ))}
+            </View>
+
+            {/* --- Nút Tiếp tục --- */}
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <Text style={styles.continueButtonText}>Tiếp tục</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* --- Gửi lại mã --- */}
+            <View style={styles.resendContainer}>
+              <Text style={styles.resendText}>
+                Không nhận được mã xác thực?
+              </Text>
+              {canResend ? (
+                <TouchableOpacity onPress={handleResend} disabled={isResending}>
+                  <Text style={styles.resendLink}>
+                    {isResending ? "Đang gửi..." : "Gửi lại mã xác thực"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.resendText}>
+                  Gửi lại mã xác thực sau{" "}
+                  <Text style={styles.timerText}>{formatTime(timer)}</Text>
+                </Text>
+              )}
             </View>
           </View>
-
-          <Text style={styles.phoneNumber}>{phoneNumber}</Text>
-
-          <Text style={styles.instructionText}>
-            Soạn tin nhắn nhận mã xác thực và điền vào bên dưới
-          </Text>
-
-          <View style={styles.codeInputContainer}>
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
-                style={styles.codeInput}
-                value={verificationCode[index]}
-                onChangeText={(text) => handleCodeChange(text, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
-                keyboardType="number-pad"
-                maxLength={1}
-                textAlign="center"
-              />
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.guideLink}>
-            <Text style={styles.guideLinkText}>Hướng dẫn nhận mã</Text>
-          </TouchableOpacity>
-
-          <View style={styles.buttonContainer}>
-            <CustomButton
-              title="Tiếp tục"
-              backgroundColor="#B8D0E0"
-              textColor="#000"
-              onPress={handleContinue}
-            />
-          </View>
-        </View>
-      </View>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
+// --- Toàn bộ Styles ---
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.white,
   },
-  headerContainer: {
+  header: {
+    backgroundColor: COLORS.headerBlue,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? 20 : 10,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#007AFF",
-    paddingTop: 10,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
   },
-  backIcon: {
-    marginRight: 12,
+  backButton: {
+    padding: 5,
+    marginRight: 15,
   },
-  headerText: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 22, // Nhỏ hơn một chút cho vừa
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.white,
   },
-  bodyContainer: {
-    padding: 16,
-    alignItems: "center",
+  keyboardAvoiding: {
+    flex: 1,
   },
-  warningText: {
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  body: {
+    padding: 20,
+  },
+  infoText: {
     fontSize: 16,
-    textAlign: "center",
-    marginTop: 20,
-    marginBottom: 30,
-    color: "#333",
-  },
-  iconContainer: {
-    marginBottom: 20,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  phoneNumber: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  instructionText: {
-    fontSize: 16,
+    color: COLORS.textPrimary,
     textAlign: "center",
     marginBottom: 30,
-    color: "#666",
+    lineHeight: 24,
   },
   codeInputContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 20,
     marginBottom: 30,
   },
   codeInput: {
-    width: 40,
+    width: 45,
     height: 50,
     borderBottomWidth: 2,
-    borderBottomColor: "#ccc",
-    fontSize: 20,
+    borderBottomColor: COLORS.mediumGray,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
+  },
+  codeInputFocused: {
+    borderBottomColor: COLORS.primaryBlue,
+  },
+  continueButton: {
+    backgroundColor: COLORS.buttonBlue,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  continueButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
     fontWeight: "bold",
   },
-  guideLink: {
-    marginBottom: 40,
+  resendContainer: {
+    marginTop: 30,
+    alignItems: "center",
   },
-  guideLinkText: {
-    color: "#007AFF",
-    fontSize: 16,
-    textAlign: "center",
+  resendText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 5,
   },
-  buttonContainer: {
-    width: "100%",
-    marginTop: 20,
+  resendLink: {
+    fontSize: 14,
+    color: COLORS.primaryBlue,
+    fontWeight: "bold",
+  },
+  timerText: {
+    color: COLORS.dangerRed,
+    fontWeight: "bold",
   },
 });
 

@@ -1,316 +1,466 @@
-import CustomButton from "@/components/button/CustomButton";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import CustomTextInput from "../../textfield/CustomTextInput";
-// import { Api_Auth } from "../../../apis/api_auth";
+import { Api_Auth_Customer } from "../../../apis/api_auth.js";
 
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
-type RootStackParamList = {
-  Main: undefined;
-  MessageScreen: { userId?: string; username?: string };
-  Register: undefined;
-  VerificationCode: {
-    phoneNumber: string;
-    firstname: string;
-    surname: string;
-    day: string;
-    month: string;
-    year: string;
-    gender: string;
-    email: string;
-    password: string;
-  };
+// --- Định nghĩa màu sắc cho dễ quản lý ---
+const COLORS = {
+  primaryBlue: "#007AFF", // Xanh dương chủ đạo
+  buttonBlue: "#0D47A1", // Xanh đậm của nút
+  white: "#FFFFFF",
+  black: "#000000",
+  lightGray: "#F5F5F5",
+  mediumGray: "#DDDDDD",
+  darkGray: "#888888",
+  textPrimary: "#333333",
+  textSecondary: "#666666",
+  successGreen: "#4CD964",
+  successGreenBg: "#EAF9EB",
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Register">;
+/**
+ * Component TextInput có nhãn ở trên
+ */
+const LabeledTextInput = ({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  keyboardType = "default",
+  secureTextEntry = false,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  keyboardType?: any;
+  secureTextEntry?: boolean;
+}) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>
+      {label} <Text style={{ color: "red" }}>*</Text>
+    </Text>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.textInput}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.darkGray}
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+      />
+    </View>
+  </View>
+);
 
-function Register() {
-  const navigation = useNavigation<NavigationProp>();
+const Register: React.FC = () => {
+  const navigation = useNavigation();
 
-  const [firstname, setFirstname] = useState("");
-  const [surname, setSurname] = useState("");
-  const [day, setDay] = useState("1");
-  const [month, setMonth] = useState("1");
-  const [year, setYear] = useState("2000");
-  const [selectedGender, setSelectedGender] = useState("Nam");
-
-  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const isSelected = (gender: string) => selectedGender === gender;
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!firstname || !surname || !email || !phone || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin!");
+    if (!fullName || !phone) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ Họ tên và Số điện thoại.");
       return;
     }
 
-    const patternName = /^[A-Za-z]{1,30}$/;
-    if (!patternName.test(firstname)) {
-      Alert.alert("Lỗi", "Tên không hợp lệ!");
-      return;
-    }
-    if (!patternName.test(surname)) {
-      Alert.alert("Lỗi", "Họ không hợp lệ!");
-      return;
-    }
-
-    const patternPhone = /0\d{9,10}/;
-    if (!patternPhone.test(phone)) {
-      Alert.alert("Lỗi", "Số điện thoại không hợp lệ!");
-      return;
-    }
-
-    const patternEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!patternEmail.test(email)) {
-      Alert.alert("Lỗi", "Email không hợp lệ!");
-      return;
-    }
-
-    if (password.length < 6 || password.length > 32) {
-      Alert.alert("Lỗi", "Mật khẩu phải từ 6 đến 32 ký tự!");
-      return;
-    }
-
-    const currentYear = new Date().getFullYear();
-    if (parseInt(year) > currentYear) {
-      Alert.alert("Lỗi", "Năm sinh không hợp lệ!");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu không khớp!");
-      return;
-    }
-
-    const data = {
-      firstname,
-      surname,
-      day,
-      month,
-      year,
-      gender: selectedGender,
-      email,
-      phone,
-      password,
-    };
+    if (isLoading) return;
+    setIsLoading(true);
 
     try {
-      // const response = await Api_Auth.signUp(data);
-      // console.log("Đăng ký thành công, user ID:", response.data.user._id);
-      // Alert.alert("Thành công", "Đăng ký thành công!");
+      await Api_Auth_Customer.requestRegisterOtp({ soDienThoai: phone });
 
       navigation.navigate("VerificationCode", {
         phoneNumber: phone,
-        firstname,
-        surname,
-        day,
-        month,
-        year,
-        gender: selectedGender,
-        email,
-        password,
+        fromScreen: "register",
+        fullName: fullName,
+        email: email,
+        dob: dob,
+        gender: gender,
       });
     } catch (error: any) {
-      console.error(error);
-      Alert.alert("Lỗi", error.response?.data?.message || "Đã xảy ra lỗi!");
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message ||
+          "Không thể gửi mã OTP. Vui lòng thử lại."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  /**
+   * Hàm render nút chọn giới tính
+   */
+  const renderGenderButton = (title: "Nam" | "Nữ" | "Khác") => {
+    const isActive = gender === title;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.genderButton,
+          isActive ? styles.genderButtonActive : styles.genderButtonInactive,
+        ]}
+        onPress={() => setGender(title)}
+      >
+        <Text
+          style={[
+            styles.genderButtonText,
+            isActive
+              ? styles.genderButtonTextActive
+              : styles.genderButtonTextInactive,
+          ]}
+        >
+          {title}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons
-            name="arrow-back-outline"
-            size={28}
-            color="#fff"
-            style={styles.backIcon}
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.primaryBlue}
+      />
+
+      {/* --- Header (Giống màn hình Login) --- */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Đăng ký</Text>
+        <Text style={styles.headerTitle}>Đăng ký</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.bodyContainer}>
-        <Text style={styles.txt01}>Tạo một tài khoản mới</Text>
-        <Text style={styles.txt02}>Thật nhanh chóng và dễ dàng</Text>
-
-        <View style={styles.row}>
-          <View style={styles.halfInput}>
-            <CustomTextInput
-              placeholder="Tên"
-              value={firstname}
-              onChangeText={setFirstname}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoiding}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* --- Phần thân (Form Đăng Ký) --- */}
+          <View style={styles.body}>
+            {/* Họ và tên */}
+            <LabeledTextInput
+              label="Họ và tên"
+              placeholder="Nhập họ và tên của bạn"
+              value={fullName}
+              onChangeText={setFullName}
             />
-          </View>
-          <View style={styles.halfInput}>
-            <CustomTextInput
-              placeholder="Họ"
-              value={surname}
-              onChangeText={setSurname}
+
+            {/* Số điện thoại */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                Số điện thoại <Text style={{ color: "red" }}>*</Text>
+              </Text>
+              <View style={styles.phoneInputContainer}>
+                <TouchableOpacity style={styles.countryCodeButton}>
+                  <Text style={styles.countryCodeText}>🇻🇳 (+84)</Text>
+                  <Ionicons
+                    name="caret-down"
+                    size={12}
+                    color={COLORS.textPrimary}
+                  />
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Số điện thoại"
+                  placeholderTextColor={COLORS.darkGray}
+                  keyboardType="numeric"
+                  value={phone}
+                  onChangeText={setPhone}
+                />
+              </View>
+            </View>
+
+            {/* Email */}
+            <LabeledTextInput
+              label="Email"
+              placeholder="Nhập email của bạn (không bắt buộc)"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
             />
-          </View>
-        </View>
+            {/* Sửa label lại nếu email là bắt buộc */}
 
-        <Text style={styles.label}>Ngày sinh của bạn?</Text>
-        <View style={styles.row}>
-          <Picker
-            selectedValue={day}
-            style={styles.thirdInput}
-            onValueChange={(itemValue) => setDay(itemValue)}
-          >
-            {[...Array(31).keys()].map((d) => (
-              <Picker.Item label={`${d + 1}`} value={`${d + 1}`} key={d + 1} />
-            ))}
-          </Picker>
-          <Picker
-            selectedValue={month}
-            style={styles.thirdInput}
-            onValueChange={(itemValue) => setMonth(itemValue)}
-          >
-            {[...Array(12).keys()].map((m) => (
-              <Picker.Item label={`${m + 1}`} value={`${m + 1}`} key={m + 1} />
-            ))}
-          </Picker>
-          <Picker
-            selectedValue={year}
-            style={styles.thirdInput}
-            onValueChange={(itemValue) => setYear(itemValue)}
-          >
-            {Array.from({ length: 100 }, (_, i) => 2025 - i).map((y) => (
-              <Picker.Item label={`${y}`} value={`${y}`} key={y} />
-            ))}
-          </Picker>
-        </View>
+            {/* Thông báo */}
+            <View style={styles.infoBox}>
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={COLORS.successGreen}
+              />
+              <Text style={styles.infoBoxText}>
+                Thông tin đơn hàng sẽ được gửi đến số điện thoại và email bạn
+                cung cấp.
+              </Text>
+            </View>
 
-        <Text style={styles.label}>Giới tính</Text>
-        <View style={styles.row}>
-          {["Nữ", "Nam", "Khác"].map((gender) => (
-            <TouchableOpacity
-              key={gender}
-              style={[
-                styles.radioButton,
-                isSelected(gender) && styles.radioButtonSelected,
-              ]}
-              onPress={() => setSelectedGender(gender)}
-            >
-              <Text
-                style={
-                  isSelected(gender)
-                    ? styles.radioTextSelected
-                    : styles.radioText
-                }
+            {/* Ngày sinh */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Ngày sinh</Text>
+              <TouchableOpacity
+                style={styles.inputContainer}
+                // Thêm onPress để mở DatePicker modal tại đây
               >
-                {gender}
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="DD/MM/YYYY (không bắt buộc)"
+                  placeholderTextColor={COLORS.darkGray}
+                  value={dob}
+                  onChangeText={setDob}
+                />
+                <Ionicons
+                  name="calendar-outline"
+                  size={24}
+                  color={COLORS.textSecondary}
+                  style={{ marginRight: 15 }}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Giới tính */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Giới tính</Text>
+              <View style={styles.genderContainer}>
+                {renderGenderButton("Nam")}
+                {renderGenderButton("Nữ")}
+                {renderGenderButton("Khác")}
+              </View>
+            </View>
+
+            {/* Nút Đăng ký */}
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} /> 
+              ) : (
+                <Text style={styles.continueButtonText}>Đăng ký</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* --- Footer (Đăng nhập) --- */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Bạn đã có tài khoản? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <Text style={[styles.footerText, styles.footerLink]}>
+                Đăng nhập
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <CustomTextInput
-          placeholder="Địa chỉ email"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <CustomTextInput
-          placeholder="Số điện thoại di động"
-          value={phone}
-          onChangeText={setPhone}
-        />
-        <CustomTextInput
-          placeholder="Nhập mật khẩu mới"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <CustomTextInput
-          placeholder="Nhập lại mật khẩu"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-
-        <CustomButton title="Đăng ký" onPress={handleRegister} />
-      </ScrollView>
-    </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
+};
 
+// --- Toàn bộ Styles ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  headerContainer: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  textInput: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 12, 
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+  header: {
+    backgroundColor: COLORS.primaryBlue,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? 20 : 10,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#007AFF",
-    paddingTop: 10,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
   },
-  backIcon: { marginRight: 12 },
-  headerText: { fontSize: 24, fontWeight: "bold", color: "#fff" },
-  bodyContainer: { padding: 16 },
-  txt01: {
+  backButton: {
+    padding: 5,
+    marginRight: 15,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#007AFF",
-    textAlign: "center",
-    marginBottom: 4,
+    color: COLORS.white,
   },
-  txt02: {
-    fontSize: 16,
-    color: "#888",
-    textAlign: "center",
+  keyboardAvoiding: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  body: {
+    padding: 20,
+  },
+  inputGroup: {
     marginBottom: 20,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
+  label: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+    fontWeight: "500",
   },
-  halfInput: { width: "48%" },
-  thirdInput: {
-    width: "32%",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 30,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginVertical: 8,
-  },
-  label: { fontSize: 16, fontWeight: "600", marginBottom: 6 },
-  radioButton: {
-    flex: 1,
+  inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: COLORS.mediumGray,
+    borderRadius: 10,
+    backgroundColor: COLORS.white,
+  },
+  textInput: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+  // --- Styles cho SĐT (từ LoginScreen) ---
+  phoneInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.mediumGray,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: COLORS.white,
+  },
+  countryCodeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 13, // Chỉnh lại cho cân
+    borderRightWidth: 1,
+    borderRightColor: COLORS.mediumGray,
+    backgroundColor: COLORS.lightGray,
+  },
+  countryCodeText: {
+    fontSize: 16,
+    marginRight: 8,
+    color: COLORS.textPrimary,
+  },
+  // --- Style cho Info Box ---
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.successGreenBg,
+    borderColor: COLORS.successGreen,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+  },
+  infoBoxText: {
+    flex: 1,
+    marginLeft: 10,
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  // --- Styles cho Giới tính ---
+  // genderContainer: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  // },
+  // genderButton: {
+  //   flex: 1,
+  //   paddingVertical: 12,
+  //   borderRadius: 10,
+  //   alignItems: 'center',
+  //   borderWidth: 1,
+  // },
+  genderButtonInactive: {
+    borderColor: COLORS.mediumGray,
+    backgroundColor: COLORS.white,
+  },
+  genderButtonActive: {
+    borderColor: COLORS.primaryBlue,
+    backgroundColor: COLORS.primaryBlue,
+  },
+  genderButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  genderButtonTextInactive: {
+    color: COLORS.textSecondary,
+  },
+  genderButtonTextActive: {
+    color: COLORS.white,
+  },
+  // Thêm margin giữa các nút
+  genderButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    marginHorizontal: 4, // Thêm khoảng cách
+  },
+  // Sửa lại style cho genderContainer
+  genderContainer: {
+    flexDirection: "row",
+    justifyContent: "center", // Canh giữa
+    marginHorizontal: -4, // Bù lại margin của nút
+  },
+  // --- Nút bấm và Footer ---
+  continueButton: {
+    backgroundColor: COLORS.buttonBlue,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10, // Giảm margin top
+  },
+  continueButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  footer: {
+    flexDirection: "row",
     justifyContent: "center",
-    marginHorizontal: 4,
-    backgroundColor: "#fff",
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
+    marginTop: 10,
   },
-  radioButtonSelected: {
-    borderColor: "#007AFF",
-    backgroundColor: "#E0F0FF",
+  footerText: {
+    fontSize: 14,
+    color: COLORS.darkGray,
   },
-  radioText: { color: "#000" },
-  radioTextSelected: { color: "#007AFF", fontWeight: "bold" },
+  footerLink: {
+    color: COLORS.buttonBlue,
+    fontWeight: "bold",
+  },
 });
 
 export default Register;
