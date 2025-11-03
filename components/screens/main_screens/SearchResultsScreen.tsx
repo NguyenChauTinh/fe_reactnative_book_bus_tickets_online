@@ -1,5 +1,6 @@
 "use client";
 
+import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
 // SVG Icons
 const BackIcon = () => (
@@ -171,7 +171,13 @@ export default function SearchResultsScreen({ navigation, route }) {
   }, [departureDate, departureLocation, destination]);
 
   const handleSeatSelection = (trip) => {
-    navigation.navigate("SeatSelectionScreen", { trip });
+    navigation.navigate("SeatSelectionScreen", {
+      trip,
+      departureLocation,
+      destination,
+      departureDate,
+      returnDate,
+    });
   };
 
   return (
@@ -194,12 +200,6 @@ export default function SearchResultsScreen({ navigation, route }) {
               </Text>
               <Text style={styles.headerSubtitle}>{departureDate}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => setShowChangeModal(true)}
-              style={styles.changeButton}
-            >
-              <Text style={styles.changeButtonText}>Thay đổi</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Transport Tabs */}

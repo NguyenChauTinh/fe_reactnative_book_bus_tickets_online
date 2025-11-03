@@ -2,6 +2,8 @@ import axios from "axios";
 
 const SERVICES = {
   trip_schedule_service: "http://localhost:3001",
+  booking_service: "http://localhost:3005",
+  api_promotion_service: "http://localhost:3004",
 };
 
 // Tạo một instance axios theo service

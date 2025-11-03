@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

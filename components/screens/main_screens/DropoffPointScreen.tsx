@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// SVG Icons
+// SVG Icons (Giữ nguyên không thay đổi)
 const BackIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <path
@@ -49,49 +50,97 @@ const MapIcon = () => (
   </svg>
 );
 
+// --- BẮT ĐẦU THAY ĐỔI ---
+
+// Hàm tiện ích để chuyển đổi phút sang định dạng HH:mm
+const formatMinutesToHHMM = (totalMinutes) => {
+  if (isNaN(totalMinutes)) return "00:00";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const formattedHours = String(hours).padStart(2, "0");
+  const formattedMinutes = String(minutes).padStart(2, "0");
+  return `${formattedHours}:${formattedMinutes}`;
+};
+
+// Hàm tiện ích để chuyển đổi HH:mm sang số phút
+const parseHHMMToMinutes = (timeString) => {
+  if (!timeString || !timeString.includes(":")) return 0;
+  const [hours, minutes] = timeString.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
 export default function DropoffPointScreen({ navigation, route }) {
-  const { trip, selectedSeats, selectedPickup } = route.params;
+  const {
+    trip,
+    selectedSeats,
+    selectedPickup,
+    departureLocation,
+    destination,
+    departureDate,
+    returnDate,
+  } = route.params;
   const [searchText, setSearchText] = useState("");
   const [selectedDropoff, setSelectedDropoff] = useState(null);
+  const [dropoffPoints, setDropoffPoints] = useState([]);
+  const [sortOrder, setSortOrder] = useState("asc"); // 'asc' for earliest, 'desc' for latest
+  const [loading, setLoading] = useState(true);
 
-  const [customerInfo, setCustomerInfo] = useState({
-    name: "T Ng",
-    phone: "84372374650",
-    email: "chautinh05122@gmail.com",
-  });
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
 
-  const dropoffPoints = [
-    {
-      id: 1,
-      time: "13:15",
-      name: "Bến xe Tân Châu",
-      address: "Trần Phú, Xã Tân An, Tân Châu, An Giang",
-    },
-    {
-      id: 2,
-      time: "13:25",
-      name: "Chợ Tân Châu",
-      address: "Trung tâm thị trấn Tân Châu, An Giang",
-    },
-    {
-      id: 3,
-      time: "13:30",
-      name: "Bến phà Tân Châu",
-      address: "Bờ sông Tiền, Tân Châu, An Giang",
-    },
-    {
-      id: 4,
-      time: "13:35",
-      name: "Khu du lịch Tân Châu",
-      address: "Khu vực du lịch sinh thái, Tân Châu",
-    },
-  ];
+  useEffect(() => {
+    if (trip?.tuyenDuong?.chiTietTuyen) {
+      setLoading(true);
+      // Thời gian đến dự kiến của cả chuyến (dạng phút)
+      const arrivalTimeInMinutes = parseHHMMToMinutes(trip.arrivalTime);
 
-  const filteredDropoffs = dropoffPoints.filter(
-    (dropoff) =>
-      dropoff.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      dropoff.address.toLowerCase().includes(searchText.toLowerCase())
-  );
+      // Lọc ra các điểm trả và sắp xếp theo thứ tự
+      const dropoffLocations = trip.tuyenDuong.chiTietTuyen
+        .filter((diem) => diem.loaiDiem === "tra")
+        .sort((a, b) => a.thuTu - b.thuTu);
+
+      let cumulativeTime = 0;
+
+      const formattedPoints = dropoffLocations.map((item, index) => {
+        // Thời gian đến tại điểm trả = thời gian đến của chuyến + thời gian di chuyển cộng dồn từ các điểm trước đó
+        if (index > 0) {
+          cumulativeTime += dropoffLocations[index - 1].thoiGianDuKien || 0;
+        }
+
+        return {
+          id: item._id,
+          time: formatMinutesToHHMM(arrivalTimeInMinutes + cumulativeTime),
+          name: item.diaDiem.tenDiaDiem,
+          address: `Địa chỉ chi tiết cho: ${item.diaDiem.tenDiaDiem}`,
+        };
+      });
+      setDropoffPoints(formattedPoints);
+      setLoading(false);
+    }
+  }, [trip]);
+
+  const sortedAndFilteredDropoffs = useMemo(() => {
+    const sorted = [...dropoffPoints].sort((a, b) => {
+      if (sortOrder === "asc") {
+        return a.time.localeCompare(b.time);
+      } else {
+        return b.time.localeCompare(a.time);
+      }
+    });
+
+    if (!searchText) {
+      return sorted;
+    }
+
+    return sorted.filter(
+      (dropoff) =>
+        dropoff.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        dropoff.address.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [dropoffPoints, sortOrder, searchText]);
+
+  // --- KẾT THÚC THAY ĐỔI ---
 
   const handleDropoffSelect = (dropoff) => {
     setSelectedDropoff(dropoff);
@@ -105,6 +154,10 @@ export default function DropoffPointScreen({ navigation, route }) {
         selectedPickup,
         selectedDropoff,
         totalPrice,
+        departureLocation,
+        destination,
+        departureDate,
+        returnDate,
       });
     }
   };
@@ -115,154 +168,130 @@ export default function DropoffPointScreen({ navigation, route }) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hiệp Thành</Text>
-          <Text style={styles.headerSubtitle}>08:00 • T3, 23/09/2025</Text>
-        </View>
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.detailsButtonText}>Chi tiết xe</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.progressContainer}>
-        <Text style={styles.activeStepText}>Chọn điểm trả</Text>
-      </View>
-
-      {/* <View style={styles.progressContainer}>
-        <View style={styles.progressStep}>
-          <View style={styles.completedStepCircle}>
-            <Text style={styles.stepNumber}>✓</Text>
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
+            </View>
           </View>
-          <Text style={styles.completedStepText}>Chọn chỗ</Text>
-        </View>
-        <View style={styles.progressLine} />
-        <View style={styles.progressStep}>
-          <View style={styles.completedStepCircle}>
-            <Text style={styles.stepNumber}>✓</Text>
+
+          <View style={styles.progressContainer}>
+            <Text style={styles.activeStepText}>Chọn điểm trả</Text>
           </View>
-          <Text style={styles.completedStepText}>Chọn điểm đón</Text>
-        </View>
-        <View style={styles.progressLine} />
-        <View style={styles.progressStep}>
-          <View style={styles.activeStepCircle}>
-            <Text style={styles.stepNumber}>3</Text>
+
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <SearchIcon />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Tìm điểm trả trong danh sách"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+            </View>
           </View>
-          <Text style={styles.activeStepText}>Chọn điểm trả</Text>
-        </View>
-        <View style={styles.progressLine} />
-        <View style={styles.progressStep}>
-          <View style={styles.inactiveStepCircle}>
-            <Text style={styles.inactiveStepNumber}>4</Text>
-          </View>
-          <Text style={styles.inactiveStepText}>Nh</Text>
-        </View>
-      </View> */}
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <SearchIcon />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm điểm trả trong danh sách"
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-        </View>
-      </View>
-
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortText}>Sắp xếp theo</Text>
-        <Text style={styles.sortValue}>Sớm nhất ▼</Text>
-        <View
-          style={{
-            flexDirection: "column",
-            alignItems: "center",
-            marginLeft: "auto",
-            flex: 1,
-            flexWrap: "wrap",
-            justifyContent: "flex-end",
-            flexShrink: 1,
-            flexGrow: 1,
-            flexBasis: "auto",
-            alignContent: "flex-end",
-          }}
-        >
-          <Text style={styles.convenientText}>
-            Điểm trả nào thuận tiện nhất?
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.addressLink}>Nhập địa chỉ của bạn</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.noteContainer}>
-        <Text style={styles.noteText}>
-          *Lưu ý: Sử dụng tên địa phương trước sắp nhập
-        </Text>
-      </View>
-
-      <ScrollView style={styles.dropoffList}>
-        {filteredDropoffs.map((dropoff) => (
-          <TouchableOpacity
-            key={dropoff.id}
-            style={[
-              styles.dropoffItem,
-              selectedDropoff?.id === dropoff.id && styles.selectedDropoffItem,
-            ]}
-            onPress={() => handleDropoffSelect(dropoff)}
-          >
-            <View style={styles.dropoffContent}>
-              <View style={styles.dropoffTime}>
-                <LocationIcon />
-                <Text style={styles.timeText}>{dropoff.time}</Text>
-              </View>
-              <View style={styles.dropoffDetails}>
-                <Text style={styles.dropoffName}>{dropoff.name}</Text>
-                <Text style={styles.dropoffAddress}>{dropoff.address}</Text>
-              </View>
-              <TouchableOpacity style={styles.mapButton}>
-                <MapIcon />
-                <Text style={styles.mapButtonText}>Bản đồ</Text>
+          <View style={styles.sortContainer}>
+            <TouchableOpacity
+              onPress={toggleSortOrder}
+              style={styles.sortButton}
+            >
+              <Text style={styles.sortText}>Sắp xếp theo</Text>
+              <Text style={styles.sortValue}>
+                {sortOrder === "asc" ? "Sớm nhất ▼" : "Muộn nhất ▲"}
+              </Text>
+            </TouchableOpacity>
+            <View
+              style={{
+                flexDirection: "column",
+                alignItems: "center",
+                marginLeft: "auto",
+              }}
+            >
+              <Text style={styles.convenientText}>
+                Điểm trả nào thuận tiện nhất?
+              </Text>
+              <TouchableOpacity>
+                <Text style={styles.addressLink}>Nhập địa chỉ của bạn</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+          </View>
 
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tạm tính</Text>
-          <Text style={styles.totalPrice}>
-            {totalPrice.toLocaleString()}đ ▲
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            !selectedDropoff && styles.disabledButton,
-          ]}
-          disabled={!selectedDropoff}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.noteContainer}>
+            <Text style={styles.noteText}>
+              *Lưu ý: Thời gian trả là dự kiến và có thể thay đổi.
+            </Text>
+          </View>
 
-      <View style={styles.changeNoteContainer}>
-        <Text style={styles.changeNoteText}>
-          Dễ dàng thay đổi điểm đón trả sau khi đặt
-        </Text>
-      </View>
-    </SafeAreaView>
+          <ScrollView style={styles.dropoffList}>
+            {sortedAndFilteredDropoffs.map((dropoff) => (
+              <TouchableOpacity
+                key={dropoff.id}
+                style={[
+                  styles.dropoffItem,
+                  selectedDropoff?.id === dropoff.id &&
+                    styles.selectedDropoffItem,
+                ]}
+                onPress={() => handleDropoffSelect(dropoff)}
+              >
+                <View style={styles.dropoffContent}>
+                  <View style={styles.dropoffTime}>
+                    <LocationIcon />
+                    <Text style={styles.timeText}>{dropoff.time}</Text>
+                  </View>
+                  <View style={styles.dropoffDetails}>
+                    <Text style={styles.dropoffName}>{dropoff.name}</Text>
+                    <Text style={styles.dropoffAddress}>{dropoff.address}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.mapButton}>
+                    <MapIcon />
+                    <Text style={styles.mapButtonText}>Bản đồ</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.bottomBar}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Tạm tính</Text>
+              <Text style={styles.totalPrice}>
+                {totalPrice.toLocaleString()}đ ▲
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                !selectedDropoff && styles.disabledButton,
+              ]}
+              disabled={!selectedDropoff}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.changeNoteContainer}>
+            <Text style={styles.changeNoteText}>
+              Dễ dàng thay đổi điểm đón trả sau khi đặt
+            </Text>
+          </View>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 
@@ -295,15 +324,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.9,
   },
-  detailsButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  detailsButtonText: {
-    color: "white",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
   progressContainer: {
     backgroundColor: "white",
     flexDirection: "row",
@@ -311,66 +331,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  progressStep: {
-    alignItems: "center",
-    flex: 1,
-  },
-  activeStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4A90E2",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  completedStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inactiveStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepNumber: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  inactiveStepNumber: {
-    color: "white",
-    fontSize: 12,
-  },
   activeStepText: {
     color: "#4A90E2",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
     textDecorationLine: "underline",
-  },
-  completedStepText: {
-    color: "#4CAF50",
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "bold",
-  },
-  inactiveStepText: {
-    color: "#ccc",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  progressLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 4,
   },
   searchContainer: {
     backgroundColor: "white",
@@ -400,6 +366,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#eee",
   },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   sortText: {
     fontSize: 14,
     color: "#666",
@@ -413,7 +383,6 @@ const styles = StyleSheet.create({
   convenientText: {
     fontSize: 14,
     color: "#666",
-    marginLeft: "auto",
   },
   addressLink: {
     fontSize: 14,

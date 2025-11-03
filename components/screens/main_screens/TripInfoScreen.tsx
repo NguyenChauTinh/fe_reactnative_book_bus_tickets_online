@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -70,256 +71,261 @@ const HeartIcon = () => (
   </svg>
 );
 
-const ShieldIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-      stroke="#4CAF50"
-      strokeWidth="2"
-      fill="#4CAF50"
-      fillOpacity="0.1"
-    />
-  </svg>
-);
-
 export default function TripInfoScreen({ navigation, route }) {
-  const { trip, selectedSeats, selectedPickup, selectedDropoff, totalPrice } =
-    route.params;
-  const [customerInfo, setCustomerInfo] = useState({
-    name: "T Ng",
-    phone: "84372374650",
-    email: "chautinh05122@gmail.com",
-  });
-  const [insuranceSelected, setInsuranceSelected] = useState(false);
-  const [accidentInsuranceSelected, setAccidentInsuranceSelected] =
-    useState(false);
+  // --- BẮT ĐẦU THAY ĐỔI ---
+  const {
+    trip,
+    selectedSeats,
+    selectedPickup,
+    selectedDropoff,
+    customerInfo, // Lấy customerInfo từ màn hình trước
+    totalPrice,
+    departureLocation,
+    destination,
+    departureDate,
+  } = route.params;
 
-  // const totalPrice = selectedSeats.reduce(
-  //   (sum, seat) => sum + (seat.price || 0),
-  //   0
-  // );
-  const insurancePrice = insuranceSelected ? 20000 : 0;
-  const accidentInsurancePrice = accidentInsuranceSelected ? 25000 : 0;
-  const finalPrice = totalPrice + insurancePrice + accidentInsurancePrice;
+  const [insuranceSelected, setInsuranceSelected] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Tính toán giá tiền cuối cùng
+  const insurancePrice = insuranceSelected ? 20000 * selectedSeats.length : 0; // Giá bảo hiểm nhân với số ghế
+  const finalPrice = totalPrice + insurancePrice;
+
+  // Lấy danh sách mã ghế
+  const seatNumbers = selectedSeats.map((seat) => seat.number).join(", ");
+  // --- KẾT THÚC THAY ĐỔI ---
 
   const handleContinue = () => {
     navigation.navigate("PaymentScreen", {
+      // Truyền tất cả dữ liệu cần thiết qua màn hình thanh toán
       trip,
       selectedSeats,
       selectedPickup,
       selectedDropoff,
+      customerInfo,
       insuranceSelected,
-      accidentInsuranceSelected,
       totalPrice,
+      finalPrice,
+      departureLocation,
+      destination,
+      departureDate,
     });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <BackIcon />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hiệp Thành</Text>
-          <Text style={styles.headerSubtitle}>08:00 • T3, 23/09/2025</Text>
-        </View>
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.detailsButtonText}>Chi tiết</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.progressContainer}>
-        <Text style={styles.activeStepText}>Thông tin chuyến đi</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.tripInfoSection}>
-          <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
-
-          <View style={styles.tripCard}>
-            <View style={styles.tripHeader}>
-              <View style={styles.tripDate}>
-                <BusIcon />
-                <Text style={styles.dateText}>T3, 23/09/2025</Text>
-              </View>
-              <TouchableOpacity>
-                <Text style={styles.detailsLink}>Chi tiết</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.busInfo}>
-              <View style={styles.busImage}>
-                <BusIcon />
-              </View>
-              <View style={styles.busDetails}>
-                <Text style={styles.busCompany}>Hiệp Thành</Text>
-                <Text style={styles.busType}>Limousine 34 phòng đơn</Text>
-                <View style={styles.seatInfo}>
-                  <PersonIcon />
-                  <Text style={styles.seatText}>1</Text>
-                  <SeatIcon />
-                  <Text style={styles.seatText}>B11</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.favoriteButton}>
-                <HeartIcon />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.routeInfo}>
-              <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>08:00</Text>
-                <View style={styles.routeIcon}>
-                  <View style={styles.blueDot} />
-                </View>
-                <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>Bến xe Miền Tây</Text>
-                  <Text style={styles.routeAddress}>
-                    395 Kinh Dương Vương, Phường An Lạc, Bình Tân, Hồ Chí Minh
-                  </Text>
-                  <TouchableOpacity>
-                    <Text style={styles.changeButton}>Thay đổi</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.routeItem}>
-                <Text style={styles.routeTime}>13:00</Text>
-                <View style={styles.routeIcon}>
-                  <View style={styles.redDot} />
-                </View>
-                <View style={styles.routeDetails}>
-                  <Text style={styles.routeName}>Bến xe Tân Châu</Text>
-                  <Text style={styles.routeAddress}>
-                    Trần Phú, Xã Tân An, Tân Châu, An Giang
-                  </Text>
-                  <TouchableOpacity>
-                    <Text style={styles.changeButton}>Thay đổi</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.cancellationInfo}>
-              <Text style={styles.cancellationText}>
-                🟢 Hủy miễn phí 00:00 • 23/09/2025 ⓘ
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.contactSection}>
-          <View style={styles.contactHeader}>
-            <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
-            <TouchableOpacity>
-              <Text style={styles.editButton}>Chính sửa</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.contactInfo}>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Họ tên</Text>
-              <Text style={styles.contactValue}>{customerInfo.name}</Text>
-            </View>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Điện thoại</Text>
-              <Text style={styles.contactValue}>{customerInfo.phone}</Text>
-            </View>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactLabel}>Email</Text>
-              <Text style={styles.contactValue}>{customerInfo.email}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.insuranceSection}>
-          <Text style={styles.sectionTitle}>Tiện ích</Text>
-
-          <TouchableOpacity
-            style={styles.insuranceItem}
-            onPress={() => setInsuranceSelected(!insuranceSelected)}
-          >
-            <View
-              style={[styles.checkbox, insuranceSelected && styles.checkedBox]}
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
             >
-              {insuranceSelected && <Text style={styles.checkmark}>✓</Text>}
+              <BackIcon />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+              </Text>
+              <Text style={styles.headerSubtitle}>{departureDate}</Text>
             </View>
-            <View style={styles.insuranceDetails}>
-              <Text style={styles.insuranceTitle}>
-                Bảo hiểm chuyến đi (+20.000đ/ghế)
-              </Text>
-              <Text style={styles.insuranceDescription}>
-                Được bồi thường lên đến 400.000.000đ/ghế{"\n"}
-                Cung cấp bởi BAOVIET🏆 x 🛡️Saladin
-              </Text>
+          </View>
+
+          <View style={styles.progressContainer}>
+            <Text style={styles.activeStepText}>Thông tin chuyến đi</Text>
+          </View>
+
+          <ScrollView style={styles.content}>
+            <View style={styles.tripInfoSection}>
+              <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
+
+              {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+              <View style={styles.tripCard}>
+                <View style={styles.tripHeader}>
+                  <View style={styles.tripDate}>
+                    <BusIcon />
+                    <Text style={styles.dateText}>{departureDate}</Text>
+                  </View>
+                  <TouchableOpacity>
+                    <Text style={styles.detailsLink}>Chi tiết</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.busInfo}>
+                  <View style={styles.busImage}>
+                    <BusIcon />
+                  </View>
+                  <View style={styles.busDetails}>
+                    <Text style={styles.busCompany}>
+                      {trip.tuyenDuong?.tenTuyen || "Nhà xe"}
+                    </Text>
+                    <Text style={styles.busType}>{trip.busType}</Text>
+                    <View style={styles.seatInfo}>
+                      <PersonIcon />
+                      <Text style={styles.seatText}>
+                        {selectedSeats.length}
+                      </Text>
+                      <SeatIcon />
+                      <Text style={styles.seatText}>{seatNumbers}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.routeInfo}>
+                  {/* Điểm đón */}
+                  <View style={styles.routeItem}>
+                    <Text style={styles.routeTime}>{selectedPickup.time}</Text>
+                    <View style={styles.routeIcon}>
+                      <View style={styles.blueDot} />
+                    </View>
+                    <View style={styles.routeDetails}>
+                      <Text style={styles.routeName}>
+                        {selectedPickup.name}
+                      </Text>
+                      <Text style={styles.routeAddress}>
+                        {selectedPickup.address}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("PickupPointScreen", {
+                            trip,
+                            selectedPickup,
+                            selectedSeats,
+                            selectedDropoff,
+                            departureLocation,
+                            destination,
+                            departureDate,
+                          })
+                        }
+                      >
+                        <Text style={styles.changeButton}>Thay đổi</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Điểm trả */}
+                  <View style={styles.routeItem}>
+                    <Text style={styles.routeTime}>{selectedDropoff.time}</Text>
+                    <View style={styles.routeIcon}>
+                      <View style={styles.redDot} />
+                    </View>
+                    <View style={styles.routeDetails}>
+                      <Text style={styles.routeName}>
+                        {selectedDropoff.name}
+                      </Text>
+                      <Text style={styles.routeAddress}>
+                        {selectedDropoff.address}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("DropoffPointScreen", {
+                            trip,
+                            selectedDropoff,
+                            selectedSeats,
+                            selectedPickup,
+                            departureLocation,
+                            destination,
+                            departureDate,
+                          })
+                        }
+                      >
+                        <Text style={styles.changeButton}>Thay đổi</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+                {/* --- KẾT THÚC THAY ĐỔI --- */}
+
+                <View style={styles.cancellationInfo}>
+                  <Text style={styles.cancellationText}>
+                    🟢 Hủy miễn phí 24 giờ trước khởi hành ⓘ
+                  </Text>
+                </View>
+              </View>
             </View>
-          </TouchableOpacity>
 
-          <View style={styles.insuranceDetails}>
-            <View style={styles.insuranceCard}>
-              <Text style={styles.insuranceCardTitle}>Bảo hiểm tai nạn</Text>
-              <Text style={styles.insuranceCardDescription}>
-                Hỗ trợ viện phí lên đến 25 triệu đồng khi xảy ra tai nạn.
-              </Text>
-
-              <Text style={styles.policyTitle}>
-                Chính sách Hoàn Hủy chuyến đi
-              </Text>
-              <Text style={styles.policyDescription}>
-                Hoàn lại 100% tiền vé thực tế nếu chuyến đi bị hủy bởi các lý do
-                khách quan hoặc bất khả kháng về sức khỏe.
-              </Text>
-
-              <View style={styles.warningBox}>
-                <Text style={styles.warningText}>
-                  ⚠️ Chỉ áp dụng với ngân hàng Việt Nam
-                </Text>
-                <TouchableOpacity>
-                  <Text style={styles.detailsLink}>Chi tiết</Text>
+            {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+            <View style={styles.contactSection}>
+              <View style={styles.contactHeader}>
+                <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <Text style={styles.editButton}>Chỉnh sửa</Text>
                 </TouchableOpacity>
               </View>
 
+              <View style={styles.contactInfo}>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Họ tên</Text>
+                  <Text style={styles.contactValue}>{customerInfo.name}</Text>
+                </View>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Điện thoại</Text>
+                  <Text style={styles.contactValue}>{customerInfo.phone}</Text>
+                </View>
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactLabel}>Email</Text>
+                  <Text style={styles.contactValue}>{customerInfo.email}</Text>
+                </View>
+              </View>
+            </View>
+            {/* --- KẾT THÚC THAY ĐỔI --- */}
+
+            <View style={styles.insuranceSection}>
+              <Text style={styles.sectionTitle}>Tiện ích</Text>
               <TouchableOpacity
-                style={styles.insuranceSelectButton}
-                onPress={() =>
-                  setAccidentInsuranceSelected(!accidentInsuranceSelected)
-                }
+                style={styles.insuranceItem}
+                onPress={() => setInsuranceSelected(!insuranceSelected)}
               >
-                <Text style={styles.insuranceSelectText}>
-                  Bồi thường trực tuyến nhanh chóng, dễ dàng
-                  <Text style={styles.detailsLink}>Chi tiết</Text>
-                </Text>
+                <View
+                  style={[
+                    styles.checkbox,
+                    insuranceSelected && styles.checkedBox,
+                  ]}
+                >
+                  {insuranceSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <View style={styles.insuranceDetails}>
+                  <Text style={styles.insuranceTitle}>
+                    Bảo hiểm chuyến đi (+
+                    {(20000 * selectedSeats.length).toLocaleString()}đ)
+                  </Text>
+                  <Text style={styles.insuranceDescription}>
+                    Được bồi thường lên đến 400.000.000đ/ghế{"\n"}
+                    Cung cấp bởi BAOVIET🏆 x 🛡️Saladin
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
+          </ScrollView>
+
+          {/* --- BẮT ĐẦU THAY ĐỔI --- */}
+          <View style={styles.bottomBar}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Tổng cộng</Text>
+              <Text style={styles.totalPrice}>
+                {finalPrice.toLocaleString()}đ ▲
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
+          {/* --- KẾT THÚC THAY ĐỔI --- */}
 
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Tạm tính</Text>
-          <Text style={styles.totalPrice}>
-            {totalPrice.toLocaleString()}đ ▲
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.paymentNoteContainer}>
-        <Text style={styles.paymentNoteText}>
-          Bạn sẽ chọn hình thức thanh toán ở bước tiếp theo
-        </Text>
-      </View>
-    </SafeAreaView>
+          <View style={styles.paymentNoteContainer}>
+            <Text style={styles.paymentNoteText}>
+              Bạn sẽ chọn hình thức thanh toán ở bước tiếp theo
+            </Text>
+          </View>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 
@@ -352,15 +358,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.9,
   },
-  detailsButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  detailsButtonText: {
-    color: "white",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
   progressContainer: {
     backgroundColor: "white",
     flexDirection: "row",
@@ -368,66 +365,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  progressStep: {
-    alignItems: "center",
-    flex: 1,
-  },
-  activeStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4A90E2",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  completedStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inactiveStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepNumber: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  inactiveStepNumber: {
-    color: "white",
-    fontSize: 12,
-  },
   activeStepText: {
     color: "#4A90E2",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
     textDecorationLine: "underline",
-  },
-  completedStepText: {
-    color: "#4CAF50",
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "bold",
-  },
-  inactiveStepText: {
-    color: "#ccc",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  progressLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 4,
   },
   content: {
     flex: 1,
@@ -529,7 +472,7 @@ const styles = StyleSheet.create({
   routeIcon: {
     alignItems: "center",
     marginHorizontal: 12,
-    paddingTop: 2,
+    paddingTop: 6,
   },
   blueDot: {
     width: 8,
@@ -652,61 +595,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
-  },
-  insuranceCard: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-  },
-  insuranceCardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  insuranceCardDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 16,
-  },
-  policyTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  policyDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  warningBox: {
-    backgroundColor: "#fff3cd",
-    padding: 12,
-    borderRadius: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  warningText: {
-    fontSize: 14,
-    color: "#856404",
-    flex: 1,
-  },
-  insuranceSelectButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  insuranceSelectText: {
-    fontSize: 14,
-    color: "white",
-    textAlign: "center",
   },
   bottomBar: {
     backgroundColor: "white",
