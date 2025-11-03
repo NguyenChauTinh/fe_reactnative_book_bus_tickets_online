@@ -214,7 +214,7 @@ const PaymentScreen = ({ navigation, route }) => {
     const ticketPayload = {
       chiTiet: chiTietVe,
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
-      hinhThucThanhToan: paymentMethod,
+      hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
     };
 
