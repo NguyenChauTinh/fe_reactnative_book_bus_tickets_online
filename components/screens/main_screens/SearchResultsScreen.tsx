@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
-// ====== ICONS (ĐÃ SỬA SANG REACT-NATIVE-SVG) ======
+// ====== ICONS (Giữ nguyên) ======
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
@@ -27,7 +27,6 @@ const BackIcon = () => (
     />
   </Svg>
 );
-
 const FilterIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <Path
@@ -38,7 +37,6 @@ const FilterIcon = () => (
     />
   </Svg>
 );
-
 const SortIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <Path
@@ -49,7 +47,6 @@ const SortIcon = () => (
     />
   </Svg>
 );
-
 const TimeIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="10" stroke="#4A90E2" strokeWidth="2" />
@@ -61,8 +58,6 @@ const TimeIcon = () => (
     />
   </Svg>
 );
-// (Các icon khác)
-// ...
 
 // Helper
 const parsePrice = (priceStr) => {
@@ -71,24 +66,19 @@ const parsePrice = (priceStr) => {
   return Number(priceStr.replace(/[^\d]/g, ""));
 };
 
-// =============================================================
-// ✅ BƯỚC 1: CẬP NHẬT MẢNG GIỜ (CHIA THEO TỪNG TIẾNG)
-// =============================================================
+// ... (Component TimeFilterModal giữ nguyên) ...
 const generateTimeSlots = () => {
   const slots = [{ label: "Tất cả (00:00+)", minutes: 0 }];
-  // Tạo mốc giờ từ 1:00 đến 23:00
   for (let i = 1; i <= 23; i++) {
     const hourString = String(i).padStart(2, "0");
     slots.push({
       label: `${hourString}:00+`,
-      minutes: i * 60, // Chuyển giờ sang phút
+      minutes: i * 60,
     });
   }
   return slots;
 };
-
 const timeSlots = generateTimeSlots();
-
 const TimeFilterModal = ({ isVisible, onClose, onSelectTime, currentTime }) => {
   return (
     <Modal
@@ -137,38 +127,51 @@ const TimeFilterModal = ({ isVisible, onClose, onSelectTime, currentTime }) => {
 };
 
 // =============================================================
-// ✅ BƯỚC 2: MÀN HÌNH CHÍNH (Không thay đổi logic)
+// MÀN HÌNH CHÍNH
 // =============================================================
 export default function SearchResultsScreen({ navigation, route }) {
   const { departureLocation, destination, departureDate, returnDate } =
     route.params;
 
   const [loading, setLoading] = useState(true);
-
-  // State danh sách
   const [allTrips, setAllTrips] = useState([]);
   const [displayedTrips, setDisplayedTrips] = useState([]);
-
-  // State bộ lọc
   const [sortCriteria, setSortCriteria] = useState("time_asc");
   const [isTimeModalVisible, setIsTimeModalVisible] = useState(false);
-  const [timeFilter, setTimeFilter] = useState(0); // Mặc định là 0 (Tất cả)
+  const [timeFilter, setTimeFilter] = useState(0);
+
+  // Lấy ngày giờ hiện tại VÀ ngày tìm kiếm
+  const [todayInfo] = useState(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+    const currentDay = String(now.getDate()).padStart(2, "0");
+    const todayString = `${currentYear}-${currentMonth}-${currentDay}`;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    let formattedSearchDate = "";
+    if (departureDate) {
+      const dateString = departureDate.split(", ")[1];
+      const parts = dateString.split("/");
+      formattedSearchDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    return {
+      todayString,
+      currentMinutes,
+      formattedSearchDate,
+      isSearchingForToday: todayString === formattedSearchDate,
+    };
+  });
 
   // --- HÀM FETCH DỮ LIỆU ---
   useEffect(() => {
     const fetchBusTrips = async () => {
       setLoading(true);
       try {
-        const dateString = departureDate.split(", ")[1];
-        const parts = dateString.split("/");
-        const day = parts[0];
-        const month = parts[1];
-        const year = parts[2];
-        const formattedDate = `${year}-${month}-${day}`;
-
         const response =
           await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
-            formattedDate,
+            todayInfo.formattedSearchDate,
             departureLocation._id,
             destination._id
           );
@@ -186,18 +189,43 @@ export default function SearchResultsScreen({ navigation, route }) {
     if (departureDate && departureLocation?._id && destination?._id) {
       fetchBusTrips();
     }
-  }, [departureDate, departureLocation, destination]);
+  }, [
+    departureDate,
+    departureLocation,
+    destination,
+    todayInfo.formattedSearchDate,
+  ]);
 
   // --- LOGIC LỌC VÀ SẮP XẾP ---
   useEffect(() => {
     let processedTrips = [...allTrips];
 
-    // 1. Lọc theo thời gian (>= mốc giờ đã chọn)
+    // ✅ --- THAY ĐỔI Ở ĐÂY --- ✅
+    // 1. Lọc các chuyến sắp chạy (nếu là hôm nay)
+    if (todayInfo.isSearchingForToday) {
+      // Tính thời gian lọc: giờ hiện tại + 60 phút
+      const filterTime = todayInfo.currentMinutes + 60;
+
+      console.log(
+        `Đang lọc chuyến xe cho HÔM NAY. Giờ hiện tại: ${todayInfo.currentMinutes} phút. Chỉ hiển thị chuyến sau: ${filterTime} phút.`
+      );
+
+      // Giữ lại các chuyến có giờ khởi hành LỚN HƠN mốc thời gian lọc
+      // (trip.gioKhoiHanh > filterTime)
+      // Ví dụ: Giờ hiện tại 06:59 (419 phút). filterTime = 479. Chuyến 08:00 (480 phút) -> 480 > 479 -> HIỂN THỊ.
+      // Ví dụ: Giờ hiện tại 07:00 (420 phút). filterTime = 480. Chuyến 08:00 (480 phút) -> 480 > 480 -> ẨN.
+      processedTrips = processedTrips.filter(
+        (trip) => trip.gioKhoiHanh > filterTime
+      );
+    }
+    // ✅ --- KẾT THÚC THAY ĐỔI --- ✅
+
+    // 2. Lọc theo mốc giờ (do người dùng chọn trong modal)
     processedTrips = processedTrips.filter(
       (trip) => trip.gioKhoiHanh >= timeFilter
     );
 
-    // 2. Sắp xếp
+    // 3. Sắp xếp
     switch (sortCriteria) {
       case "price_asc":
         processedTrips.sort(
@@ -216,10 +244,9 @@ export default function SearchResultsScreen({ navigation, route }) {
     }
 
     setDisplayedTrips(processedTrips);
-  }, [allTrips, sortCriteria, timeFilter]);
+  }, [allTrips, sortCriteria, timeFilter, todayInfo]);
 
   // --- CÁC HÀM XỬ LÝ (handlers) ---
-
   const handleSeatSelection = (trip) => {
     navigation.navigate("SeatSelectionScreen", {
       trip,
@@ -356,7 +383,7 @@ export default function SearchResultsScreen({ navigation, route }) {
 }
 
 // =============================================================
-// ✅ BƯỚC 3: STYLES (ĐÃ THÊM STYLE CHO MODAL)
+// STYLES (Giữ nguyên)
 // =============================================================
 const styles = StyleSheet.create({
   container: {
@@ -533,8 +560,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 22,
-    paddingBottom: 30, // Thêm padding dưới cho an toàn
-    maxHeight: "70%", // Tăng chiều cao tối đa
+    paddingBottom: 30,
+    maxHeight: "70%",
   },
   modalTitle: {
     fontSize: 20,
@@ -550,7 +577,7 @@ const styles = StyleSheet.create({
   timeSlotButtonSelected: {
     backgroundColor: "#E6F0FA",
     borderRadius: 8,
-    borderBottomColor: "#E6F0FA", // Ẩn đường gạch khi được chọn
+    borderBottomColor: "#E6F0FA",
   },
   timeSlotText: {
     fontSize: 16,
@@ -574,7 +601,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // (Các style rác chưa dùng đến)
+  // (Các style rác)
   detailsContainer: {},
   changeButton: {},
   changeButtonText: {},
