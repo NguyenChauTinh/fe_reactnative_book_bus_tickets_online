@@ -11,29 +11,29 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Path, Polygon, Rect, Svg } from "react-native-svg";
 import BookingTimeline from "../main_screens/BookingTimeline";
-
 // SVG Icons
 const BackIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M15 18L9 12L15 6"
       stroke="white"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  </svg>
+  </Svg>
 );
 
 const VietnamFlagIcon = () => (
-  <svg width="24" height="16" viewBox="0 0 24 16">
-    <rect width="24" height="16" fill="#DA020E" />
-    <polygon
+  <Svg width="24" height="16" viewBox="0 0 24 16">
+    <Rect width="24" height="16" fill="#DA020E" />
+    <Polygon
       points="12,2 13.5,6.5 18,6.5 14.5,9.5 16,14 12,11 8,14 9.5,9.5 6,6.5 10.5,6.5"
       fill="#FFFF00"
     />
-  </svg>
+  </Svg>
 );
 
 export default function CustomerInfoScreen({ navigation, route }) {

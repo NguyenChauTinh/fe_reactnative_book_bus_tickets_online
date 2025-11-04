@@ -1,28 +1,26 @@
-import { ApiManager } from "./ApiManager";
+import createApiManager from "./Api_Manager.js";
+
+// const API_BASE_URL =
+//   'http://localhost:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.10:3001/api/v1";
+
+console.log("API_BASE_URL == ", API_BASE_URL);
+
+const tripApiClient = createApiManager(API_BASE_URL);
 
 export const api_trip_schedule_service = {
   getAllDiaDiem: async () => {
-    return ApiManager.get(
-      "trip_schedule_service",
-      "/api/v1/dia-diem/lay-tat-ca-dia-diem"
-    );
+    return tripApiClient.get("/dia-diem/lay-tat-ca-dia-diem");
   },
   getDiaDiemById: async (id) => {
-    return ApiManager.get(
-      "trip_schedule_service",
-      `/api/v1/dia-diem/lay-dia-diem/${id}`
-    );
+    return tripApiClient.get(`/dia-diem/lay-dia-diem/${id}`);
   },
   getActiveDiaDiem: async () => {
-    return ApiManager.get(
-      "trip_schedule_service",
-      "/api/v1/dia-diem/lay-dia-diem-active"
-    );
+    return tripApiClient.get("/dia-diem/lay-dia-diem-active");
   },
   getChuyenXeTheoNgayVaDiaDiem: async (ngayKhoiHanh, diemDiId, diemDenId) => {
-    return ApiManager.get(
-      "trip_schedule_service",
-      `/api/v1/chuyen-xe/theo-ngay-va-dia-diem?ngayKhoiHanh=${ngayKhoiHanh}&diemDiId=${diemDiId}&diemDenId=${diemDenId}`
+    return tripApiClient.get(
+      `/chuyen-xe/theo-ngay-va-dia-diem?ngayKhoiHanh=${ngayKhoiHanh}&diemDiId=${diemDiId}&diemDenId=${diemDenId}`
     );
   },
 
@@ -31,10 +29,9 @@ export const api_trip_schedule_service = {
       type: params?.findType,
       selectedId: params?.relatedId,
     };
-    return ApiManager.get(
-      "trip_schedule_service",
-      "/api/v1/tuyen-duong/lay-dia-diem-ket-noi",
-      { params: apiParams }
-    );
+    // Bây giờ chỉ cần truyền URL và params object
+    return tripApiClient.get("/tuyen-duong/lay-dia-diem-ket-noi", {
+      params: apiParams,
+    });
   },
 };

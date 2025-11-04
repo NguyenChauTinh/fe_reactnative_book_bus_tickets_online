@@ -1,14 +1,17 @@
-import { ApiManager } from "./ApiManager";
+import createApiManager from "./Api_Manager.js";
+
+// const API_BASE_URL =
+//   'http://localhost:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.10:3004/api/v1";
+
+console.log("API_BASE_URL == ", API_BASE_URL);
+
+const apiPromoClient = createApiManager(API_BASE_URL);
 
 export const api_promotion_service = {
-  // khuyenMaiRouter.get('/tim-ap-dung', khuyenMaiController.timKhuyenMaiApDung);
-  // http://localhost:3004/api/v1/khuyen-mai/tim-ap-dung?ngay=2025-10-31T17%3A00%3A00.000Z&gio=630
+  
   timKhuyenMaiApDung: async (ngay, gio, soLuongVeChay) => {
     const params = { ngay, gio, soLuongVeChay };
-    return ApiManager.get(
-      "api_promotion_service",
-      "/api/v1/khuyen-mai/tim-ap-dung",
-      { params }
-    );
+    return apiPromoClient.get("/khuyen-mai/tim-ap-dung", { params });
   },
 };

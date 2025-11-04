@@ -9,14 +9,14 @@ export default function Header() {
     <View style={styles.container}>
       <View style={styles.leftSection}>
         <VexereIcon />
-        <Text style={styles.logo}>Call me</Text>
+        <Text style={styles.logo}>Việt Tân Phát</Text>
       </View>
 
       <TouchableOpacity
         style={styles.rightSection}
         onPress={() => navigation.navigate("AccountTab" as never)}
       >
-        <Text style={styles.greeting}>Chào Tình</Text>
+        <Text style={styles.greeting}>Xin chào</Text>
         <ChevronRightIcon />
       </TouchableOpacity>
     </View>

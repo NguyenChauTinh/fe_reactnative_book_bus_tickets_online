@@ -13,13 +13,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// ✅ SỬA 1: Import thêm Path, Rect, Circle và Svg
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
+import { api_booking_service } from "../../../apis/api_booking_service";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
 import PaymentCountdown from "./PaymentCountdown";
 
-// --- ICONS (✅ SỬA LẠI BackIcon) ---
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
@@ -216,17 +215,17 @@ const PaymentScreen = ({ navigation, route }) => {
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
+      userId : "userId"
     };
 
-    try {
+try {
       setLoading(true);
-      const response = await axios.post(
-        "http://localhost:3005/api/v1/ve-xe",
-        ticketPayload
-      );
-      if (response.data.success) {
+      
+      const response = await api_booking_service.createTicket(ticketPayload);
+      console.log("response = ", response);
+      if (response.success) {
         navigation.navigate("BookingSuccessScreen", {
-          ticketInfo: response.data.data,
+          ticketInfo: response.data,
           trip,
           departureLocation,
           destination,
@@ -237,7 +236,7 @@ const PaymentScreen = ({ navigation, route }) => {
       } else {
         Alert.alert(
           "Lỗi",
-          response.data.message || "Có lỗi xảy ra khi đặt vé."
+          response.message || "Có lỗi xảy ra khi đặt vé." 
         );
       }
     } catch (error) {
@@ -263,7 +262,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://localhost:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.10:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,

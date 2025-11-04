@@ -1,7 +1,6 @@
 // BookingTimeline.tsx
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-
 // 1. Định nghĩa các bước
 const STEPS = [
   { number: 1, name: "Chọn chỗ" },

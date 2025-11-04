@@ -1,4 +1,3 @@
-"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -11,21 +10,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// Giả sử bạn có file api service này
+import { Path, Rect, Svg } from "react-native-svg";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import BookingTimeline from "../main_screens/BookingTimeline";
-
-// SVG Icons (Giữ nguyên không thay đổi)
 const BackIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path
+
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path
       d="M15 18L9 12L15 6"
       stroke="white"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  </svg>
+  </Svg>
 );
 
 const CabinIcon = ({ status, cabinNumber }) => {
@@ -45,10 +43,12 @@ const CabinIcon = ({ status, cabinNumber }) => {
     fillColor = "#ffffff";
   }
 
-  return (
+ return (
     <View style={styles.cabinContainer}>
-      <svg width="40" height="40" viewBox="0 0 32 32">
-        <rect
+      {/* <svg> -> <Svg> */}
+      <Svg width="40" height="40" viewBox="0 0 32 32">
+        {/* <rect> -> <Rect> */}
+        <Rect
           x="4"
           y="6"
           width="24"
@@ -58,7 +58,7 @@ const CabinIcon = ({ status, cabinNumber }) => {
           stroke={strokeColor}
           strokeWidth="1"
         />
-        <rect
+        <Rect
           x="6"
           y="8"
           width="20"
@@ -67,7 +67,7 @@ const CabinIcon = ({ status, cabinNumber }) => {
           fill={strokeColor}
           opacity="0.3"
         />
-        <rect
+        <Rect
           x="6"
           y="14"
           width="20"
@@ -76,7 +76,7 @@ const CabinIcon = ({ status, cabinNumber }) => {
           fill={strokeColor}
           opacity="0.3"
         />
-        <rect
+        <Rect
           x="4"
           y="22"
           width="24"
@@ -87,17 +87,19 @@ const CabinIcon = ({ status, cabinNumber }) => {
           strokeWidth="1"
         />
         {status === "occupied" && (
-          <path d="M8 10L24 22M24 10L8 22" stroke="#999" strokeWidth="2" />
+          // <path> -> <Path>
+          <Path d="M8 10L24 22M24 10L8 22" stroke="#999" strokeWidth="2" />
         )}
         {status === "selected" && (
-          <path
+          // <path> -> <Path>
+          <Path
             d="M10 16L14 20L22 12"
             stroke="white"
             strokeWidth="2"
             fill="none"
           />
         )}
-      </svg>
+      </Svg>
       <Text style={[styles.cabinNumber, { color: textColor }]}>
         {cabinNumber}
       </Text>
@@ -122,8 +124,10 @@ const SeatIcon = ({ status, seatNumber }) => {
 
   return (
     <View style={styles.seatContainer}>
-      <svg width="40" height="40" viewBox="0 0 32 32">
-        <rect
+      {/* <svg> -> <Svg> */}
+      <Svg width="40" height="40" viewBox="0 0 32 32">
+        {/* <rect> -> <Rect> */}
+        <Rect
           x="4"
           y="6"
           width="24"
@@ -133,7 +137,7 @@ const SeatIcon = ({ status, seatNumber }) => {
           stroke={strokeColor}
           strokeWidth="1"
         />
-        <rect
+        <Rect
           x="6"
           y="8"
           width="20"
@@ -142,7 +146,7 @@ const SeatIcon = ({ status, seatNumber }) => {
           fill={strokeColor}
           opacity="0.3"
         />
-        <rect
+        <Rect
           x="6"
           y="14"
           width="20"
@@ -151,7 +155,7 @@ const SeatIcon = ({ status, seatNumber }) => {
           fill={strokeColor}
           opacity="0.3"
         />
-        <rect
+        <Rect
           x="4"
           y="22"
           width="24"
@@ -163,17 +167,19 @@ const SeatIcon = ({ status, seatNumber }) => {
         />
 
         {status === "occupied" && (
-          <path d="M8 10L24 22M24 10L8 22" stroke="#999" strokeWidth="2" />
+          // <path> -> <Path>
+          <Path d="M8 10L24 22M24 10L8 22" stroke="#999" strokeWidth="2" />
         )}
         {status === "selected" && (
-          <path
+          // <path> -> <Path>
+          <Path
             d="M10 16L14 20L22 12"
             stroke="white"
             strokeWidth="2"
             fill="none"
           />
         )}
-      </svg>
+      </Svg>
       <Text style={[styles.seatNumber, { color: textColor }]}>
         {seatNumber}
       </Text>

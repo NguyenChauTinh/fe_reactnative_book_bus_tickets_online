@@ -21,13 +21,11 @@ export default function DepartureScreen({ navigation, route }) {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        // ✅ THAY ĐỔI: Gọi API mới với tham số
         const params = {
-          findType: "don", // Màn hình này tìm điểm ĐÓN
-          relatedId: destinationId, // ID của điểm ĐẾN đã chọn (hoặc null)
+          findType: "don", 
+          relatedId: destinationId, 
         };
 
-        // Giả sử bạn đã tạo hàm 'getDiaDiemKetNoi' trong service
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
@@ -36,15 +34,13 @@ export default function DepartureScreen({ navigation, route }) {
           response
         );
 
-        // ✅ Gán dữ liệu vào state
         if (Array.isArray(response)) {
           setLocations(response);
         } else if (response?.data) {
-          // tuỳ theo response structure (Axios hoặc fetch)
           setLocations(response.data);
         }
       } catch (error) {
-        console.error("Lỗi khi lấy danh sách địa điểm đón:", error);
+        console.error("Lỗi khi lấy danh sách địa điểm đón:", error.message);
       }
     };
 

@@ -8,25 +8,33 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { Circle, Path, Svg } from 'react-native-svg';
 // --- ICONS ---
-const CheckIcon = () => (
-  <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-    <path
-      d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
-      stroke="#4CAF50"
-      strokeWidth="2.5"
+const COLORS = {
+  primary: '#007AFF', // Màu xanh dương của iOS
+  success: '#34C759', // Màu xanh lá cây của iOS
+  white: '#FFFFFF',
+  textPrimary: '#000000',
+  textSecondary: '#6C757D',
+  background: '#F0F2F5',
+  cardBackground: '#FFFFFF',
+  borderColor: '#E0E0E0',
+};
+
+const CheckmarkIcon = () => (
+  // <svg> -> <Svg>
+  <Svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+    {/* <circle> -> <Circle> */}
+    <Circle cx="12" cy="12" r="10" fill={COLORS.success} />
+    {/* <path> -> <Path> */}
+    <Path
+      d="M9 12L11 14L15 10"
+      stroke={COLORS.white}
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path
-      d="M22 4L12 14.01l-3-3"
-      stroke="#4CAF50"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
+  </Svg>
 );
 
 // Hàm tiện ích để hiển thị tên phương thức thanh toán
@@ -55,7 +63,7 @@ const BookingSuccessScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.successContainer}>
-          <CheckIcon />
+          <CheckmarkIcon />
           <Text style={styles.successTitle}>Đặt vé thành công!</Text>
           <Text style={styles.successSubtitle}>
             Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi.
