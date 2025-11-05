@@ -44,4 +44,8 @@ export const api_trip_schedule_service = {
   getChuyenXeByID: async (id) => {
     return tripApiClient.get(`/chuyen-xe/${id}`);
   },
+
+  getChuyenXeByObjId: async (id) => {
+    return tripApiClient.get(`/chuyen-xe/by-obj-id/${id}`);
+  },
 };

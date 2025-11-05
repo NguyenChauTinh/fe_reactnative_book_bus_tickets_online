@@ -3,6 +3,7 @@
 
 import axios from "axios";
 import { api_booking_service } from "./api_booking_service";
+import { api_promotion_service } from "./api_promotion_service";
 import { api_trip_schedule_service } from "./api_trip_schedule_service";
 
 // Hàm tiện ích (Giữ nguyên)
@@ -100,21 +101,55 @@ const callYourTripAPI = async (departure, destination, date) => {
   }
 };
 
-// (Hàm callYourSeatAPI giữ nguyên)
-const callYourSeatAPI = async (tripId) => {
-  console.log(`[AI DEBUG] 2. Đang lấy GHẾ + ĐIỂM ĐÓN/TRẢ cho: ${tripId}`);
+// (Hàm callYourSeatAPI giữ nguyên như file bạn cung cấp)
+const callYourSeatAPI = async (tripId, numSeats) => {
+  console.log(
+    `[AI DEBUG] 2. Đang lấy GHẾ + ĐIỂM ĐÓN/TRẢ cho: ${tripId} (Số vé: ${numSeats})`
+  );
 
   try {
-    // 1. Lấy thông tin chuyến xe
-    const seatResponse = await api_trip_schedule_service.getChuyenXeByID(
-      tripId
-    );
+    // 1. Lấy thông tin chuyến xe (song song với lấy vé)
+    // tripId ở đây là _id
+    const tripDetailsPromise =
+      api_trip_schedule_service.getChuyenXeByObjId(tripId);
+
+    // 2. LẤY DANH SÁCH GHẾ ĐÃ ĐẶT (API THẬT)
+    let bookedSeats = [];
+    try {
+      console.log(
+        `[AI DEBUG] 2.1. Đang lấy danh sách vé đã đặt cho: ${tripId}`
+      );
+      // tripId ở đây là _id
+      const bookedTicketsResponse =
+        await api_booking_service.getTicketsByChuyenXeId(tripId);
+
+      if (bookedTicketsResponse.success && bookedTicketsResponse.data) {
+        console.log(
+          "[AI DEBUG] 2.1. Vé đã đặt trả về:",
+          bookedTicketsResponse.data
+        );
+
+        bookedSeats = bookedTicketsResponse.data.flatMap((ve) =>
+          ve.chiTiet.map((detail) => detail.maChoNgoi)
+        );
+        console.log("[AI DEBUG] 2.1. OK. Các ghế đã đặt:", bookedSeats);
+      } else {
+        console.warn(
+          "[AI DEBUG] 2.1. Không tìm thấy vé đã đặt (hoặc lỗi API vé)."
+        );
+      }
+    } catch (ticketError) {
+      console.warn(
+        `[AI DEBUG] 2.1. LỖI (Không nghiêm trọng) khi lấy vé:`,
+        ticketError.message
+      );
+    }
+
+    // Chờ thông tin chuyến xe
+    const seatResponse = await tripDetailsPromise;
 
     if (!seatResponse || !seatResponse.success) {
-      console.error(
-        "[AI DEBUG] 2. LỖI: Không tìm thấy chuyến xe với ID/Mã:",
-        tripId
-      );
+      // ... (xử lý lỗi)
       return {
         success: false,
         error: "TRIP_NOT_FOUND",
@@ -123,42 +158,30 @@ const callYourSeatAPI = async (tripId) => {
     }
 
     const trip = seatResponse.data;
-    let tuyenDuongData = trip.tuyenDuong; // Đây là ID (ví dụ: "68ddf...")
+    let tuyenDuongData = trip.tuyenDuong;
 
-    // --- BƯỚC MỚI: PHẢI LẤY (POPULATE) TUYẾN ĐƯỜNG ---
+    // 3. Populate Tuyến đường (Giữ nguyên)
     if (tuyenDuongData && typeof tuyenDuongData === "string") {
-      console.log(
-        `[AI DEBUG] 2.1. Tuyến đường là ID ("${tuyenDuongData}"), đang fetch chi tiết...`
-      );
       try {
         const tuyenDuongResponse = await axios.get(
           `${TUYEN_DUONG_API_URL}/${tuyenDuongData}`
         );
         if (tuyenDuongResponse.data) {
-          tuyenDuongData = tuyenDuongResponse.data; // Bây giờ là object
-          console.log("[AI DEBUG] 2.1. OK. Đã lấy chi tiết tuyến đường.");
+          tuyenDuongData = tuyenDuongResponse.data;
         } else {
           throw new Error("API tuyến đường trả về rỗng.");
         }
       } catch (tuyenDuongError) {
-        console.error(
-          "[AI DEBUG] 2.1. LỖI: Không fetch được tuyến đường:",
-          tuyenDuongError.message
-        );
         return {
           success: false,
           message: "Lỗi: Không thể lấy chi tiết tuyến đường.",
         };
       }
     }
-    // --- KẾT THÚC BƯỚC MỚI ---
 
     const chiTietTuyen = tuyenDuongData?.chiTietTuyen;
     if (!chiTietTuyen || !Array.isArray(chiTietTuyen)) {
-      console.error(
-        "[AI DEBUG] 2. LỖI: chiTietTuyen không phải là mảng.",
-        tuyenDuongData
-      );
+      // ... (xử lý lỗi)
       return {
         success: false,
         error: "ROUTE_DETAILS_MISSING",
@@ -166,18 +189,23 @@ const callYourSeatAPI = async (tripId) => {
       };
     }
 
-    // 2. Lấy sơ đồ ghế
+    // ✅ 4. LỌC SẴN GHẾ CHO AI
     const soDoGhe = trip.loaiXe.soDoGhe;
-    // !!! CẢNH BÁO: Vẫn đang thiếu API lấy ghế đã đặt
-    const bookedSeats = [];
-    const availableSeats = soDoGhe
-      .filter((ghe) => ghe.trangThai === true)
-      .map((ghe) => ({
-        seatId: ghe.maSoGhe,
-        available: !bookedSeats.includes(ghe.maSoGhe),
-      }));
+    const seatStatus = {
+      available: [],
+      unavailable: [],
+    };
+    soDoGhe
+      .filter((ghe) => ghe.trangThai === true) // Lọc ghế (bỏ lối đi)
+      .forEach((ghe) => {
+        if (bookedSeats.includes(ghe.maSoGhe)) {
+          seatStatus.unavailable.push(ghe.maSoGhe);
+        } else {
+          seatStatus.available.push(ghe.maSoGhe);
+        }
+      });
 
-    // 3. XỬ LÝ ĐIỂM ĐÓN
+    // 5. Xử lý Điểm đón (Giữ nguyên)
     const departureTimeInMinutes = trip.gioKhoiHanh || 0;
     const sortedPickupPoints = chiTietTuyen
       .filter((diem) => diem.loaiDiem === "don")
@@ -198,7 +226,7 @@ const callYourSeatAPI = async (tripId) => {
       };
     });
 
-    // 4. XỬ LÝ ĐIỂM TRẢ
+    // 6. Xử lý Điểm trả (Giữ nguyên)
     const totalDuration = tuyenDuongData.thoiGian || 0;
     const arrivalTimeInMinutes = departureTimeInMinutes + totalDuration;
 
@@ -219,12 +247,40 @@ const callYourSeatAPI = async (tripId) => {
       };
     });
 
-    console.log("[AI DEBUG] 2. OK. Trả về Ghế, Điểm đón, Điểm trả.");
+    // 7. Tìm Khuyến mãi (Giữ nguyên)
+    let availablePromos = [];
+    if (numSeats && numSeats > 0) {
+      try {
+        const promoResponse = await api_promotion_service.timKhuyenMaiApDung(
+          trip.ngayKhoiHanh,
+          trip.gioKhoiHanh,
+          numSeats
+        );
+        if (promoResponse.success && promoResponse.data.length > 0) {
+          promoResponse.data.forEach((campaign) => {
+            campaign.lines.forEach((line) => {
+              availablePromos.push({
+                maLine: line.maLine,
+                tenKhuyenMai: campaign.tenKhuyenMai,
+                ghiChu: line.ghiChu || campaign.tenKhuyenMai,
+              });
+            });
+          });
+        }
+      } catch (promoError) {
+        // (Bỏ qua lỗi KM)
+      }
+    }
+
+    console.log(
+      "[AI DEBUG] 2. OK. Trả về Ghế (đã lọc), Điểm đón, Điểm trả, KM."
+    );
     return {
       success: true,
-      seats: availableSeats,
+      seats: seatStatus, // <-- TRẢ VỀ OBJECT ĐÃ LỌC
       pickupPoints: formattedPickupPoints,
       dropoffPoints: formattedDropoffPoints,
+      promotions: availablePromos,
     };
   } catch (error) {
     console.error(
@@ -239,14 +295,15 @@ const callYourSeatAPI = async (tripId) => {
   }
 };
 
-// ✅ SỬA 1: HÀM `callYourBookingAPI` (Xử lý email = null)
+// ✅ SỬA 1: HÀM `callYourBookingAPI` (Dùng getChuyenXeByObjId)
 const callYourBookingAPI = async (
   tripId,
   seatIds,
   passengerInfo,
   pickupPointName,
   dropoffPointName,
-  paymentMethod
+  paymentMethod,
+  promoCode // <-- Tham số mới
 ) => {
   console.log(
     `[AI DEBUG] 4. BẮT ĐẦU: callYourBookingAPI (Đặt vé thật)
@@ -255,12 +312,17 @@ const callYourBookingAPI = async (
     Khách: ${passengerInfo.name},
     Đón: ${pickupPointName},
     Trả: ${dropoffPointName},
-    Thanh toán: ${paymentMethod}`
+    Thanh toán: ${paymentMethod},
+    Mã KM: ${promoCode || "Không có"}`
   );
 
   try {
-    // BƯỚC 1: LẤY THÔNG TIN CHUYẾN XE (ĐỂ LẤY ID VÀ THÔNG TIN TÍNH GIÁ)
-    const tripDetails = await api_trip_schedule_service.getChuyenXeByID(tripId);
+    // BƯỚC 1: LẤY THÔNG TIN CHUYẾN XE
+    // --- SỬA Ở ĐÂY ---
+    // (tripId ở đây là _id)
+    const tripDetails = await api_trip_schedule_service.getChuyenXeByObjId(
+      tripId
+    );
     if (!tripDetails || !tripDetails.success) {
       return { success: false, message: "Lỗi: Không tìm thấy chuyến xe." };
     }
@@ -268,23 +330,28 @@ const callYourBookingAPI = async (
     const tripData = tripDetails.data;
     const chuyenXeId = tripData._id; // _id (ví dụ: 6908b973...)
 
-    // BƯỚC 2: GỌI API TÍNH GIÁ VÉ THẬT (THAY THẾ MOCK)
-    let giaVeCoBan = 0; // Giá mặc định nếu lỗi
+    // BƯỚC 2: GỌI API TÍNH GIÁ VÉ THẬT
+    let giaVeCoBan = 0;
     try {
       const priceParams = {
-        tuyenDuongId: tripData.tuyenDuong, // ID tuyến đường
-        loaiXeId: tripData.loaiXe._id, // ID loại xe
-        ngayHienTai: tripData.ngayKhoiHanh, // Ngày khởi hành
+        tuyenDuongId: tripData.tuyenDuong, // Đây là ID tuyến đường (đã populate)
+        loaiXeId: tripData.loaiXe._id,
+        ngayHienTai: tripData.ngayKhoiHanh,
       };
 
-      console.log("[AI DEBUG] 4.1. Đang gọi API tính giá vé với:", priceParams);
+      // (Xử lý nếu tuyenDuongId là object)
+      if (
+        typeof priceParams.tuyenDuongId === "object" &&
+        priceParams.tuyenDuongId !== null
+      ) {
+        priceParams.tuyenDuongId = priceParams.tuyenDuongId._id;
+      }
+
       const priceResponse = await axios.get(GIAVE_API_URL, {
         params: priceParams,
       });
-
       if (priceResponse.data.success) {
         giaVeCoBan = priceResponse.data.soTienThanhToan;
-        console.log("[AI DEBUG] 4.1. OK. Giá vé cơ bản là:", giaVeCoBan);
       } else {
         throw new Error(priceResponse.data.message || "Không tìm thấy giá");
       }
@@ -293,27 +360,110 @@ const callYourBookingAPI = async (
         "[AI DEBUG] 4.1. LỖI: Không lấy được giá vé:",
         priceError.message
       );
-      // Có thể dùng giá MOCK ở đây nếu muốn, hoặc báo lỗi
       return {
         success: false,
         message: `Lỗi: Không thể lấy được giá vé cho chuyến đi (${priceError.message})`,
       };
     }
 
-    // BƯỚC 3: CHUẨN BỊ PAYLOAD VÉ
-    const chiTietVe = seatIds.map((seatMa) => {
+    // TỔNG TIỀN TRƯỚC GIẢM
+    const priceBeforeDiscount = giaVeCoBan * seatIds.length;
+    let discountAmount = 0;
+    let selectedPromoLine = null; // Dùng để lưu campaignId
+
+    // BƯỚC 3: XỬ LÝ KHUYẾN MÃI (NẾU CÓ)
+    if (promoCode) {
+      console.log(`[AI DEBUG] 4.2. Đang kiểm tra Mã KM: ${promoCode}`);
+      try {
+        const promoResponse = await api_promotion_service.timKhuyenMaiApDung(
+          tripData.ngayKhoiHanh,
+          tripData.gioKhoiHanh,
+          seatIds.length
+        );
+
+        if (promoResponse.success && promoResponse.data.length > 0) {
+          // Tìm line khuyến mãi khớp với mã
+          for (const campaign of promoResponse.data) {
+            const line = campaign.lines.find(
+              (l) => l.maLine.toLowerCase() === promoCode.toLowerCase()
+            );
+            if (line) {
+              selectedPromoLine = {
+                ...line,
+                campaignId: campaign._id,
+              };
+              break;
+            }
+          }
+        }
+
+        if (!selectedPromoLine) {
+          console.error(
+            `[AI DEBUG] 4.2. LỖI: Mã KM "${promoCode}" không hợp lệ.`
+          );
+          return {
+            success: false,
+            message: `Mã khuyến mãi "${promoCode}" không hợp lệ hoặc không áp dụng được cho chuyến này.`,
+          };
+        }
+
+        // TÍNH TOÁN GIẢM GIÁ (Logic từ PaymentScreen.tsx)
+        const { loaiKhuyenMai, chiTiet } = selectedPromoLine;
+        if (loaiKhuyenMai === "GIAM_PHAN_TRAM") {
+          discountAmount = priceBeforeDiscount * (chiTiet.phanTramGiam / 100);
+          if (
+            chiTiet.soTienGiamToiDa &&
+            discountAmount > chiTiet.soTienGiamToiDa
+          )
+            discountAmount = chiTiet.soTienGiamToiDa;
+        } else if (loaiKhuyenMai === "GIAM_TIEN") {
+          discountAmount = chiTiet.soTienGiam;
+        } else if (loaiKhuyenMai === "TANG_VE" && seatIds.length > 0) {
+          discountAmount = giaVeCoBan * (chiTiet.soLuongVeTang || 1);
+        }
+
+        console.log(
+          `[AI DEBUG] 4.2. OK. Áp dụng KM thành công. Giảm: ${discountAmount}`
+        );
+      } catch (promoError) {
+        console.error(
+          "[AI DEBUG] 4.2. LỖI: API khuyến mãi:",
+          promoError.message
+        );
+        return { success: false, message: "Lỗi khi kiểm tra khuyến mãi." };
+      }
+    }
+
+    // TỔNG TIỀN SAU GIẢM
+    const finalPrice = priceBeforeDiscount - discountAmount;
+
+    // BƯỚC 4: PHÂN BỔ TIỀN GIẢM VÀ CHUẨN BỊ PAYLOAD VÉ
+    const numTickets = seatIds.length;
+    let discountDistributed = 0;
+    const discountPerTicket =
+      Math.round((discountAmount / numTickets) * 1000) / 1000;
+
+    const chiTietVe = seatIds.map((seatMa, index) => {
+      let ticketDiscount = 0;
+      if (index < numTickets - 1) {
+        ticketDiscount = discountPerTicket;
+        discountDistributed += ticketDiscount;
+      } else {
+        ticketDiscount = discountAmount - discountDistributed;
+        ticketDiscount = Math.round(ticketDiscount * 1000) / 1000;
+      }
+
       return {
         chuyenXe: chuyenXeId,
         tenKhachHang: passengerInfo.name,
         soDienThoai: passengerInfo.phone,
-        // --- SỬA Ở ĐÂY ---
-        email: passengerInfo.email || "", // Gửi chuỗi rỗng nếu không có email
+        email: passengerInfo.email || "",
         maChoNgoi: seatMa,
         diemDon: pickupPointName,
         diemTra: dropoffPointName,
-        giaVeCoBan: giaVeCoBan, // <-- SỬ DỤNG GIÁ VÉ THẬT
+        giaVeCoBan: giaVeCoBan,
         phuThu: 0,
-        giamGia: 0,
+        giamGia: ticketDiscount, // <-- Gán tiền giảm đã chia
         trangThaiChiTiet:
           paymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
         vnpTransactionNo: null,
@@ -322,18 +472,28 @@ const callYourBookingAPI = async (
 
     const ticketPayload = {
       chiTiet: chiTietVe,
-      maGiamGia: null,
+      maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
       userId: "userId",
     };
 
-    // BƯỚC 4: GỌI API ĐẶT VÉ
-    console.log("[AI DEBUG] 4.2. Đang gọi api_booking_service.createTicket...");
+    // BƯỚC 5: GỌI API ĐẶT VÉ
+    console.log("[AI DEBUG] 4.3. Đang gọi api_booking_service.createTicket...");
     const response = await api_booking_service.createTicket(ticketPayload);
 
-    console.log("[AI DEBUG] 4.2. OK. Kết quả đặt vé:", response);
-    return response;
+    // BƯỚC 6: TRẢ VỀ KẾT QUẢ THÀNH CÔNG (KÈM GIÁ)
+    if (response.success) {
+      console.log("[AI DEBUG] 4.3. OK. Đặt vé thành công.");
+      return {
+        ...response,
+        finalPrice: finalPrice, // Gửi kèm giá cuối
+        discountAmount: discountAmount, // Gửi kèm tiền giảm
+      };
+    } else {
+      console.error("[AI DEBUG] 4.3. LỖI: Đặt vé thất bại.", response);
+      return response;
+    }
   } catch (error) {
     console.error(
       "[AI DEBUG] LỖI NGHIÊM TRỌNG trong callYourBookingAPI:",
@@ -351,7 +511,7 @@ const callYourBookingAPI = async (
 const API_KEY = "AIzaSyAaKOXhDKTGKFDH0GvfzEkwR5tabN7Vs14"; // Thay bằng API key của bạn
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
 
-// ✅ SỬA 2: `systemPrompt` (Câu hỏi 2.4)
+// ✅ SỬA 2: `systemPrompt` (Dạy AI dùng `id` thay vì `maChuyenXe`)
 const systemPrompt = `
   Bạn là trợ lý AI chính thức của Nhà xe An Vui.
   Nhiệm vụ của bạn là giúp hành khách tìm kiếm chuyến xe,
@@ -360,65 +520,82 @@ const systemPrompt = `
   - Luôn sử dụng tên "Nhà xe An Vui" khi giới thiệu hoặc xác nhận.
   - Bạn không cần hỏi người dùng muốn đi nhà xe nào.
   - Ngày hôm nay là: ${new Date().toLocaleDateString("vi-VN")}
+  - KHÔNG BAO GIỜ được trả lời bằng các câu xác nhận trung gian như "Tuyệt vời, tôi sẽ kiểm tra...",
+    hoặc "OK, tôi sẽ tìm...". Bạn phải gọi tool (functionCall) ngay lập tức.
 
   --- QUAN TRỌNG: HƯỚNG DẪN XỬ LÝ DỮ LIỆU API ---
   
   **1. Khi bạn gọi tool \`find_trips\` (TÌM CHUYẾN):**
      - Dữ liệu chuyến xe nằm trong mảng \`functionResult.data\`.
      - Nếu \`data\` rỗng, báo không tìm thấy chuyến.
-     - Với MỖI CHUYẾN XE, hãy đọc: \`maChuyenXe\`, \`departureTime\`, \`arrivalTime\`, \`price\`, \`seatsLeft\`, \`busType\`.
-     - ===> BẠN PHẢI GHI NHỚ \`maChuyenXe\` (Rất quan trọng) <===
-     - ===> BẠN KHÔNG ĐƯỢC HIỂN THỊ \`maChuyenXe\` CHO KHÁCH HÀNG <===
+     - Với MỖI CHUYẾN XE, hãy đọc: \`id\` (đây là ID thật), \`departureTime\`, \`arrivalTime\`, \`price\`, \`seatsLeft\`, \`busType\`.
+     - ===> BẠN PHẢI GHI NHỚ \`id\` (Rất quan trọng) <===
+     - ===> BẠN KHÔNG ĐƯỢC HIỂN THỊ \`id\` CHO KHÁCH HÀNG <===
+     
      - **Cách trả lời mẫu (KHÔNG HIỂN THỊ MÃ):**
        "Tôi tìm thấy 2 chuyến đi phù hợp:
-       1. Chuyến 19:30 (Loại xe: Limousine 24 phòng đôi), đến lúc 23:55, giá 500.000 ₫.
-       2. Chuyến 22:00 (Loại xe: Limousine 34 phòng đơn), đến lúc 02:25, giá 350.000 ₫.
+       1. Chuyến 19:30 (Loại xe: Limousine 24 phòng đôi), đến lúc 23:55, giá 500.000 ₫. **Còn [seatsLeft].**
+       2. Chuyến 22:00 (Loại xe: Limousine 34 phòng đơn), đến lúc 02:25, giá 350.000 ₫. **Còn [seatsLeft].**
        
-       Bạn muốn chọn chuyến nào (ví dụ: 'chuyến 19:30') để tôi kiểm tra ghế không?"
+       Bạn muốn chọn chuyến nào (ví dụ: 'chuyến 19:30') và **dự định đi mấy người** để tôi kiểm tra ghế và khuyến mãi không?"
+     - **Nếu người dùng trả lời (ví dụ: 'chuyến 19:30, 2 người'):** BẠN PHẢI GỌI TOOL \`get_available_seats(tripId, numSeats)\` NGAY LẬP TỨC (với tripId là \`id\` bạn đã nhớ).
 
   **2. Khi bạn gọi tool \`get_available_seats\` (LẤY GHẾ):**
-     - Bạn phải gửi \`maChuyenXe\` (mà bạn đã nhớ ở bước 1) làm tham số \`tripId\`.
-     - Bạn sẽ nhận lại một object chứa 3 mảng: \`seats\`, \`pickupPoints\`, \`dropoffPoints\`.
+     - Bạn phải gửi \`id\` (mà bạn đã nhớ ở bước 1) làm tham số \`tripId\`.
+     - Bạn sẽ nhận lại một object chứa: \`seats\`, \`pickupPoints\`, \`dropoffPoints\`, \`promotions\`.
      
      **QUY TRÌNH HỎI KHÁCH (BẮT BUỘC THEO THỨ TỰ):**
      
-     - **BƯỚC 2.1 (HỎI GHẾ):**
-       - Liệt kê các ghế CÒN TRỐNG (ví dụ: A1, B1, C2) từ mảng \`functionResult.seats\`.
-       - **Cách hỏi mẫu:** "Chuyến này còn các ghế trống sau: A1, B1, C2, D4. Bạn muốn chọn ghế nào? (Bạn có thể chọn một hoặc nhiều ghế)"
+     - **BƯỚC 2.1 (TRẢ LỜI ĐẦU TIÊN - HỎI GHẾ & BÁO KM):**
+       - **ĐỌC DỮ LIỆU GHẾ:** Bạn sẽ nhận được \`functionResult.seats\` có dạng \`{ available: ["A1", "B2"], unavailable: ["A3"] }\`.
+       - BẠN PHẢI duyệt mảng \`functionResult.seats.available\` và liệt kê các ghế đó.
+       
+       - **Cách hỏi mẫu (Có KM):** "Chuyến này còn các ghế trống sau: [danh sách ghế từ seats.available]. 
+           Tuyệt vời! Vì bạn đi [X] người, Nhà xe An Vui đang có các khuyến mãi sau:
+           1. Mã \`[maLine]\`: [ghiChu]
+           2. Mã \`[maLine]\`: [ghiChu]
+           (Bạn có thể chọn mã ở bước sau).
+           Bây giờ, bạn muốn chọn ghế nào? (Ví dụ: 'A1, B1')"
+       - **Cách hỏi mẫu (Không KM):** "Chuyến này còn các ghế trống sau: [danh sách ghế từ seats.available]. Bạn muốn chọn ghế nào? (Bạn có thể chọn một hoặc nhiều ghế)"
+       - **Cách hỏi mẫu (Hết ghế):** "Rất tiếc, chuyến xe này đã hết ghế trống (mảng seats.available bị rỗng). Bạn có muốn chọn chuyến khác không?"
      
-     - **BƯỚC 2.2 (HỎI ĐIỂM ĐÓN):**
-       - SAU KHI khách chọn ghế, bạn liệt kê các điểm đón từ mảng \`functionResult.pickupPoints\`.
+     - **BƯỚC 2.2 (KHÁCH TRẢ LỜI - HỎI ĐIỂM ĐÓN):**
+       - (Giữ nguyên)
        - **Cách hỏi mẫu:** "OK, tôi giữ ghế [ghế khách chọn]. Bạn muốn đón tại điểm nào sau đây?
          1. [07:00] Bến xe An Sương
          2. [07:15] Ngã 4 Ga
          (Vui lòng chọn 1 điểm đón)"
 
-     - **BƯỚC 2.3 (HỎI ĐIỂM TRẢ):**
-       - SAU KHI khách chọn điểm đón, bạn liệt kê các điểm trả từ mảng \`functionResult.dropoffPoints\`.
+     - **BƯỚC 2.3 (KHÁCH TRẢ LỜI - HỎI ĐIỂM TRẢ):**
+       - (Giữ nguyên)
        - **Cách hỏi mẫu:** "OK, bạn sẽ lên xe tại [điểm đón khách chọn]. Bạn muốn trả tại điểm nào sau đây?
          1. [14:00] Bến xe Ninh Sơn
          2. [14:15] Chợ Ninh Sơn
          (Vui lòng chọn 1 điểm trả)"
 
-     - **BƯỚC 2.4 (HỎI THÔNG TIN):**
+     - **BƯỚC 2.4 (KHÁCH TRẢ LỜI - HỎI THÔNG TIN):**
        - SAU KHI khách chọn điểm trả, bạn hỏi thông tin cuối cùng.
-       - **Cách hỏi mẫu:** "Tuyệt vời! Vui lòng cho tôi biết **Tên** và **Số điện thoại** của bạn. (Nếu có Email, bạn cũng có thể cung cấp để nhận vé điện tử)"
+       - **Cách hỏi mẫu (Nếu trước đó CÓ KM):** "Tuyệt vời! Vui lòng cho tôi biết **Tên** và **Số điện thoại** của bạn. Bạn có muốn dùng một trong các mã khuyến mãi tôi đã nêu (ví dụ: 'SALE50') không? (Nếu không dùng, bạn có thể bỏ qua)"
+       - **Cách hỏi mẫu (Nếu trước đó KHÔNG CÓ KM):** "Tuyệt vời! Vui lòng cho tôi biết **Tên** và **Số điện thoại** của bạn. (Email là tùy chọn). Nếu bạn có mã khuyến mãi khác, vui lòng cung cấp."
+
+     - **Nếu người dùng trả lời (ví dụ: 'Nguyễn Văn A, 0909...'):** BẠN PHẢI GỌI TOOL \`book_ticket\` NGAY LẬP TỨC.
 
   **3. Khi bạn gọi tool \`book_ticket\` (ĐẶT VÉ):**
-     - (Giữ nguyên logic)
-     - Bạn phải gọi tool này SAU KHI đã thu thập ĐỦ 5 thông tin: \`tripId\`, \`seatIds\` (mảng), \`passengerInfo\`, \`pickupPointName\`, \`dropoffPointName\`.
-     - Bạn phải tự động gán \`paymentMethod: "TAI_XE"\`.
-     - **Cách trả lời mẫu (thành công):** "Cảm ơn bạn! Tôi đã đặt vé thành công (thanh toán khi lên xe). Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
+     - Bạn phải gửi \`id\` (mà bạn đã nhớ) làm tham số \`tripId\`.
+     - **Cách trả lời mẫu (Thành công KHÔNG giảm giá):**
+       "Cảm ơn bạn! Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
+     - **Cách trả lời mẫu (Thành công CÓ giảm giá):**
+       "Cảm ơn bạn! Mã khuyến mãi đã được áp dụng, bạn được giảm [discountAmount] ₫.
+       Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền cuối cùng của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
+       
+     - **Cách trả lời mẫu (Lỗi khuyến mãi):**
+       "Xin lỗi, tôi không thể đặt vé: [nội dung message lỗi, ví dụ: 'Mã khuyến mãi không hợp lệ.']. Bạn có muốn đặt vé mà không dùng mã này không?"
 
   **4. CÁCH XỬ LÝ KHI TOOL THẤT BẠI (Rất quan trọng):**
-     - Nếu bạn gọi 1 tool (như \`get_available_seats\`) và nhận được kết quả là \`{ success: false, message: "..." }\`,
-     - BẠN PHẢI báo lỗi đó cho người dùng.
-     - BẠN KHÔNG ĐƯỢC tự ý liệt kê lại các chuyến xe khác (như trong hình).
-     - **Cách trả lời mẫu (lỗi):**
-       "Xin lỗi, đã có lỗi khi kiểm tra chuyến [tên chuyến]: [Nội dung message lỗi ở đây]. Bạn có muốn tôi thử lại, hay kiểm tra một chuyến khác không?"
+     - (Giữ nguyên)
 `;
 
-// ✅ SỬA 3: `tools` (Xóa email khỏi 'required')
+// ✅ SỬA 3: `tools` (Cập nhật mô tả tripId)
 const tools = [
   {
     functionDeclarations: [
@@ -447,17 +624,23 @@ const tools = [
           required: ["departure", "destination", "date"],
         },
       },
-      // Tool 2: get_available_seats (Giữ nguyên)
+      // Tool 2: get_available_seats (NÂNG CẤP)
       {
         name: "get_available_seats",
         description:
-          "Lấy danh sách ghế trống, ĐIỂM ĐÓN, và ĐIỂM TRẢ cho một chuyến xe cụ thể.",
+          "Lấy danh sách ghế trống, ĐIỂM ĐÓN, ĐIỂM TRẢ và CÁC KHUYẾN MÃI HỢP LỆ cho một chuyến xe cụ thể.",
         parameters: {
           type: "OBJECT",
           properties: {
             tripId: {
               type: "STRING",
-              description: "Mã của chuyến xe (maChuyenXe)",
+              // --- SỬA Ở ĐÂY ---
+              description: "ID (ObjectId) của chuyến xe (ví dụ: '6908ba...')",
+            },
+            numSeats: {
+              type: "NUMBER",
+              description:
+                "Số lượng vé khách dự định mua (ví dụ: 2). Rất quan trọng để kiểm tra khuyến mãi. Nếu không rõ, gửi null.",
             },
           },
           required: ["tripId"],
@@ -472,7 +655,8 @@ const tools = [
           properties: {
             tripId: {
               type: "STRING",
-              description: "Mã của chuyến xe (maChuyenXe)",
+              // --- SỬA Ở ĐÂY ---
+              description: "ID (ObjectId) của chuyến xe (ví dụ: '6908ba...')",
             },
             seatIds: {
               type: "ARRAY",
@@ -491,10 +675,8 @@ const tools = [
                   description: "Email của khách (TÙY CHỌN, có thể là null)",
                 },
               },
-              // --- SỬA Ở ĐÂY ---
-              required: ["name", "phone"], // Xóa "email"
+              required: ["name", "phone"], // Email không bắt buộc
             },
-            // --- THÊM 2 TRƯỜNG MỚI ---
             pickupPointName: {
               type: "STRING",
               description:
@@ -509,6 +691,11 @@ const tools = [
               type: "STRING",
               description: "Phương thức thanh toán. Chỉ chấp nhận 'TAI_XE'.",
               enum: ["TAI_XE"],
+            },
+            promoCode: {
+              type: "STRING",
+              description:
+                "Mã khuyến mãi khách hàng cung cấp (ví dụ: 'GIGA50'). Gửi null nếu không có.",
             },
           },
           required: [
@@ -593,15 +780,17 @@ export const runConversation = async (userInput) => {
           args.date
         );
       } else if (functionName === "get_available_seats") {
-        functionResult = await callYourSeatAPI(args.tripId);
+        // ✅ CẬP NHẬT LỜI GỌI HÀM
+        functionResult = await callYourSeatAPI(args.tripId, args.numSeats);
       } else if (functionName === "book_ticket") {
         functionResult = await callYourBookingAPI(
           args.tripId,
           args.seatIds,
           args.passengerInfo,
-          args.pickupPointName, // <-- Thêm tham số mới
-          args.dropoffPointName, // <-- Thêm tham số mới
-          args.paymentMethod
+          args.pickupPointName,
+          args.dropoffPointName,
+          args.paymentMethod,
+          args.promoCode // <-- Thêm tham số mới
         );
       } else {
         console.warn(`[AI DEBUG] Tool không xác định: ${functionName}`);
