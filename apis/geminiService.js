@@ -507,6 +507,145 @@ const callYourBookingAPI = async (
   }
 };
 
+const callYourPriceCalculationAPI = async (tripId, seatIds, promoCode) => {
+  console.log(
+    `[AI DEBUG] 3. BẮT ĐẦU: callYourPriceCalculationAPI (Kiểm tra giá)
+    Chuyến: ${tripId},
+    Ghế: ${seatIds.join(", ")},
+    Mã KM: ${promoCode || "Không có"}`
+  );
+
+  try {
+    // BƯỚC 1: LẤY THÔNG TIN CHUYẾN XE
+    const tripDetails = await api_trip_schedule_service.getChuyenXeByObjId(
+      tripId
+    );
+    if (!tripDetails || !tripDetails.success) {
+      return { success: false, message: "Lỗi: Không tìm thấy chuyến xe." };
+    }
+    const tripData = tripDetails.data;
+
+    // BƯỚC 2: GỌI API TÍNH GIÁ VÉ THẬT
+    let giaVeCoBan = 0;
+    try {
+      const priceParams = {
+        tuyenDuongId: tripData.tuyenDuong,
+        loaiXeId: tripData.loaiXe._id,
+        ngayHienTai: tripData.ngayKhoiHanh,
+      };
+      if (
+        typeof priceParams.tuyenDuongId === "object" &&
+        priceParams.tuyenDuongId !== null
+      ) {
+        priceParams.tuyenDuongId = priceParams.tuyenDuongId._id;
+      }
+      const priceResponse = await axios.get(GIAVE_API_URL, {
+        params: priceParams,
+      });
+      if (priceResponse.data.success) {
+        giaVeCoBan = priceResponse.data.soTienThanhToan;
+      } else {
+        throw new Error(priceResponse.data.message || "Không tìm thấy giá");
+      }
+    } catch (priceError) {
+      console.error(
+        "[AI DEBUG] 3.1. LỖI: Không lấy được giá vé:",
+        priceError.message
+      );
+      return {
+        success: false,
+        message: `Lỗi: Không thể lấy được giá vé cho chuyến đi (${priceError.message})`,
+      };
+    }
+
+    // TỔNG TIỀN TRƯỚC GIẢM
+    const priceBeforeDiscount = giaVeCoBan * seatIds.length;
+    let discountAmount = 0;
+    let selectedPromoLine = null;
+
+    // BƯỚC 3: XỬ LÝ KHUYẾN MÃI (NẾU CÓ)
+    if (promoCode) {
+      console.log(`[AI DEBUG] 3.2. Đang kiểm tra Mã KM: ${promoCode}`);
+      try {
+        const promoResponse = await api_promotion_service.timKhuyenMaiApDung(
+          tripData.ngayKhoiHanh,
+          tripData.gioKhoiHanh,
+          seatIds.length
+        );
+
+        if (promoResponse.success && promoResponse.data.length > 0) {
+          for (const campaign of promoResponse.data) {
+            const line = campaign.lines.find(
+              (l) => l.maLine.toLowerCase() === promoCode.toLowerCase()
+            );
+            if (line) {
+              selectedPromoLine = { ...line, campaignId: campaign._id };
+              break;
+            }
+          }
+        }
+
+        if (!selectedPromoLine) {
+          console.error(
+            `[AI DEBUG] 3.2. LỖI: Mã KM "${promoCode}" không hợp lệ.`
+          );
+          return {
+            success: false,
+            message: `Mã khuyến mãi "${promoCode}" không hợp lệ hoặc không áp dụng được cho chuyến này.`,
+          };
+        }
+
+        const { loaiKhuyenMai, chiTiet } = selectedPromoLine;
+        if (loaiKhuyenMai === "GIAM_PHAN_TRAM") {
+          discountAmount = priceBeforeDiscount * (chiTiet.phanTramGiam / 100);
+          if (
+            chiTiet.soTienGiamToiDa &&
+            discountAmount > chiTiet.soTienGiamToiDa
+          )
+            discountAmount = chiTiet.soTienGiamToiDa;
+        } else if (loaiKhuyenMai === "GIAM_TIEN") {
+          discountAmount = chiTiet.soTienGiam;
+        } else if (loaiKhuyenMai === "TANG_VE" && seatIds.length > 0) {
+          discountAmount = giaVeCoBan * (chiTiet.soLuongVeTang || 1);
+        }
+
+        console.log(
+          `[AI DEBUG] 3.2. OK. Áp dụng KM thành công. Giảm: ${discountAmount}`
+        );
+      } catch (promoError) {
+        console.error(
+          "[AI DEBUG] 3.2. LỖI: API khuyến mãi:",
+          promoError.message
+        );
+        return { success: false, message: "Lỗi khi kiểm tra khuyến mãi." };
+      }
+    }
+
+    // TỔNG TIỀN SAU GIẢM
+    const finalPrice = priceBeforeDiscount - discountAmount;
+
+    // BƯỚC 4: TRẢ VỀ KẾT QUẢ TÍNH TOÁN
+    // (Không đặt vé, chỉ trả về giá)
+    console.log("[AI DEBUG] 3.3. OK. Trả về kết quả tính giá.");
+    return {
+      success: true,
+      priceBeforeDiscount: priceBeforeDiscount, // Giá gốc
+      discountAmount: discountAmount, // Số tiền giảm
+      finalPrice: finalPrice, // Giá cuối
+    };
+  } catch (error) {
+    console.error(
+      "[AI DEBUG] LỖI NGHIÊM TRỌNG trong callYourPriceCalculationAPI:",
+      error.message
+    );
+    return {
+      success: false,
+      error: "API_ERROR",
+      message: "Đã xảy ra lỗi hệ thống khi gọi API tính giá.",
+    };
+  }
+};
+
 // (Cấu hình API_KEY và API_URL giữ nguyên)
 const API_KEY = "AIzaSyAaKOXhDKTGKFDH0GvfzEkwR5tabN7Vs14"; // Thay bằng API key của bạn
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
@@ -578,9 +717,45 @@ const systemPrompt = `
        - **Cách hỏi mẫu (Nếu trước đó CÓ KM):** "Tuyệt vời! Vui lòng cho tôi biết **Tên** và **Số điện thoại** của bạn. Bạn có muốn dùng một trong các mã khuyến mãi tôi đã nêu (ví dụ: 'SALE50') không? (Nếu không dùng, bạn có thể bỏ qua)"
        - **Cách hỏi mẫu (Nếu trước đó KHÔNG CÓ KM):** "Tuyệt vời! Vui lòng cho tôi biết **Tên** và **Số điện thoại** của bạn. (Email là tùy chọn). Nếu bạn có mã khuyến mãi khác, vui lòng cung cấp."
 
-     - **Nếu người dùng trả lời (ví dụ: 'Nguyễn Văn A, 0909...'):** BẠN PHẢI GỌI TOOL \`book_ticket\` NGAY LẬP TỨC.
+     - **(SỬA ĐỔI QUAN TRỌNG):**
+       - **Nếu người dùng trả lời (ví dụ: 'Nguyễn Văn A, 0909...'):** - BẠN KHÔNG ĐƯỢC GỌI \`book_ticket\` NGAY.
+       - BẠN PHẢI GỌI TOOL \`calculate_final_price\` NGAY LẬP TỨC.
+       - Khi gọi \`calculate_final_price\`, bạn phải gửi TẤT CẢ thông tin cần thiết: (tripId, seatIds, promoCode).
+  
+  **3. Khi bạn gọi tool \`calculate_final_price\` (BƯỚC XÁC NHẬN MỚI):**
+     - Tool này sẽ trả về \`functionResult\` chứa: \`priceBeforeDiscount\`, \`discountAmount\`, \`finalPrice\`.
+     - Nếu \`success: false\`, bạn phải báo lỗi cho người dùng (ví dụ: "Lỗi: Mã khuyến mãi không hợp lệ.").
+     - Nếu \`success: true\`, nhiệm vụ của bạn là trình bày TOÀN BỘ thông tin (lấy từ các bước trước) VÀ KẾT QUẢ GIÁ (từ \`functionResult\`) để người dùng xem lại.
 
-  **3. Khi bạn gọi tool \`book_ticket\` (ĐẶT VÉ):**
+     - **Cách trả lời mẫu (KHÔNG giảm giá - khi \`discountAmount\` = 0):**
+       "Cảm ơn bạn. Vui lòng kiểm tra lại thông tin đặt vé lần cuối:
+       * Hành khách: [Tên] - [SĐT]
+       * Chuyến: [Giờ khởi hành]
+       * Ghế: [A1, B1]
+       * Đón tại: [Tên điểm đón]
+       * Trả tại: [Tên điểm trả]
+       * Tổng tiền: [finalPrice] ₫ (Thanh toán khi lên xe)
+       
+       Bạn có xác nhận đặt vé với thông tin này không? (Vui lòng trả lời 'Xác nhận' hoặc 'Hủy')"
+
+     - **Cách trả lời mẫu (CÓ giảm giá - khi \`discountAmount\` > 0):**
+       "Cảm ơn bạn. Vui lòng kiểm tra lại thông tin đặt vé lần cuối:
+       * Hành khách: [Tên] - [SĐT]
+       * Chuyến: [Giờ khởi hành]
+       * Ghế: [A1, B1]
+       * Đón tại: [Tên điểm đón]
+       * Trả tại: [Tên điểm trả]
+       * Mã khuyến mãi: [promoCode]
+       * Giá gốc: [priceBeforeDiscount] ₫
+       * Giảm giá: -[discountAmount] ₫
+       * **Tổng cuối cùng: [finalPrice] ₫** (Thanh toán khi lên xe)
+       
+       Bạn có xác nhận đặt vé với thông tin này không? (Vui lòng trả lời 'Xác nhận' hoặc 'Hủy')"
+
+     - **Nếu người dùng trả lời 'Xác nhận':** BẠN MỚI ĐƯỢC GỌI TOOL \`book_ticket\` (với các thông tin bạn đã thu thập).
+     - **Nếu người dùng trả lời 'Hủy' hoặc muốn 'Sửa lại':** Bạn phải hỏi lại họ muốn sửa thông tin gì (ví dụ: "Bạn muốn thay đổi thông tin gì? (ghế, điểm đón, SĐT...)"
+  
+  **4. Khi bạn gọi tool \`book_ticket\` (ĐẶT VÉ):**
      - Bạn phải gửi \`id\` (mà bạn đã nhớ) làm tham số \`tripId\`.
      - **Cách trả lời mẫu (Thành công KHÔNG giảm giá):**
        "Cảm ơn bạn! Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
@@ -591,7 +766,7 @@ const systemPrompt = `
      - **Cách trả lời mẫu (Lỗi khuyến mãi):**
        "Xin lỗi, tôi không thể đặt vé: [nội dung message lỗi, ví dụ: 'Mã khuyến mãi không hợp lệ.']. Bạn có muốn đặt vé mà không dùng mã này không?"
 
-  **4. CÁCH XỬ LÝ KHI TOOL THẤT BẠI (Rất quan trọng):**
+  **5. CÁCH XỬ LÝ KHI TOOL THẤT BẠI (Rất quan trọng):**
      - (Giữ nguyên)
 `;
 
@@ -644,6 +819,33 @@ const tools = [
             },
           },
           required: ["tripId"],
+        },
+      },
+      {
+        name: "calculate_final_price",
+        description:
+          "QUAN TRỌNG: Gọi tool này SAU KHI đã thu thập TẤT CẢ thông tin (ghế, tên, SĐT, mã KM) " +
+          "VÀ TRƯỚC KHI gọi 'book_ticket'. " +
+          "Tool này sẽ tính toán và trả về giá gốc, số tiền giảm, và giá cuối cùng.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            tripId: {
+              type: "STRING",
+              description: "ID (ObjectId) của chuyến xe (ví dụ: '6908ba...')",
+            },
+            seatIds: {
+              type: "ARRAY",
+              description: "Mảng các mã ghế khách chọn (ví dụ: ['A1', 'B2'])",
+              items: { type: "STRING" },
+            },
+            promoCode: {
+              type: "STRING",
+              description:
+                "Mã khuyến mãi khách hàng cung cấp (ví dụ: 'GIGA50'). Gửi null nếu không có.",
+            },
+          },
+          required: ["tripId", "seatIds"],
         },
       },
       // Tool 3: book_ticket (NÂNG CẤP)
@@ -780,8 +982,17 @@ export const runConversation = async (userInput) => {
           args.date
         );
       } else if (functionName === "get_available_seats") {
-        // ✅ CẬP NHẬT LỜI GỌI HÀM
         functionResult = await callYourSeatAPI(args.tripId, args.numSeats);
+
+        // --- THÊM ĐOẠN NÀY ---
+      } else if (functionName === "calculate_final_price") {
+        console.log("[AI DEBUG] AI Yêu cầu TÍNH GIÁ (thật).");
+        functionResult = await callYourPriceCalculationAPI(
+          args.tripId,
+          args.seatIds,
+          args.promoCode
+        );
+        // --- KẾT THÚC ĐOẠN THÊM ---
       } else if (functionName === "book_ticket") {
         functionResult = await callYourBookingAPI(
           args.tripId,
@@ -790,7 +1001,7 @@ export const runConversation = async (userInput) => {
           args.pickupPointName,
           args.dropoffPointName,
           args.paymentMethod,
-          args.promoCode // <-- Thêm tham số mới
+          args.promoCode
         );
       } else {
         console.warn(`[AI DEBUG] Tool không xác định: ${functionName}`);
