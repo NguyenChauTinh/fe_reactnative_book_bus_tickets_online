@@ -215,12 +215,12 @@ const PaymentScreen = ({ navigation, route }) => {
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
-      userId : "userId"
+      userId: "userId",
     };
 
-try {
+    try {
       setLoading(true);
-      
+
       const response = await api_booking_service.createTicket(ticketPayload);
       console.log("response = ", response);
       if (response.success) {
@@ -234,10 +234,7 @@ try {
           discountAmount,
         });
       } else {
-        Alert.alert(
-          "Lỗi",
-          response.message || "Có lỗi xảy ra khi đặt vé." 
-        );
+        Alert.alert("Lỗi", response.message || "Có lỗi xảy ra khi đặt vé.");
       }
     } catch (error) {
       Alert.alert(
@@ -262,7 +259,7 @@ try {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.10:3005/api/v1/payment/create-vnpay-url",
+          "http://localhost:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,

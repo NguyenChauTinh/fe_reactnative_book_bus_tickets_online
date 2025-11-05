@@ -208,7 +208,7 @@ export default function App() {
   return (
     <SocketProvider>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName="Main"
         screenOptions={{
           headerShown: false,
           animation: "none", // Disable animations

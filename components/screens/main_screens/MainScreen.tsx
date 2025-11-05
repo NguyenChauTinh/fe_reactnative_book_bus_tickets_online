@@ -9,6 +9,7 @@ import Header from "../../components/Header";
 import LocationSelector from "../../components/LocationSelector";
 import RecentSearches from "../../components/RecentSearches";
 import SearchButton from "../../components/SearchButton";
+import { AiChatbot } from "./ChatModal";
 
 export default function MainScreen({ navigation }) {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
@@ -134,6 +135,7 @@ export default function MainScreen({ navigation }) {
 
         <RecentSearches />
       </ScrollView>
+      <AiChatbot />
     </SafeAreaView>
   );
 }

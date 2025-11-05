@@ -2,7 +2,7 @@ import createApiManager from "./Api_Manager.js";
 
 // const API_BASE_URL =
 //   'http://localhost:3002/api/v1';
-const API_BASE_URL = "http://192.168.1.10:3001/api/v1";
+const API_BASE_URL = "http://localhost:3001/api/v1";
 
 console.log("API_BASE_URL == ", API_BASE_URL);
 
@@ -33,5 +33,15 @@ export const api_trip_schedule_service = {
     return tripApiClient.get("/tuyen-duong/lay-dia-diem-ket-noi", {
       params: apiParams,
     });
+  },
+
+  timDiaDiemTheoTen: async (tenDiaDiem) => {
+    return tripApiClient.get(
+      `/dia-diem/tim-dia-diem-theo-ten?ten=${tenDiaDiem}`
+    );
+  },
+
+  getChuyenXeByID: async (id) => {
+    return tripApiClient.get(`/chuyen-xe/${id}`);
   },
 };

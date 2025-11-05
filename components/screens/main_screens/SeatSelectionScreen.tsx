@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,7 +13,6 @@ import { Path, Rect, Svg } from "react-native-svg";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import BookingTimeline from "../main_screens/BookingTimeline";
 const BackIcon = () => (
-
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
       d="M15 18L9 12L15 6"
@@ -43,7 +41,7 @@ const CabinIcon = ({ status, cabinNumber }) => {
     fillColor = "#ffffff";
   }
 
- return (
+  return (
     <View style={styles.cabinContainer}>
       {/* <svg> -> <Svg> */}
       <Svg width="40" height="40" viewBox="0 0 32 32">
@@ -225,15 +223,6 @@ export default function SeatSelectionScreen({ navigation, route }) {
         const response = await api_booking_service.getTicketsByChuyenXeId(
           tripId
         );
-        // Dữ liệu giả lập để test
-        // const response = {
-        //   success: true,
-        //   data: [
-        //     { chiTiet: [{ maChoNgoi: "1C" }] },
-        //     { chiTiet: [{ maChoNgoi: "1D" }] },
-        //     { chiTiet: [{ maChoNgoi: "2A" }, { maChoNgoi: "3B" }] },
-        //   ],
-        // };
 
         if (response.success && response.data) {
           // Dùng flatMap để lấy tất cả maChoNgoi từ các chi tiết vé
