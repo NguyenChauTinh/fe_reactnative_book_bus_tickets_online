@@ -81,7 +81,7 @@ export default function MainScreen({ navigation }) {
   console.log("Current Destination State:", destination);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       <Header />
@@ -143,6 +143,7 @@ export default function MainScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "white",
   },
   content: {
     flex: 1,

@@ -9,7 +9,7 @@ export default function Header() {
     <View style={styles.container}>
       <View style={styles.leftSection}>
         <VexereIcon />
-        <Text style={styles.logo}>Việt Tân Phát</Text>
+        <Text style={styles.logo}>Vé xe</Text>
       </View>
 
       <TouchableOpacity
@@ -27,7 +27,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 8,
     backgroundColor: "#4A90E2",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -36,7 +35,7 @@ const styles = StyleSheet.create({
   leftSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   logo: {
     color: "white",

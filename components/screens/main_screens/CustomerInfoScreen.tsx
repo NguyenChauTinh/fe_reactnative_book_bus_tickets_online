@@ -52,8 +52,8 @@ export default function CustomerInfoScreen({ navigation, route }) {
   } = route.params;
 
   const [customerInfo, setCustomerInfo] = useState({
-    name: "T Ng",
-    phone: "372374650",
+    name: "Châu Tình",
+    phone: "0372374651",
     email: "chautinh05122@gmail.com",
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -92,7 +92,10 @@ export default function CustomerInfoScreen({ navigation, route }) {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
       ) : (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={["bottom", "left", "right"]}
+        >
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
@@ -101,7 +104,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
               <BackIcon />
             </TouchableOpacity>
             <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
+              <Text style={styles.headerTitle} numberOfLines={1}>
                 {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
               </Text>
               <Text style={styles.headerSubtitle}>{departureDate}</Text>
@@ -157,7 +160,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
                 </Text>
               </View>
 
-              <View style={styles.termsContainer}>
+              {/* <View style={styles.termsContainer}>
                 <Text style={styles.termsText}>
                   Bằng việc nhấn nút Tiếp tục, bạn đồng ý với{" "}
                   <TouchableOpacity>
@@ -170,7 +173,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
                     <Text style={styles.termsLink}>Quy chế</Text>
                   </TouchableOpacity>
                 </Text>
-              </View>
+              </View> */}
             </View>
           </ScrollView>
 
@@ -178,7 +181,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Tạm tính</Text>
               <Text style={styles.totalPrice}>
-                {totalPrice.toLocaleString()}đ
+                {totalPrice.toLocaleString()}đ ▲
               </Text>
             </View>
             <TouchableOpacity
@@ -189,11 +192,11 @@ export default function CustomerInfoScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.paymentNoteContainer}>
+          {/* <View style={styles.paymentNoteContainer}>
             <Text style={styles.paymentNoteText}>
               Bạn có thể mua thêm tiện ích ở bước tiếp theo
             </Text>
-          </View>
+          </View> */}
         </SafeAreaView>
       )}
     </View>
@@ -203,7 +206,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -400,12 +403,12 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
   priceContainer: {
     flex: 1,

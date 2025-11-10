@@ -290,7 +290,7 @@ export default function SearchResultsScreen({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -391,7 +391,7 @@ export default function SearchResultsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",

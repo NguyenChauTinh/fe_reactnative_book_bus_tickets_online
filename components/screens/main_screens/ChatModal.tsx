@@ -18,7 +18,7 @@ import { runConversation } from "../../../apis/geminiService"; // "Bộ não" AI
 // Icon (Bạn có thể dùng react-native-vector-icons)
 const ChatIcon = ({ onPress }) => (
   <TouchableOpacity style={styles.chatIconContainer} onPress={onPress}>
-    <Text style={styles.chatIconText}>AI</Text>
+    <Text style={styles.chatIconText}>Đặt</Text>
   </TouchableOpacity>
 );
 
@@ -101,7 +101,7 @@ export const ChatModal = ({ visible, onClose }) => {
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Trợ lý AI</Text>
+          <Text style={styles.headerTitle}>Trợ lý đặt xe</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Đóng</Text>
           </TouchableOpacity>

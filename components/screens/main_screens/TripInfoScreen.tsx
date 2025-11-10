@@ -113,7 +113,10 @@ export default function TripInfoScreen({ navigation, route }) {
 
   return (
     <View style={{ flex: 1, justifyContent: "center" }}>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -122,7 +125,7 @@ export default function TripInfoScreen({ navigation, route }) {
             <BackIcon />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
               {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
             </Text>
             <Text style={styles.headerSubtitle}>{departureDate}</Text>
@@ -256,7 +259,7 @@ export default function TripInfoScreen({ navigation, route }) {
             </View>
           </View>
 
-          <View style={styles.insuranceSection}>
+          {/* <View style={styles.insuranceSection}>
             <Text style={styles.sectionTitle}>Tiện ích</Text>
             <TouchableOpacity
               style={styles.insuranceItem}
@@ -281,7 +284,7 @@ export default function TripInfoScreen({ navigation, route }) {
                 </Text>
               </View>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
 
         <View style={styles.bottomBar}>
@@ -299,11 +302,11 @@ export default function TripInfoScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.paymentNoteContainer}>
+        {/* <View style={styles.paymentNoteContainer}>
           <Text style={styles.paymentNoteText}>
             Bạn sẽ chọn hình thức thanh toán ở bước tiếp theo
           </Text>
-        </View>
+        </View> */}
       </SafeAreaView>
     </View>
   );
@@ -312,7 +315,7 @@ export default function TripInfoScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -578,12 +581,12 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
   priceContainer: {
     flex: 1,

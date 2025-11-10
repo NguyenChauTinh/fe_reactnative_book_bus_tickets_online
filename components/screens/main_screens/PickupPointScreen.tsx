@@ -43,7 +43,6 @@ const LocationIcon = () => (
 
 const MapIcon = () => (
   <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-       {" "}
     <Path
       d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" // Đây là đường viền của bản đồ
       stroke="#4A90E2"
@@ -51,7 +50,6 @@ const MapIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-       {" "}
     <Path
       d="M8 2v16" // Đây là đường gấp ở giữa
       stroke="#4A90E2"
@@ -59,7 +57,6 @@ const MapIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-       {" "}
     <Path
       d="M16 6v16" // Đây là đường gấp ở giữa
       stroke="#4A90E2"
@@ -67,7 +64,6 @@ const MapIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-     {" "}
   </Svg>
 );
 
@@ -191,7 +187,10 @@ export default function PickupPointScreen({ navigation, route }) {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
       ) : (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={["bottom", "left", "right"]}
+        >
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
@@ -200,7 +199,7 @@ export default function PickupPointScreen({ navigation, route }) {
               <BackIcon />
             </TouchableOpacity>
             <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
+              <Text style={styles.headerTitle} numberOfLines={1}>
                 {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
               </Text>
               <Text style={styles.headerSubtitle}>{departureDate}</Text>
@@ -238,12 +237,12 @@ export default function PickupPointScreen({ navigation, route }) {
                 marginLeft: "auto",
               }}
             >
-              <Text style={styles.convenientText}>
+              {/* <Text style={styles.convenientText}>
                 Điểm đón nào thuận tiện nhất?
               </Text>
               <TouchableOpacity>
                 <Text style={styles.addressLink}>Nhập địa chỉ của bạn</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
 
@@ -303,11 +302,11 @@ export default function PickupPointScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.changeNoteContainer}>
+          {/* <View style={styles.changeNoteContainer}>
             <Text style={styles.changeNoteText}>
               Dễ dàng thay đổi điểm đón trả sau khi đặt
             </Text>
-          </View>
+          </View> */}
         </SafeAreaView>
       )}
     </View>
@@ -317,7 +316,7 @@ export default function PickupPointScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -473,12 +472,12 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
   priceContainer: {
     flex: 1,

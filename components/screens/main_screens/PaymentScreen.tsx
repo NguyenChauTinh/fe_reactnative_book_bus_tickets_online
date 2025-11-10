@@ -313,7 +313,7 @@ const PaymentScreen = ({ navigation, route }) => {
         onRequestClose={() => setShowGateway(false)}
         animationType="slide"
       >
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1 }} edges={["bottom", "left", "right"]}>
           <WebView
             source={{ uri: paymentUrl }}
             onNavigationStateChange={handleWebViewNavigationStateChange}
@@ -339,7 +339,7 @@ const PaymentScreen = ({ navigation, route }) => {
               <BackIcon />
             </TouchableOpacity>
             <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
+              <Text style={styles.headerTitle} numberOfLines={1}>
                 {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
               </Text>
               <Text style={styles.headerSubtitle}>{departureDate}</Text>
@@ -348,14 +348,14 @@ const PaymentScreen = ({ navigation, route }) => {
           <View style={styles.warningBox}>
             <PaymentCountdown />
           </View>
-          {!insuranceSelected && (
+          {/* {!insuranceSelected && (
             <View style={styles.alertBox}>
               <Text style={styles.alertText}>Chuyến đi chưa được bảo vệ</Text>
               <TouchableOpacity onPress={() => navigation.goBack()}>
                 <Text style={styles.link}>Thêm bảo hiểm</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
           <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
             <View style={styles.promotionSection}>
               <Text style={styles.sectionTitle}>Khuyến mãi</Text>
@@ -438,7 +438,7 @@ const PaymentScreen = ({ navigation, route }) => {
               <View>
                 <Text style={styles.optionText}>Thanh toán khi lên xe</Text>
                 <Text style={styles.optionTextSub}>
-                  Bạn có thể thanh toán cho tài xế khi lên xe.
+                  Bạn có thể thanh toán khi lên xe.
                 </Text>
               </View>
             </TouchableOpacity>
@@ -564,11 +564,13 @@ const styles = StyleSheet.create({
     top: "100%",
     width: "100%",
     maxHeight: 200,
+    zIndex: 10,
   },
   dropdownItem: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    zIndex: 20,
   },
   promoCode: { fontWeight: "bold" },
   promoDesc: { color: "#666", fontSize: 12 },
@@ -596,7 +598,7 @@ const styles = StyleSheet.create({
   totalPrice: { fontSize: 18, fontWeight: "bold", color: "#E74C3C" },
   continueButton: {
     backgroundColor: "#FFC107",
-    paddingHorizontal: 24,
+    paddingHorizontal: 14,
     paddingVertical: 14,
     borderRadius: 8,
     marginLeft: 16,
