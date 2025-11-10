@@ -336,7 +336,7 @@ export default function SearchResultsScreen({ navigation, route }) {
                 <Text style={styles.duration}>{trip.duration}</Text>
                 <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
               </View>
-              <View style={styles.stationInfo}>
+              {/* <View style={styles.stationInfo}>
                 <Text style={styles.stationText} numberOfLines={1}>
                   {trip.departureStation}
                 </Text>
@@ -344,7 +344,7 @@ export default function SearchResultsScreen({ navigation, route }) {
                 <Text style={styles.stationTextRight} numberOfLines={1}>
                   {trip.arrivalStation}
                 </Text>
-              </View>
+              </View> */}
               <View style={styles.detailsAndPriceRow}>
                 <Text style={styles.busType} numberOfLines={1}>
                   {trip.busType}

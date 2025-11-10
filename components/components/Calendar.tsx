@@ -103,7 +103,7 @@ export default function Calendar({
       const isPastDate = currentDateObj < todayObj;
 
       const dateString = `T${
-        new Date(year, month - 1, day).getDay() || 7
+        new Date(year, month - 1, day).getDay() + 1 || 7
       }, ${day.toString().padStart(2, "0")}/${month
         .toString()
         .padStart(2, "0")}/${year}`;

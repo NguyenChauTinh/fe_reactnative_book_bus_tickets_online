@@ -93,7 +93,7 @@ export default function MainScreen({ navigation }) {
             destination={destination?.tenDiaDiem || ""}
             onDeparturePress={handleDeparturePress}
             onDestinationPress={handleDestinationPress}
-            onSwap={handleSwapLocations}
+            // onSwap={handleSwapLocations}
           />
 
           <DateSelector

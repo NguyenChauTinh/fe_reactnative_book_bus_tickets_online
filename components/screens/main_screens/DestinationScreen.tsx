@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   StatusBar,
   StyleSheet,
@@ -17,10 +18,12 @@ export default function DestinationScreen({ navigation, route }) {
   // ✅ THAY ĐỔI: Nhận thêm 'departureId'
   const { onSelect, departureId } = route.params;
   const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLocation = async () => {
       try {
+        setLoading(true);
         // ✅ THAY ĐỔI: Gọi API mới với tham số
         const params = {
           findType: "tra", // Màn hình này tìm điểm TRẢ
@@ -45,6 +48,8 @@ export default function DestinationScreen({ navigation, route }) {
         }
       } catch (error) {
         console.error("Lỗi khi lấy danh sách địa điểm đến:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -68,8 +73,17 @@ export default function DestinationScreen({ navigation, route }) {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={{ marginTop: 10 }}>Đang tải địa điểm...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       <View style={styles.header}>

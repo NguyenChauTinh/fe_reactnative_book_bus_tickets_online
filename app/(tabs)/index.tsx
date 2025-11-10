@@ -28,6 +28,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { StyleSheet } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SocketProvider } from "../../contexts/SocketContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -206,129 +207,131 @@ export default function App() {
   // }, []);
 
   return (
-    <SocketProvider>
-      <Stack.Navigator
-        initialRouteName="Main"
-        screenOptions={{
-          headerShown: false,
-          animation: "none", // Disable animations
-        }}
-      >
-        <Stack.Screen
-          name="Welcome"
-          component={Welcome}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={Register}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="VerificationCode"
-          component={VerificationCode}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPassword}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ResetPassword"
-          component={ResetPassword}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="VerificationCodeRegister"
-          component={VerificationCodeRegister}
-          options={{ headerShown: false }}
-        />
-        {/* Main Tab Navigator */}
-        <Stack.Screen
-          name="Main"
-          component={MainTabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Ticket"
-          component={TicketStackNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Notification"
-          component={NotificationStackNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Account"
-          component={AccountStackNavigator}
-          options={{ headerShown: false }}
-        />
-        {/* =========================== */}
-        {/* Main screen */}
-        <Stack.Screen
-          name="DateSelectionScreen"
-          component={DateSelectionScreen}
-        />
-        <Stack.Screen
-          name="DestinationScreen"
-          component={DestinationScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DepartureScreen"
-          component={DepartureScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SearchResultsScreen"
-          component={SearchResultsScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SeatSelectionScreen"
-          component={SeatSelectionScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CustomerInfoScreen"
-          component={CustomerInfoScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DropoffPointScreen"
-          component={DropoffPointScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PickupPointScreen"
-          component={PickupPointScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="TripInfoScreen"
-          component={TripInfoScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PaymentScreen"
-          component={PaymentScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="BookingSuccessScreen"
-          component={BookingSuccessScreen}
-          options={{ headerShown: false }}
-        />
-        {/* ================================ */}
-      </Stack.Navigator>
-    </SocketProvider>
+    <SafeAreaProvider>
+      <SocketProvider>
+        <Stack.Navigator
+          initialRouteName="Main"
+          screenOptions={{
+            headerShown: false,
+            animation: "none", // Disable animations
+          }}
+        >
+          <Stack.Screen
+            name="Welcome"
+            component={Welcome}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={Register}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerificationCode"
+            component={VerificationCode}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPassword}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPassword}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerificationCodeRegister"
+            component={VerificationCodeRegister}
+            options={{ headerShown: false }}
+          />
+          {/* Main Tab Navigator */}
+          <Stack.Screen
+            name="Main"
+            component={MainTabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Ticket"
+            component={TicketStackNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notification"
+            component={NotificationStackNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Account"
+            component={AccountStackNavigator}
+            options={{ headerShown: false }}
+          />
+          {/* =========================== */}
+          {/* Main screen */}
+          <Stack.Screen
+            name="DateSelectionScreen"
+            component={DateSelectionScreen}
+          />
+          <Stack.Screen
+            name="DestinationScreen"
+            component={DestinationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DepartureScreen"
+            component={DepartureScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SearchResultsScreen"
+            component={SearchResultsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SeatSelectionScreen"
+            component={SeatSelectionScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CustomerInfoScreen"
+            component={CustomerInfoScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DropoffPointScreen"
+            component={DropoffPointScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PickupPointScreen"
+            component={PickupPointScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="TripInfoScreen"
+            component={TripInfoScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentScreen"
+            component={PaymentScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="BookingSuccessScreen"
+            component={BookingSuccessScreen}
+            options={{ headerShown: false }}
+          />
+          {/* ================================ */}
+        </Stack.Navigator>
+      </SocketProvider>
+    </SafeAreaProvider>
   );
 }
 
