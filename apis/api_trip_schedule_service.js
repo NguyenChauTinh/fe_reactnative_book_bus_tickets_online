@@ -48,4 +48,9 @@ export const api_trip_schedule_service = {
   getChuyenXeByObjId: async (id) => {
     return tripApiClient.get(`/chuyen-xe/by-obj-id/${id}`);
   },
+
+  getMultipleChuyenXeByIds: async (chuyenXeIds) => {
+    // Gọi đến endpoint mới bạn vừa tạo ở Bước 1
+    return tripApiClient.post("/chuyen-xe/get-by-ids", { ids: chuyenXeIds });
+  },
 };

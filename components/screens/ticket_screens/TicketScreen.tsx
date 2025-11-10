@@ -1,8 +1,8 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,202 +10,92 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+// ✅ 1. Import API service
+import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
+import { api_booking_service } from "../../../apis/api_booking_service";
 
+// ✅ 2. Cập nhật Interface
 interface Ticket {
-  id: string;
+  id: string; // chiTiet._id
   status: "current" | "completed" | "cancelled";
-  route: string;
-  time: string;
-  date: string;
-  ticketNumber: string;
-  price: string;
+  route: string; // chuyenXe.tuyenDuong
+  time: string; // chuyenXe.gioKhoiHanh
+  date: string; // chuyenXe.ngayKhoiHanh
+  plateNumber: string; // chuyenXe.xe.bienSo
+  price: string; // chiTiet.giaVeCoBan...
+  maVe: string; // veXe.maVe
+  maGhe: string; // chiTiet.maChoNgoi
 }
 
-const mockTickets: Ticket[] = [
-  // Current tickets
-  {
-    id: "1",
-    status: "current",
-    route: "Hồ Chí Minh → Đà Lạt",
-    time: "08:00",
-    date: "20/12/2024",
-    ticketNumber: "50H-123.45",
-    price: "180.000đ",
-  },
-  {
-    id: "2",
-    status: "current",
-    route: "Hà Nội → Hải Phòng",
-    time: "14:30",
-    date: "22/12/2024",
-    ticketNumber: "30A-678.90",
-    price: "120.000đ",
-  },
-  {
-    id: "8",
-    status: "current",
-    route: "Hồ Chí Minh → Vũng Tàu",
-    time: "07:15",
-    date: "25/12/2024",
-    ticketNumber: "64B-234.56",
-    price: "85.000đ",
-  },
-  {
-    id: "9",
-    status: "current",
-    route: "Đà Nẵng → Hội An",
-    time: "10:45",
-    date: "28/12/2024",
-    ticketNumber: "43D-567.89",
-    price: "45.000đ",
-  },
-  {
-    id: "10",
-    status: "current",
-    route: "Hà Nội → Sapa",
-    time: "22:30",
-    date: "30/12/2024",
-    ticketNumber: "20E-890.12",
-    price: "280.000đ",
-  },
-  // Completed tickets
-  {
-    id: "3",
-    status: "completed",
-    route: "Hồ Chí Minh → Cần Thơ",
-    time: "09:15",
-    date: "10/12/2024",
-    ticketNumber: "92B-456.78",
-    price: "150.000đ",
-  },
-  {
-    id: "4",
-    status: "completed",
-    route: "Đà Nẵng → Huế",
-    time: "16:45",
-    date: "05/12/2024",
-    ticketNumber: "43C-789.12",
-    price: "90.000đ",
-  },
-  {
-    id: "11",
-    status: "completed",
-    route: "Hà Nội → Ninh Bình",
-    time: "06:30",
-    date: "28/11/2024",
-    ticketNumber: "18F-345.67",
-    price: "95.000đ",
-  },
-  {
-    id: "12",
-    status: "completed",
-    route: "Hồ Chí Minh → Phan Thiết",
-    time: "13:20",
-    date: "22/11/2024",
-    ticketNumber: "77G-678.90",
-    price: "110.000đ",
-  },
-  {
-    id: "13",
-    status: "completed",
-    route: "Hà Nội → Hạ Long",
-    time: "08:45",
-    date: "15/11/2024",
-    ticketNumber: "25H-901.23",
-    price: "130.000đ",
-  },
-  {
-    id: "14",
-    status: "completed",
-    route: "Đà Nẵng → Quy Nhon",
-    time: "11:30",
-    date: "08/11/2024",
-    ticketNumber: "56I-234.56",
-    price: "160.000đ",
-  },
-  // Cancelled tickets
-  {
-    id: "5",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "6",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "7",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-  {
-    id: "8",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "9",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "10",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-  {
-    id: "11",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "12",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "13",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-];
+// ⛔ 3. Bỏ mockTickets.
+// const mockTickets: Ticket[] = [ ... ];
+
+// ✅ 4. Thêm các hàm helper định dạng
+/**
+ * Chuyển đổi số phút (ví dụ 480) thành chuỗi "HH:mm" (ví dụ "08:00")
+ */
+const formatMinutesToHHMM = (totalMinutes: number): string => {
+  if (isNaN(totalMinutes)) return "N/A";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}`;
+};
+
+/**
+ * Chuyển đổi chuỗi Date (ví dụ "2025-11-10T...") thành "DD/MM/YYYY"
+ */
+const formatDateString = (dateStr: string | Date): string => {
+  try {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return "N/A";
+  }
+};
+
+/**
+ * Chuyển đổi trạng thái từ API (backend) sang trạng thái của Tab (frontend)
+ */
+const mapApiStatusToFrontend = (
+  apiStatus: string,
+  tripDateStr: string | Date
+): "current" | "completed" | "cancelled" => {
+  // 1. Ưu tiên hàng đầu: Vé đã hủy
+  if (apiStatus === "DA_HUY") {
+    return "cancelled";
+  }
+
+  // 2. Phân loại "Đã đi" hay "Hiện tại"
+  if (!tripDateStr) {
+    // Nếu không có ngày (lỗi populate), tạm cho là "current"
+    return "current";
+  }
+
+  try {
+    const tripDate = new Date(tripDateStr);
+    const now = new Date();
+
+    // Reset giờ về 0 để so sánh ngày chính xác
+    tripDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+
+    if (tripDate < now) {
+      // Nếu ngày đi nhỏ hơn hôm nay -> Đã đi
+      return "completed";
+    } else {
+      // Ngược lại là vé "Hiện tại"
+      return "current";
+    }
+  } catch (error) {
+    return "current"; // Lỗi parse ngày thì tạm cho là "current"
+  }
+};
 
 const TicketScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -213,17 +103,127 @@ const TicketScreen: React.FC = () => {
   >("current");
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {
+  // ✅ 5. Thêm state cho loading và data thật
+  const [loading, setLoading] = useState(true);
+  const [allTickets, setAllTickets] = useState<Ticket[]>([]);
+
+  const fetchTickets = useCallback(async () => {
+    const userId = "userId"; // <-- ⚠️ THAY THẾ BẰNG USER ID THẬT
+    if (!userId) return;
+
+    setLoading(true);
+    try {
+      // ✅ DEBUG Bước 1
+      console.log("[TicketScreen] Bước 1: Đang gọi getTicketsByUserId...");
+      const bookingResponse = await api_booking_service.getTicketsByUserId(
+        userId
+      );
+      console.log("[TicketScreen] Bước 1: Hoàn thành getTicketsByUserId.");
+
+      // (Kiểm tra API 1)
+      if (!bookingResponse.success || !Array.isArray(bookingResponse.data)) {
+        console.error("[TicketScreen] Lỗi API Vé Xe:", bookingResponse);
+        throw new Error("Không tìm thấy vé");
+      }
+
+      const allVeXe = bookingResponse.data;
+      const allChiTiet = allVeXe.flatMap((ve) => ve.chiTiet);
+
+      if (allChiTiet.length === 0) {
+        setAllTickets([]);
+        setLoading(false);
+        return;
+      }
+
+      const chuyenXeIds = [...new Set(allChiTiet.map((item) => item.chuyenXe))];
+
+      // ✅ DEBUG Bước 2
+      console.log(
+        `[TicketScreen] Bước 2: Đang gọi getMultipleChuyenXeByIds với ${chuyenXeIds.length} ID...`
+      );
+      // (Bạn đã dùng tên api_trip_schedule_service trong file code bạn gửi)
+      const tripResponse =
+        await api_trip_schedule_service.getMultipleChuyenXeByIds(chuyenXeIds);
+      console.log(
+        "[TicketScreen] Bước 2: Hoàn thành getMultipleChuyenXeByIds."
+      );
+
+      // (Log Phản hồi API Chuyến Xe mà bạn đã có)
+      console.log(
+        "[TicketScreen] Phản hồi từ API Chuyến Xe:",
+        JSON.stringify(tripResponse, null, 2)
+      );
+
+      // (Kiểm tra API 2)
+      if (!tripResponse.success || !Array.isArray(tripResponse.data)) {
+        console.error(
+          "[TicketScreen] Lỗi API Chuyến Xe (data không phải là mảng):",
+          tripResponse
+        );
+        throw new Error("Không tìm thấy chi tiết chuyến");
+      }
+
+      // (Tạo Map)
+      const tripDetailsMap = new Map(
+        tripResponse.data.map((chuyen) => [chuyen._id, chuyen])
+      );
+
+      // (Join dữ liệu)
+      const formattedTickets: Ticket[] = allVeXe.flatMap((veXe) =>
+        veXe.chiTiet.map((item) => {
+          const chuyenXe = tripDetailsMap.get(item.chuyenXe);
+          const finalPrice =
+            (item.giaVeCoBan || 0) + (item.phuThu || 0) - (item.giamGia || 0);
+
+          return {
+            id: item._id,
+            maVe: veXe.maVe,
+            status: mapApiStatusToFrontend(
+              item.trangThaiChiTiet,
+              chuyenXe?.ngayKhoiHanh
+            ),
+            route: chuyenXe?.tuyenDuong || "Không rõ tuyến",
+            time: chuyenXe ? formatMinutesToHHMM(chuyenXe.gioKhoiHanh) : "N/A",
+            date: chuyenXe ? formatDateString(chuyenXe.ngayKhoiHanh) : "N/A",
+            plateNumber: chuyenXe?.xe?.bienSo || "Chưa xếp xe",
+            maGhe: item.maChoNgoi,
+            price: `${finalPrice.toLocaleString("vi-VN")}đ`,
+          };
+        })
+      );
+
+      setAllTickets(formattedTickets);
+    } catch (error) {
+      console.error("[TicketScreen] Lỗi khi tải vé:", error); //
+      setAllTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ✅ 7. Gọi API khi component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await fetchTickets();
+      setLoading(false);
+    };
+    loadData();
+  }, [fetchTickets]); // Chỉ gọi 1 lần khi mount
+
+  // ✅ 8. Cập nhật hàm refresh
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  };
+    await fetchTickets();
+    setRefreshing(false);
+  }, [fetchTickets]);
 
+  // ✅ 9. Cập nhật hàm filter
   const getFilteredTickets = () => {
-    return mockTickets.filter((ticket) => ticket.status === activeTab);
+    return allTickets.filter((ticket) => ticket.status === activeTab);
   };
 
+  // ... (giữ nguyên getStatusText, getButtonText, renderEmptyState) ...
   const getStatusText = (status: string) => {
     switch (status) {
       case "current":
@@ -259,11 +259,12 @@ const TicketScreen: React.FC = () => {
       </View>
       <Text style={styles.emptyTitle}>Bạn chưa có đơn hàng nào</Text>
       <Text style={styles.emptySubtitle}>
-        Hãy thử kéo xuống để cập nhật danh sách đơn hàng trong 3 tháng gần nhất
+        Hãy thử kéo xuống để cập nhật danh sách đơn hàng
       </Text>
     </View>
   );
 
+  // ✅ 10. Cập nhật renderTicketCard
   const renderTicketCard = (ticket: Ticket) => (
     <View key={ticket.id} style={styles.ticketCard}>
       <View style={styles.ticketHeader}>
@@ -281,9 +282,20 @@ const TicketScreen: React.FC = () => {
           <View style={styles.routeInfo}>
             <Text style={styles.routeText}>{ticket.route}</Text>
             <View style={styles.companyRow}>
+              {/* Cột 1: Mã ghế */}
+              <View>
+                <Text style={styles.ticketLabel}>Mã ghế</Text>
+                <Text style={styles.ticketText}>{ticket.maGhe}</Text>
+              </View>
+              {/* Cột 2: Biển số xe */}
               <View>
                 <Text style={styles.ticketLabel}>Biển số xe</Text>
-                <Text style={styles.ticketText}>{ticket.ticketNumber}</Text>
+                <Text style={styles.ticketText}>{ticket.plateNumber}</Text>
+              </View>
+              {/* Cột 3: Mã vé */}
+              <View>
+                <Text style={styles.ticketLabel}>Mã vé</Text>
+                <Text style={styles.ticketText}>{ticket.maVe}</Text>
               </View>
             </View>
           </View>
@@ -304,17 +316,20 @@ const TicketScreen: React.FC = () => {
 
   const filteredTickets = getFilteredTickets();
 
+  // ✅ 11. Cập nhật return, thêm xử lý loading
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Vé của tôi</Text>
-        <TouchableOpacity onPress={onRefresh}>
-          <Text style={styles.refreshText}>↻ Làm mới</Text>
+        <TouchableOpacity onPress={onRefresh} disabled={refreshing}>
+          <Text style={styles.refreshText}>
+            {refreshing ? "Đang tải..." : "↻ Làm mới"}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation (Giữ nguyên) */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "current" && styles.activeTab]}
@@ -360,29 +375,39 @@ const TicketScreen: React.FC = () => {
       </View>
 
       {/* Content */}
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredTickets.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <View style={styles.ticketList}>
-            {activeTab === "cancelled" && (
-              <Text style={styles.pullToRefreshText}>
-                ↓ Kéo để cập nhật các vé trong 3 tháng gần nhất
-              </Text>
-            )}
-            {filteredTickets.map(renderTicketCard)}
-          </View>
-        )}
-      </ScrollView>
+      {loading ? (
+        // Hiển thị loading khi API đang chạy
+        <ActivityIndicator
+          size="large"
+          color="#4A90E2"
+          style={styles.loading}
+        />
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {filteredTickets.length === 0 ? (
+            renderEmptyState()
+          ) : (
+            <View style={styles.ticketList}>
+              {activeTab === "cancelled" && (
+                <Text style={styles.pullToRefreshText}>
+                  ↓ Kéo để cập nhật các vé trong 3 tháng gần nhất
+                </Text>
+              )}
+              {filteredTickets.map(renderTicketCard)}
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -430,6 +455,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  // ✅ Thêm style cho loading
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyContainer: {
     flex: 1,
@@ -539,6 +570,8 @@ const styles = StyleSheet.create({
   companyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    // ✅ Thêm để các cột không dính vào nhau
+    paddingRight: 8, // Thêm 1 chút padding
   },
   companyLabel: {
     fontSize: 12,

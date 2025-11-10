@@ -15,4 +15,7 @@ export const api_booking_service = {
   createTicket: async (ticketPayload) => {
     return apibooking.post("/ve-xe", ticketPayload);
   },
+  getTicketsByUserId: async (userId) => {
+    return apibooking.get(`/ve-xe/user/${userId}`);
+  },
 };
