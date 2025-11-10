@@ -766,9 +766,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   continueButton: {
-    backgroundColor: "#FFD700",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    backgroundColor: "#FFC107",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
     borderRadius: 8,
   },
   disabledButton: {
