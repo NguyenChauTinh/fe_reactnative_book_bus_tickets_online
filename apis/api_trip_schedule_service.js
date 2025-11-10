@@ -1,8 +1,8 @@
 import createApiManager from "./Api_Manager.js";
 
 // const API_BASE_URL =
-//   'http://localhost:3002/api/v1';
-const API_BASE_URL = "http://localhost:3001/api/v1";
+//   'http://192.168.1.15:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.15:3001/api/v1";
 
 console.log("API_BASE_URL == ", API_BASE_URL);
 

@@ -188,7 +188,7 @@ export default function App() {
   //     // const userId = await AsyncStorage.getItem("userId");
   //     if (!userId) return;
 
-  //     const socket = io("http://localhost:8081", {
+  //     const socket = io("http://192.168.1.15:8081", {
   //       query: { userId },
   //       transports: ["websocket"],
   //     });

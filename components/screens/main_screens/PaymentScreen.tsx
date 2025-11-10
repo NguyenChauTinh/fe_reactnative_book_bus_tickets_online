@@ -259,7 +259,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://localhost:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.15:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -286,7 +286,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const handleWebViewNavigationStateChange = (navState) => {
     const { url } = navState;
 
-    if (url.includes("http://localhost:3005/payment-return")) {
+    if (url.includes("http://192.168.1.15:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
