@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,21 +17,19 @@ export default function DepartureScreen({ navigation, route }) {
   // ✅ THAY ĐỔI: Nhận thêm 'destinationId'
   const { onSelect, destinationId } = route.params;
   const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLocation = async () => {
       try {
+        setLoading(true);
         const params = {
-          findType: "don", 
-          relatedId: destinationId, 
+          findType: "don",
+          relatedId: destinationId,
         };
 
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
-        );
-        console.log(
-          `Finding 'don' locations related to destination ${destinationId}:`,
-          response
         );
 
         if (Array.isArray(response)) {
@@ -41,6 +39,8 @@ export default function DepartureScreen({ navigation, route }) {
         }
       } catch (error) {
         console.error("Lỗi khi lấy danh sách địa điểm đón:", error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -64,9 +64,18 @@ export default function DepartureScreen({ navigation, route }) {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={{ marginTop: 10 }}>Đang tải địa điểm...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* <StatusBar backgroundColor="#4A90E2" barStyle="light-content" /> */}
 
       <View style={styles.header}>
         <BackButton onPress={() => navigation.goBack()} />

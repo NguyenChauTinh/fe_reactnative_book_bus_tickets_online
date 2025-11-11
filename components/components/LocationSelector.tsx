@@ -1,7 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DepartureIcon from "./icons/DepartureIcon";
 import DestinationIcon from "./icons/DestinationIcon";
-import SwapIcon from "./icons/SwapIcon";
 
 export default function LocationSelector({
   departureLocation,
@@ -30,9 +29,9 @@ export default function LocationSelector({
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.swapButton} onPress={onSwap}>
+      {/* <TouchableOpacity style={styles.swapButton} onPress={onSwap}>
         <SwapIcon />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }

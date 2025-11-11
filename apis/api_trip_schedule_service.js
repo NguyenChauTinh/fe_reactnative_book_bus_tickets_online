@@ -34,4 +34,32 @@ export const api_trip_schedule_service = {
       params: apiParams,
     });
   },
+
+  timDiaDiemTheoTen: async (tenDiaDiem) => {
+    return tripApiClient.get(
+      `/dia-diem/tim-dia-diem-theo-ten?ten=${tenDiaDiem}`
+    );
+  },
+
+  getChuyenXeByID: async (id) => {
+    return tripApiClient.get(`/chuyen-xe/${id}`);
+  },
+
+  getChuyenXeByObjId: async (id) => {
+    return tripApiClient.get(`/chuyen-xe/by-obj-id/${id}`);
+  },
+
+  getMultipleChuyenXeByIds: async (chuyenXeIds) => {
+    // Gọi đến endpoint mới bạn vừa tạo ở Bước 1
+    return tripApiClient.post("/chuyen-xe/get-by-ids", { ids: chuyenXeIds });
+  },
+
+  // router.get("/lay-tuyen-duong/:id", getTuyenDuong);
+  getTuyenDuong: async (id) => {
+    return tripApiClient.get(`/tuyen-duong/lay-tuyen-duong/${id}`);
+  },
+
+  getTuyenDuongData: async (id) => {
+    return tripApiClient.get(`/tuyen-duong/lay-tuyen-duong-data/${id}`);
+  },
 };

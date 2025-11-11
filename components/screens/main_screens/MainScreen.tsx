@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import DateSelector from "../../components/DateSelector";
 import FeatureIcons from "../../components/FeatureIcons";
 import Header from "../../components/Header";
 import LocationSelector from "../../components/LocationSelector";
 import RecentSearches from "../../components/RecentSearches";
 import SearchButton from "../../components/SearchButton";
+import { AiChatbot } from "./ChatModal";
 
 export default function MainScreen({ navigation }) {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
@@ -76,11 +76,8 @@ export default function MainScreen({ navigation }) {
     // setDestination(null); // (Tùy chọn)
   };
 
-  console.log("Current Departure State:", departureLocation);
-  console.log("Current Destination State:", destination);
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       <Header />
@@ -92,7 +89,7 @@ export default function MainScreen({ navigation }) {
             destination={destination?.tenDiaDiem || ""}
             onDeparturePress={handleDeparturePress}
             onDestinationPress={handleDestinationPress}
-            onSwap={handleSwapLocations}
+            // onSwap={handleSwapLocations}
           />
 
           <DateSelector
@@ -134,7 +131,8 @@ export default function MainScreen({ navigation }) {
 
         <RecentSearches />
       </ScrollView>
-    </SafeAreaView>
+      <AiChatbot />
+    </View>
   );
 }
 
@@ -144,6 +142,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    backgroundColor: "white",
   },
   bookingCard: {
     backgroundColor: "white",

@@ -1,8 +1,8 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,220 +10,275 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+// ✅ 1. Import thêm useNavigation
+import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
+import { useNavigation } from "@react-navigation/native";
+import { api_booking_service } from "../../../apis/api_booking_service";
 
-interface Ticket {
-  id: string;
-  status: "current" | "completed" | "cancelled";
-  route: string;
-  time: string;
-  date: string;
-  ticketNumber: string;
-  price: string;
+// ✅ 2. Cập nhật Interface (từ Chi Tiết sang Vé Xe)
+interface MasterTicket {
+  id: string; // veXe._id
+  maVe: string; // veXe.maVe
+  status: "current" | "completed" | "cancelled"; // Trạng thái cho Tab
+  paymentStatusText: string; // Trạng thái để hiển thị (vd: "Chưa thanh toán")
+  route: string; // chuyenXe.tuyenDuong
+  time: string; // chuyenXe.gioKhoiHanh
+  date: string; // chuyenXe.ngayKhoiHanh
+  providerName: string; // ⚠️ Giả định: chuyenXe.nhaXe.tenNhaXe
+  totalPrice: string; // TỔNG tiền của tất cả chiTiet
+  seatList: string; // Danh sách ghế (vd: "A1, A2")
+  chuyenXeId: string; // Dùng để truyền sang màn hình chi tiết
+  xe: string;
+  chiTietIds: string[];
 }
 
-const mockTickets: Ticket[] = [
-  // Current tickets
-  {
-    id: "1",
-    status: "current",
-    route: "Hồ Chí Minh → Đà Lạt",
-    time: "08:00",
-    date: "20/12/2024",
-    ticketNumber: "50H-123.45",
-    price: "180.000đ",
-  },
-  {
-    id: "2",
-    status: "current",
-    route: "Hà Nội → Hải Phòng",
-    time: "14:30",
-    date: "22/12/2024",
-    ticketNumber: "30A-678.90",
-    price: "120.000đ",
-  },
-  {
-    id: "8",
-    status: "current",
-    route: "Hồ Chí Minh → Vũng Tàu",
-    time: "07:15",
-    date: "25/12/2024",
-    ticketNumber: "64B-234.56",
-    price: "85.000đ",
-  },
-  {
-    id: "9",
-    status: "current",
-    route: "Đà Nẵng → Hội An",
-    time: "10:45",
-    date: "28/12/2024",
-    ticketNumber: "43D-567.89",
-    price: "45.000đ",
-  },
-  {
-    id: "10",
-    status: "current",
-    route: "Hà Nội → Sapa",
-    time: "22:30",
-    date: "30/12/2024",
-    ticketNumber: "20E-890.12",
-    price: "280.000đ",
-  },
-  // Completed tickets
-  {
-    id: "3",
-    status: "completed",
-    route: "Hồ Chí Minh → Cần Thơ",
-    time: "09:15",
-    date: "10/12/2024",
-    ticketNumber: "92B-456.78",
-    price: "150.000đ",
-  },
-  {
-    id: "4",
-    status: "completed",
-    route: "Đà Nẵng → Huế",
-    time: "16:45",
-    date: "05/12/2024",
-    ticketNumber: "43C-789.12",
-    price: "90.000đ",
-  },
-  {
-    id: "11",
-    status: "completed",
-    route: "Hà Nội → Ninh Bình",
-    time: "06:30",
-    date: "28/11/2024",
-    ticketNumber: "18F-345.67",
-    price: "95.000đ",
-  },
-  {
-    id: "12",
-    status: "completed",
-    route: "Hồ Chí Minh → Phan Thiết",
-    time: "13:20",
-    date: "22/11/2024",
-    ticketNumber: "77G-678.90",
-    price: "110.000đ",
-  },
-  {
-    id: "13",
-    status: "completed",
-    route: "Hà Nội → Hạ Long",
-    time: "08:45",
-    date: "15/11/2024",
-    ticketNumber: "25H-901.23",
-    price: "130.000đ",
-  },
-  {
-    id: "14",
-    status: "completed",
-    route: "Đà Nẵng → Quy Nhon",
-    time: "11:30",
-    date: "08/11/2024",
-    ticketNumber: "56I-234.56",
-    price: "160.000đ",
-  },
-  // Cancelled tickets
-  {
-    id: "5",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "6",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "7",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-  {
-    id: "8",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "9",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "10",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-  {
-    id: "11",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "15/08/2025",
-    ticketNumber: "50H-365.72",
-    price: "210.000đ",
-  },
-  {
-    id: "12",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "16/08/2025",
-    ticketNumber: "50H-151.59",
-    price: "210.000đ",
-  },
-  {
-    id: "13",
-    status: "cancelled",
-    route: "Hồ Chí Minh → An Giang",
-    time: "21:00",
-    date: "17/08/2025",
-    ticketNumber: "67B-017.05",
-    price: "210.000đ",
-  },
-];
+// ⛔ 3. Bỏ mockTickets.
+
+// ✅ 4. Giữ nguyên các hàm helper (formatMinutesToHHMM, formatDateString)
+const formatMinutesToHHMM = (totalMinutes: number): string => {
+  if (isNaN(totalMinutes)) return "N/A";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}`;
+};
+
+const formatDateString = (dateStr: string | Date): string => {
+  try {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return "N/A";
+  }
+};
+
+/**
+ * [HÀM MỚI] Quyết định Tab (View) dựa trên mảng chiTiet
+ * Quyết định xem vé master nên nằm ở tab "current", "completed", hay "cancelled".
+ */
+const getFrontendStatusFromChiTiet = (
+  chiTietList: any[], // Giả định mảng chiTiet
+  tripDateStr: string | Date | undefined
+): "current" | "completed" | "cancelled" => {
+  if (!chiTietList || chiTietList.length === 0) {
+    return "cancelled";
+  }
+
+  // 1. Đếm số vé *không* bị hủy
+  // (Giả định các trạng thái active là DAT_CHO, DA_THANH_TOAN, DA_CHUYEN)
+  const activeChiTiet = chiTietList.filter(
+    (ct) =>
+      ct.trangThaiChiTiet !== "DA_HUY" && ct.trangThaiChiTiet !== "DA_HOAN_TIEN"
+  );
+
+  // 2. Nếu không có vé nào active -> Tab "Đã hủy"
+  if (activeChiTiet.length === 0) {
+    return "cancelled";
+  }
+
+  // 3. Nếu có ít nhất 1 vé active, phân loại "Đã đi" hay "Hiện tại"
+  if (!tripDateStr) {
+    return "current"; // Mặc định là 'current' nếu thiếu ngày
+  }
+
+  try {
+    const tripDate = new Date(tripDateStr);
+    const now = new Date();
+    tripDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+
+    if (tripDate < now) {
+      return "completed";
+    } else {
+      return "current";
+    }
+  } catch (error) {
+    return "current"; // Lỗi thì trả về 'current'
+  }
+};
+
+// ✅ 5. Thêm hàm helper mới để map trạng thái thanh toán
+/**
+ * Chuyển đổi trạng thái API (vd: "CHUA_THANH_TOAN") thành text hiển thị
+ */
+const mapApiBookingStatusToPaymentText = (apiStatus: string): string => {
+  // ⚠️ Đây là giả định, bạn cần thay bằng trạng thái thật từ API của bạn
+  switch (apiStatus) {
+    case "CHUA_THANH_TOAN":
+      return "Chưa thanh toán";
+    case "DA_THANH_TOAN":
+      return "Đã thanh toán";
+    case "DA_HUY":
+      return "Đã hủy";
+    default:
+      // Nếu là trạng thái khác (vd: "DA_DI"), có thể coi là "Đã thanh toán"
+      // hoặc bạn có thể thêm logic riêng
+      return "Đã thanh toán";
+  }
+};
 
 const TicketScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "current" | "completed" | "cancelled"
   >("current");
   const [refreshing, setRefreshing] = useState(false);
+  // ✅ 6. Cập nhật tên state cho rõ nghĩa
+  const [loading, setLoading] = useState(true);
+  const [allMasterTickets, setAllMasterTickets] = useState<MasterTicket[]>([]);
 
-  const onRefresh = () => {
+  // ✅ 7. Khởi tạo navigation
+  const navigation = useNavigation<any>();
+
+  const fetchTickets = useCallback(async () => {
+    const userId = "userId"; // <-- ⚠️ THAY THẾ BẰNG USER ID THẬT
+    if (!userId) return;
+
+    setLoading(true);
+    try {
+      // BƯỚC 1: Lấy danh sách Vé Xe (Đơn hàng)
+      console.log("[TicketScreen] Bước 1: Đang gọi getTicketsByUserId...");
+      const bookingResponse = await api_booking_service.getTicketsByUserId(
+        userId
+      );
+      console.log("[TicketScreen] Bước 1: Hoàn thành getTicketsByUserId.");
+
+      if (!bookingResponse.success || !Array.isArray(bookingResponse.data)) {
+        console.error("[TicketScreen] Lỗi API Vé Xe:", bookingResponse);
+        throw new Error("Không tìm thấy vé");
+      }
+
+      const allVeXe = bookingResponse.data; // Đây là mảng các [VeXe]
+      const allChiTiet = allVeXe.flatMap((ve) => ve.chiTiet || []);
+
+      if (allChiTiet.length === 0) {
+        setAllMasterTickets([]);
+        setLoading(false);
+        return;
+      }
+
+      // BƯỚC 2: Lấy thông tin Chuyến Xe (Lấy 1 lần)
+      const chuyenXeIds = [...new Set(allChiTiet.map((item) => item.chuyenXe))];
+
+      console.log(
+        `[TicketScreen] Bước 2: Đang gọi getMultipleChuyenXeByIds với ${chuyenXeIds.length} ID...`
+      );
+      const tripResponse =
+        await api_trip_schedule_service.getMultipleChuyenXeByIds(chuyenXeIds);
+      console.log(
+        "[TicketScreen] Bước 2: Hoàn thành getMultipleChuyenXeByIds."
+      );
+
+      if (!tripResponse.success || !Array.isArray(tripResponse.data)) {
+        console.error("[TicketScreen] Lỗi API Chuyến Xe:", tripResponse);
+        throw new Error("Không tìm thấy chi tiết chuyến");
+      }
+
+      const tripDetailsMap = new Map(
+        tripResponse.data.map((chuyen) => [chuyen._id, chuyen])
+      );
+
+      // BƯỚC 3: Xử lý (Map) dữ liệu
+
+      // ✅ 1. Tạo ra mảng các Promises
+      const ticketPromises = allVeXe
+        .filter((veXe) => veXe.chiTiet && veXe.chiTiet.length > 0)
+        .map(async (veXe) => {
+          // <-- Vẫn giữ async ở đây
+          const firstChiTiet = veXe.chiTiet[0];
+          const chuyenXe = tripDetailsMap.get(firstChiTiet.chuyenXe);
+
+          const totalPrice = veXe.chiTiet.reduce(
+            (sum, item) =>
+              sum +
+              (item.giaVeCoBan || 0) +
+              (item.phuThu || 0) -
+              (item.giamGia || 0),
+            0
+          );
+
+          const seatList = veXe.chiTiet
+            .map((item) => item.maChoNgoi)
+            .join(", ");
+
+          const frontendStatus = getFrontendStatusFromChiTiet(
+            veXe.chiTiet, // <-- Truyền toàn bộ mảng chiTiet
+            chuyenXe?.ngayKhoiHanh
+          );
+
+          const paymentStatusText = mapApiBookingStatusToPaymentText(
+            veXe.trangThaiThanhToan // <-- DÙNG TRẠNG THÁI CỦA VÉ XE
+          );
+
+          const chiTietIds = veXe.chiTiet.map((ct: any) => ct._id);
+          // Gọi API cho từng tuyến
+          const routeResponse =
+            await api_trip_schedule_service.getTuyenDuongData(
+              chuyenXe?.tuyenDuong
+            );
+
+          console.log("[TicketScreen] Route Response:", routeResponse);
+
+          return {
+            id: veXe._id,
+            maVe: veXe.maVe,
+            status: frontendStatus,
+            paymentStatusText: paymentStatusText,
+            route: routeResponse?.data?.tenTuyen || "Không rõ tuyến", // Giả định API trả về 'tenTuyen'
+            time: chuyenXe ? formatMinutesToHHMM(chuyenXe.gioKhoiHanh) : "N/A",
+            date: chuyenXe ? formatDateString(chuyenXe.ngayKhoiHanh) : "N/A",
+            providerName: chuyenXe?.xe?.bienSo || "Không rõ biển số", // Giả định dùng biển số xe
+            totalPrice: `${totalPrice.toLocaleString("vi-VN")}đ`,
+            seatList: seatList,
+            chuyenXeId: chuyenXe?._id || "",
+            chiTietIds: chiTietIds,
+          };
+        });
+
+      // ✅ 2. Chờ tất cả promises trong mảng hoàn thành
+      const formattedMasterTickets = await Promise.all(ticketPromises);
+
+      // ✅ 3. Set state sau khi đã có dữ liệu thật
+      setAllMasterTickets(formattedMasterTickets);
+    } catch (error) {
+      console.error("[TicketScreen] Lỗi khi tải vé:", error);
+      setAllMasterTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // ⚠️ Nếu bạn dùng navigation, hãy thêm [navigation] vào đây
+
+  // ✅ 9. Gọi API khi component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await fetchTickets();
+      setLoading(false);
+    };
+    loadData();
+    // Thêm listener để refresh khi quay lại màn hình
+    const unsubscribe = navigation.addListener("focus", loadData);
+    return unsubscribe;
+  }, [fetchTickets, navigation]);
+
+  // ✅ 10. Cập nhật hàm refresh
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await fetchTickets();
+    setRefreshing(false);
+  }, [fetchTickets]);
+
+  // ✅ 11. Cập nhật hàm filter
+  const getFilteredMasterTickets = () => {
+    return allMasterTickets.filter((ticket) => ticket.status === activeTab);
   };
 
-  const getFilteredTickets = () => {
-    return mockTickets.filter((ticket) => ticket.status === activeTab);
-  };
-
+  // ... (giữ nguyên getStatusText, getButtonText, renderEmptyState) ...
+  // (Hàm này giờ chỉ dùng cho renderEmptyState, có thể không cần nữa)
   const getStatusText = (status: string) => {
     switch (status) {
       case "current":
@@ -232,19 +287,6 @@ const TicketScreen: React.FC = () => {
         return "Đã đi";
       case "cancelled":
         return "Đã hủy";
-      default:
-        return "";
-    }
-  };
-
-  const getButtonText = (status: string) => {
-    switch (status) {
-      case "current":
-        return "Xem chi tiết";
-      case "completed":
-        return "Đánh giá";
-      case "cancelled":
-        return "Đặt lại";
       default:
         return "";
     }
@@ -259,62 +301,115 @@ const TicketScreen: React.FC = () => {
       </View>
       <Text style={styles.emptyTitle}>Bạn chưa có đơn hàng nào</Text>
       <Text style={styles.emptySubtitle}>
-        Hãy thử kéo xuống để cập nhật danh sách đơn hàng trong 3 tháng gần nhất
+        Hãy thử kéo xuống để cập nhật danh sách đơn hàng
       </Text>
     </View>
   );
 
-  const renderTicketCard = (ticket: Ticket) => (
-    <View key={ticket.id} style={styles.ticketCard}>
-      <View style={styles.ticketHeader}>
-        <Text style={styles.statusText}>{getStatusText(ticket.status)}</Text>
-        <Text style={styles.priceText}>{ticket.price}</Text>
-      </View>
+  const renderMasterTicketCard = (ticket: MasterTicket) => {
+    const handleViewDetails = () => {
+      navigation.navigate("TicketDetailScreen", {
+        veXeId: ticket.id,
+        chuyenXeId: ticket.chuyenXeId,
+      });
+    };
 
-      <View style={styles.ticketContent}>
-        <View style={styles.routeContainer}>
-          <View style={styles.timeContainer}>
-            <Text style={styles.timeText}>{ticket.time}</Text>
-            <Text style={styles.dateText}>{ticket.date}</Text>
-          </View>
+    const handleCancel = () => {
+      // Thay vì Alert, chúng ta điều hướng đến màn hình mới
+      navigation.navigate("CancelFlowScreen", {
+        veXeId: ticket.id, // Truyền ID của vé master
+      });
+    };
 
-          <View style={styles.routeInfo}>
-            <Text style={styles.routeText}>{ticket.route}</Text>
-            <View style={styles.companyRow}>
-              <View>
-                <Text style={styles.ticketLabel}>Biển số xe</Text>
-                <Text style={styles.ticketText}>{ticket.ticketNumber}</Text>
-              </View>
+    return (
+      <View key={ticket.id} style={styles.masterCardContainer}>
+        {/* Phần Header: Trạng thái thanh toán & Giá */}
+        <View style={styles.masterCardHeader}>
+          <Text
+            style={[
+              styles.masterCardStatus,
+              ticket.paymentStatusText === "Chưa thanh toán" &&
+                styles.masterCardStatusPending,
+            ]}
+          >
+            {ticket.paymentStatusText}
+          </Text>
+          <Text style={styles.masterCardPrice}>{ticket.totalPrice}</Text>
+        </View>
+
+        {/* Phần Thân: Thông tin chuyến */}
+        <View style={styles.masterCardBody}>
+          {/* Cột trái: Thời gian */}
+          <View style={styles.masterCardTimeInfo}>
+            <View style={styles.masterCardBusIcon}>
+              <Text>🚌</Text>
             </View>
+            <Text style={styles.masterCardTime}>{ticket.time}</Text>
+            <Text style={styles.masterCardDate}>{ticket.date}</Text>
           </View>
 
-          <TouchableOpacity>
-            <Text style={styles.chevronText}>›</Text>
+          {/* Cột phải: Thông tin tuyến */}
+          <View style={styles.masterCardRouteInfo}>
+            <Text style={styles.masterCardRoute} numberOfLines={1}>
+              {ticket.route}
+            </Text>
+            <Text style={styles.masterCardProvider}>{ticket.providerName}</Text>
+            <Text style={styles.masterCardMeta}>
+              Mã vé:{" "}
+              <Text style={styles.masterCardMetaBold}>{ticket.maVe}</Text>
+            </Text>
+            {/* Hiển thị danh sách ghế nếu muốn */}
+            {/* <Text style={styles.masterCardMeta}>
+              Ghế: <Text style={styles.masterCardMetaBold}>{ticket.seatList}</Text>
+            </Text> */}
+          </View>
+
+          {/* Icon chevron (nếu muốn) */}
+          <TouchableOpacity onPress={handleViewDetails}>
+            <Text style={styles.masterCardChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Phần Chân: Nút hành động */}
+        <View style={styles.masterCardActions}>
+          {/* Nút Hủy (Chỉ hiện khi là vé "current") */}
+          {ticket.status === "current" && (
+            <TouchableOpacity
+              style={[styles.masterButton, styles.masterCancelButton]}
+              onPress={handleCancel}
+            >
+              <Text style={styles.masterCancelButtonText}>Hủy</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Nút Xem Chi Tiết (Thay cho "Đặt chiều về") */}
+          <TouchableOpacity
+            style={[styles.masterButton, styles.masterDetailButton]}
+            onPress={handleViewDetails}
+          >
+            <Text style={styles.masterDetailButtonText}>Xem chi tiết</Text>
           </TouchableOpacity>
         </View>
       </View>
+    );
+  };
 
-      <TouchableOpacity style={styles.actionButton}>
-        <Text style={styles.actionButtonText}>
-          {getButtonText(ticket.status)}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const filteredMasterTickets = getFilteredMasterTickets();
 
-  const filteredTickets = getFilteredTickets();
-
+  // ✅ 13. Cập nhật return, thêm xử lý loading
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Vé của tôi</Text>
-        <TouchableOpacity onPress={onRefresh}>
-          <Text style={styles.refreshText}>↻ Làm mới</Text>
+        <TouchableOpacity onPress={onRefresh} disabled={refreshing}>
+          <Text style={styles.refreshText}>
+            {refreshing ? "Đang tải..." : "↻ Làm mới"}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation (Giữ nguyên) */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "current" && styles.activeTab]}
@@ -360,29 +455,34 @@ const TicketScreen: React.FC = () => {
       </View>
 
       {/* Content */}
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredTickets.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <View style={styles.ticketList}>
-            {activeTab === "cancelled" && (
-              <Text style={styles.pullToRefreshText}>
-                ↓ Kéo để cập nhật các vé trong 3 tháng gần nhất
-              </Text>
-            )}
-            {filteredTickets.map(renderTicketCard)}
-          </View>
-        )}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#4A90E2"
+          style={styles.loading}
+        />
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {filteredMasterTickets.length === 0 ? (
+            renderEmptyState()
+          ) : (
+            <View style={styles.ticketList}>
+              {/* ✅ Cập nhật map sang hàm render mới */}
+              {filteredMasterTickets.map(renderMasterTicketCard)}
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };
 
+// ... (Styles cũ giữ nguyên)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -431,6 +531,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -469,112 +574,136 @@ const styles = StyleSheet.create({
   ticketList: {
     padding: 16,
   },
-  pullToRefreshText: {
-    fontSize: 12,
-    color: "#666666",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  ticketCard: {
+  // ⛔ Bỏ style cũ (pullToRefreshText, ticketCard, ticketHeader, v.v...)
+
+  // ✅ 14. Thêm STYLES MỚI cho Master Ticket Card (Dựa trên image_cbca03.png)
+  masterCardContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     elevation: 3,
+    overflow: "hidden", // Đảm bảo bo góc
   },
-  ticketHeader: {
+  masterCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  statusText: {
-    fontSize: 12,
-    color: "#666666",
-  },
-  priceText: {
-    fontSize: 16,
+  masterCardStatus: {
+    fontSize: 14,
     fontWeight: "600",
+    color: "#27AE60", // Màu xanh lá (mặc định là đã thanh toán)
+  },
+  masterCardStatusPending: {
+    color: "#E74C3C", // Màu đỏ (chưa thanh toán)
+  },
+  masterCardPrice: {
+    fontSize: 16,
+    fontWeight: "700",
     color: "#333333",
   },
-  ticketContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  routeContainer: {
+  masterCardBody: {
     flexDirection: "row",
+    padding: 16,
     alignItems: "center",
   },
-  timeContainer: {
+  masterCardTimeInfo: {
     alignItems: "center",
-    marginRight: 16,
+    paddingRight: 16,
+    borderRightWidth: 1,
+    borderRightColor: "#F0F0F0",
   },
-  timeText: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#333333",
-  },
-  dateText: {
-    fontSize: 12,
-    color: "#666666",
-    marginTop: 4,
-  },
-  routeInfo: {
-    flex: 1,
-  },
-  routeText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333333",
+  masterCardBusIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#EBF3FF",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
-  companyRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  masterCardTime: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333333",
   },
-  companyLabel: {
+  masterCardDate: {
     fontSize: 12,
     color: "#666666",
-  },
-  companyText: {
-    fontSize: 14,
-    color: "#333333",
     marginTop: 2,
   },
-  ticketLabel: {
-    fontSize: 12,
+  masterCardRouteInfo: {
+    flex: 1,
+    paddingLeft: 16,
+  },
+  masterCardRoute: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333333",
+    marginBottom: 4,
+  },
+  masterCardProvider: {
+    fontSize: 14,
+    color: "#555555",
+    marginBottom: 6,
+  },
+  masterCardMeta: {
+    fontSize: 13,
     color: "#666666",
   },
-  ticketText: {
-    fontSize: 14,
+  masterCardMetaBold: {
+    fontWeight: "600",
     color: "#333333",
-    marginTop: 2,
   },
-  chevronText: {
+  masterCardChevron: {
     fontSize: 24,
     color: "#CCCCCC",
     marginLeft: 8,
   },
-  actionButton: {
-    backgroundColor: "#1E3A8A",
-    marginHorizontal: 16,
-    marginBottom: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
+  masterCardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
   },
-  actionButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+  masterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  masterCancelButton: {
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  masterCancelButtonText: {
+    color: "#333333",
     fontWeight: "600",
+    fontSize: 14,
+  },
+  masterDetailButton: {
+    backgroundColor: "#1E3A8A", // Màu xanh đậm
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  masterDetailButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
 

@@ -62,7 +62,7 @@ export default function DateSelectionScreen({ navigation, route }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       <View style={styles.fixedHeader}>

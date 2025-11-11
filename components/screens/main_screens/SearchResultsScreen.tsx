@@ -176,7 +176,6 @@ export default function SearchResultsScreen({ navigation, route }) {
             destination._id
           );
 
-        console.log("Fetched bus trips:", response.data);
         setAllTrips(response.data || []);
       } catch (error) {
         console.error("Error fetching bus trips:", error);
@@ -203,9 +202,6 @@ export default function SearchResultsScreen({ navigation, route }) {
     // 1. Lọc các chuyến sắp chạy (nếu là hôm nay)
     if (todayInfo.isSearchingForToday) {
       const filterTime = todayInfo.currentMinutes + 60;
-      console.log(
-        `Đang lọc chuyến xe cho HÔM NAY. Giờ hiện tại: ${todayInfo.currentMinutes} phút. Chỉ hiển thị chuyến sau: ${filterTime} phút.`
-      );
 
       processedTrips = processedTrips.filter((trip) => {
         const tripDate = trip.ngayKhoiHanh.split("T")[0];
@@ -290,7 +286,7 @@ export default function SearchResultsScreen({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -336,7 +332,7 @@ export default function SearchResultsScreen({ navigation, route }) {
                 <Text style={styles.duration}>{trip.duration}</Text>
                 <Text style={styles.arrivalTime}>{trip.arrivalTime}</Text>
               </View>
-              <View style={styles.stationInfo}>
+              {/* <View style={styles.stationInfo}>
                 <Text style={styles.stationText} numberOfLines={1}>
                   {trip.departureStation}
                 </Text>
@@ -344,7 +340,7 @@ export default function SearchResultsScreen({ navigation, route }) {
                 <Text style={styles.stationTextRight} numberOfLines={1}>
                   {trip.arrivalStation}
                 </Text>
-              </View>
+              </View> */}
               <View style={styles.detailsAndPriceRow}>
                 <Text style={styles.busType} numberOfLines={1}>
                   {trip.busType}
@@ -391,7 +387,7 @@ export default function SearchResultsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",

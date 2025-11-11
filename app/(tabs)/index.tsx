@@ -24,11 +24,17 @@ import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 
+import CancelFlowScreen from "@/components/screens/ticket_screens/CancelFlowScreen";
+import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { StyleSheet } from "react-native";
+<<<<<<< HEAD
 import { AuthProvider, useAuth } from "../../contexts/AuthContext";
+=======
+import { SafeAreaProvider } from "react-native-safe-area-context";
+>>>>>>> origin/tinh_0311
 import { SocketProvider } from "../../contexts/SocketContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,6 +82,8 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { phoneNumber: string };
   VerificationCodeRegister: { phoneNumber: string };
+  TicketDetailScreen: { veXeId: string; chuyenXeId: string };
+  CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -186,6 +194,7 @@ const RootNavigator: React.FC = () => {
   // isLoading là trạng thái chờ khi app đang kiểm tra AsyncStorage
   const { token, isLoading } = useAuth();
 
+<<<<<<< HEAD
   // Khi AuthProvider đang load, ta đã hiển thị ActivityIndicator rồi
   // nên ở đây ta có thể return null hoặc check lại isLoading
   if (isLoading) {
@@ -205,6 +214,42 @@ const RootNavigator: React.FC = () => {
       {token == null ? (
         // --- CHƯA ĐĂNG NHẬP: Hiển thị các màn hình Auth ---
         <>
+=======
+export default function App() {
+  // useEffect(() => {
+  //   const setupSocket = async () => {
+  //     const userId = "1";
+  //     // const userId = await AsyncStorage.getItem("userId");
+  //     if (!userId) return;
+
+  //     const socket = io("http://192.168.1.37:8081", {
+  //       query: { userId },
+  //       transports: ["websocket"],
+  //     });
+
+  //     socket.on("connect", () => {
+  //       console.log("Socket connected");
+  //     });
+
+  //     socket.on("disconnect", () => {
+  //       console.log("Socket disconnected");
+  //     });
+  //   };
+
+  //   setupSocket();
+  // }, []);
+
+  return (
+    <SafeAreaProvider>
+      <SocketProvider>
+        <Stack.Navigator
+          initialRouteName="Main"
+          screenOptions={{
+            headerShown: false,
+            animation: "none", // Disable animations
+          }}
+        >
+>>>>>>> origin/tinh_0311
           <Stack.Screen
             name="Welcome"
             component={Welcome}
@@ -240,10 +285,13 @@ const RootNavigator: React.FC = () => {
             component={VerificationCodeRegister}
             options={{ headerShown: false }}
           />
+<<<<<<< HEAD
         </>
       ) : (
         // --- ĐÃ ĐĂNG NHẬP: Hiển thị các màn hình chính của App ---
         <>
+=======
+>>>>>>> origin/tinh_0311
           {/* Main Tab Navigator */}
           <Stack.Screen
             name="Main"
@@ -266,7 +314,11 @@ const RootNavigator: React.FC = () => {
             options={{ headerShown: false }}
           />
           {/* =========================== */}
+<<<<<<< HEAD
           {/* Các màn hình con (không nằm trong Tab) */}
+=======
+          {/* Main screen */}
+>>>>>>> origin/tinh_0311
           <Stack.Screen
             name="DateSelectionScreen"
             component={DateSelectionScreen}
@@ -321,6 +373,7 @@ const RootNavigator: React.FC = () => {
             component={BookingSuccessScreen}
             options={{ headerShown: false }}
           />
+<<<<<<< HEAD
         </>
       )}
     </Stack.Navigator>
@@ -333,6 +386,22 @@ export default function App() {
         <RootNavigator />
       </AuthProvider>
     </SocketProvider>
+=======
+          <Stack.Screen
+            name="TicketDetailScreen"
+            component={TicketDetailScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CancelFlowScreen"
+            component={CancelFlowScreen}
+            options={{ headerShown: false }} // Tắt header mặc định vì đã có header tùy chỉnh
+          />
+          {/* ================================ */}
+        </Stack.Navigator>
+      </SocketProvider>
+    </SafeAreaProvider>
+>>>>>>> origin/tinh_0311
   );
 }
 

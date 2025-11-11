@@ -9,7 +9,6 @@ console.log("API_BASE_URL == ", API_BASE_URL);
 const apiPromoClient = createApiManager(API_BASE_URL);
 
 export const api_promotion_service = {
-  
   timKhuyenMaiApDung: async (ngay, gio, soLuongVeChay) => {
     const params = { ngay, gio, soLuongVeChay };
     return apiPromoClient.get("/khuyen-mai/tim-ap-dung", { params });

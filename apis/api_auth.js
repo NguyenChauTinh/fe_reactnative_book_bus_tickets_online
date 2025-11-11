@@ -28,6 +28,14 @@ export const Api_Auth_Customer = {
   logout: async () => {
     return apiClient.post("/tai-khoan-khach-hang/logout");
   },
+
+  requestOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/request-otp", data);
+  },
+
+  verifyOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/verify", data);
+  },
 };
 
 export const Api_KhachHang = {

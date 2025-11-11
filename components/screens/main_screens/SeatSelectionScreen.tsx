@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
+  // ✅ BỎ: Modal
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +13,6 @@ import { Path, Rect, Svg } from "react-native-svg";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import BookingTimeline from "../main_screens/BookingTimeline";
 const BackIcon = () => (
-
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
       d="M15 18L9 12L15 6"
@@ -43,7 +41,7 @@ const CabinIcon = ({ status, cabinNumber }) => {
     fillColor = "#ffffff";
   }
 
- return (
+  return (
     <View style={styles.cabinContainer}>
       {/* <svg> -> <Svg> */}
       <Svg width="40" height="40" viewBox="0 0 32 32">
@@ -197,11 +195,13 @@ export default function SeatSelectionScreen({ navigation, route }) {
   const { trip, departureLocation, destination, departureDate, returnDate } =
     route.params;
   const [selectedCabins, setSelectedCabins] = useState([]);
-  const [showRoomModal, setShowRoomModal] = useState(false);
-  const [selectedCabin, setSelectedCabin] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // --- BẮT ĐẦU THAY ĐỔI ---
+  // --- BẮT ĐẦU THAY ĐỔI: Bỏ state của modal ---
+  // const [showRoomModal, setShowRoomModal] = useState(false);
+  // const [selectedCabin, setSelectedCabin] = useState(null);
+  // --- KẾT THÚC THAY ĐỔI ---
+
+  const [loading, setLoading] = useState(true);
   const [occupiedSeats, setOccupiedSeats] = useState([]);
 
   const handleContinue = () => {
@@ -221,22 +221,11 @@ export default function SeatSelectionScreen({ navigation, route }) {
     const fetchTickets = async (tripId) => {
       setLoading(true);
       try {
-        // Thay thế bằng service API thực tế của bạn
         const response = await api_booking_service.getTicketsByChuyenXeId(
           tripId
         );
-        // Dữ liệu giả lập để test
-        // const response = {
-        //   success: true,
-        //   data: [
-        //     { chiTiet: [{ maChoNgoi: "1C" }] },
-        //     { chiTiet: [{ maChoNgoi: "1D" }] },
-        //     { chiTiet: [{ maChoNgoi: "2A" }, { maChoNgoi: "3B" }] },
-        //   ],
-        // };
 
         if (response.success && response.data) {
-          // Dùng flatMap để lấy tất cả maChoNgoi từ các chi tiết vé
           const bookedSeatCodes = response.data.flatMap((ticket) =>
             ticket.chiTiet.map((detail) => detail.maChoNgoi)
           );
@@ -252,16 +241,13 @@ export default function SeatSelectionScreen({ navigation, route }) {
     if (trip?._id) {
       fetchTickets(trip._id);
     } else {
-      setLoading(false); // Nếu không có trip id, dừng loading
+      setLoading(false);
     }
   }, [trip?._id]);
-
-  // --- KẾT THÚC THAY ĐỔI ---
 
   const is24DoubleRooms = trip.busType.includes("Limousine 24 phòng đôi");
   const is32SingleRooms = trip.busType.includes("Limousine 34 phòng đơn");
 
-  // --- BẮT ĐẦU THAY ĐỔI ---
   const generateSeats = (tripData, occupiedList) => {
     const lowerFloor = [];
     const upperFloor = [];
@@ -277,7 +263,6 @@ export default function SeatSelectionScreen({ navigation, route }) {
         const newSeat = {
           id: `${seat.tang}-${seat.maSoGhe}`,
           number: seat.maSoGhe,
-          // Kiểm tra nếu ghế có trong danh sách đã đặt
           status: occupiedList.includes(seat.maSoGhe)
             ? "occupied"
             : "available",
@@ -298,7 +283,6 @@ export default function SeatSelectionScreen({ navigation, route }) {
   };
 
   const { lowerFloor, upperFloor } = generateSeats(trip, occupiedSeats);
-  // --- KẾT THÚC THAY ĐỔI ---
 
   const handleCabinPress = (cabin) => {
     if (cabin.status === "occupied") return;
@@ -308,32 +292,24 @@ export default function SeatSelectionScreen({ navigation, route }) {
     if (isSelected) {
       setSelectedCabins(selectedCabins.filter((c) => c.id !== cabin.id));
     } else {
-      if (is32SingleRooms) {
+      // --- BẮT ĐẦU THAY ĐỔI: Gộp logic 24 và 32 phòng ---
+      if (is32SingleRooms || is24DoubleRooms) {
         const cabinWithRoom = {
           ...cabin,
-          roomType: "single",
-          price: parsePrice(trip.price),
+          roomType: "single", // Luôn là 'single'
+          price: parsePrice(trip.price), // Luôn lấy giá đơn
         };
         setSelectedCabins([...selectedCabins, cabinWithRoom]);
-      } else if (is24DoubleRooms) {
-        setSelectedCabin(cabin);
-        setShowRoomModal(true);
       }
+      // --- KẾT THÚC THAY ĐỔI: Đã bỏ logic mở modal ---
     }
   };
 
-  const handleRoomTypeSelect = (roomType) => {
-    const price =
-      roomType === "double" ? parsePrice(trip.price1) : parsePrice(trip.price);
-    const cabinWithRoom = {
-      ...selectedCabin,
-      roomType,
-      price,
-    };
-    setSelectedCabins([...selectedCabins, cabinWithRoom]);
-    setShowRoomModal(false);
-    setSelectedCabin(null);
-  };
+  // --- BẮT ĐẦU THAY ĐỔI: Bỏ hàm xử lý modal ---
+  // const handleRoomTypeSelect = (roomType) => {
+  //   ...
+  // };
+  // --- KẾT THÚC THAY ĐỔI ---
 
   const getCabinStatus = (cabin) => {
     if (cabin.status === "occupied") return "occupied";
@@ -404,7 +380,6 @@ export default function SeatSelectionScreen({ navigation, route }) {
     0
   );
 
-  // --- BẮT ĐẦU THAY ĐỔI ---
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -413,184 +388,122 @@ export default function SeatSelectionScreen({ navigation, route }) {
       </View>
     );
   }
-  // --- KẾT THÚC THAY ĐỔI ---
 
+  // --- BẮT ĐẦU THAY ĐỔI: Sửa lỗi giao diện ---
+  // Bỏ <View> ngoài cùng và ternary 'loading' không cần thiết
   return (
-    <View style={{ flex: 1, justifyContent: "center" }}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" /> // <-- Hiển thị khi đang tải
-      ) : (
-        <SafeAreaView style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <BackIcon />
-            </TouchableOpacity>
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
-                {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
-              </Text>
-              <Text style={styles.headerSubtitle}>{departureDate}</Text>
-            </View>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <BackIcon />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {departureLocation.tenDiaDiem} → {destination.tenDiaDiem}
+          </Text>
+          <Text style={styles.headerSubtitle}>{departureDate}</Text>
+        </View>
+      </View>
+
+      {/* Progress Steps */}
+      <BookingTimeline currentStep={1} />
+      {/* Legend */}
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={styles.legendIcon}>
+            <CabinIcon status="unselected" cabinNumber="" />
           </View>
-
-          {/* Progress Steps */}
-          <BookingTimeline currentStep={1} />
-
-          {/* Notice */}
-          <View style={styles.noticeContainer}>
-            <Text style={styles.noticeText}>
-              ℹ️ Quy định cần lưu ý khi đi xe
-            </Text>
-            <TouchableOpacity>
-              <Text style={styles.detailsLink}>Chi tiết</Text>
-            </TouchableOpacity>
+          <Text style={styles.legendText}>Còn trống</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={styles.legendIcon}>
+            <CabinIcon status="occupied" cabinNumber="" />
           </View>
-
-          {/* Legend */}
-          <View style={styles.legendContainer}>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIcon}>
-                <CabinIcon status="unselected" cabinNumber="" />
-              </View>
-              <Text style={styles.legendText}>Còn trống</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIcon}>
-                <CabinIcon status="occupied" cabinNumber="" />
-              </View>
-              <Text style={styles.legendText}>Đã đặt</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIcon}>
-                <CabinIcon status="selected" cabinNumber="" />
-              </View>
-              <Text style={styles.legendText}>Đang chọn</Text>
-            </View>
+          <Text style={styles.legendText}>Đã đặt</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={styles.legendIcon}>
+            <CabinIcon status="selected" cabinNumber="" />
           </View>
+          <Text style={styles.legendText}>Đang chọn</Text>
+        </View>
+      </View>
 
-          {/* Pricing Info for Double Rooms */}
-          {is24DoubleRooms && (
-            <View style={styles.pricingContainer}>
-              <View style={styles.pricingItem}>
-                <View>
-                  <Text style={styles.pricingTitle}>Giường phòng đôi</Text>
-                  <Text style={styles.pricingPrice}>{trip.price1}</Text>
-                </View>
+      {/* --- BẮT ĐẦU THAY ĐỔI: Bỏ bảng giá phòng đôi --- */}
+      {/* {is24DoubleRooms && (
+        <View style={styles.pricingContainer}>
+         ...
+        </View>
+      )} */}
+      {/* --- KẾT THÚC THAY ĐỔI --- */}
+
+      {/* Cabin Layout */}
+      <ScrollView style={styles.seatLayout}>
+        <View style={styles.floorsContainer}>
+          {renderFloor(lowerFloor, "TẦNG DƯỚI")}
+          {renderFloor(upperFloor, "TẦNG TRÊN")}
+        </View>
+      </ScrollView>
+
+      {/* Selected Seats Info */}
+      {selectedCabins.length > 0 && (
+        <View style={styles.selectedSeatsInfo}>
+          <Text style={styles.selectedSeatsTitle}>Ghế đã chọn:</Text>
+          <View style={styles.selectedSeatsContainer}>
+            {selectedCabins.map((cabin, index) => (
+              <View key={index} style={styles.selectedSeatItem}>
+                <Text style={styles.selectedSeatNumber}>{cabin.number}</Text>
               </View>
-              <View style={styles.pricingItem}>
-                <View>
-                  <Text style={styles.pricingTitle}>Giường phòng đơn</Text>
-                  <Text style={styles.pricingPrice}>{trip.price}</Text>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* Cabin Layout */}
-          <ScrollView style={styles.seatLayout}>
-            <View style={styles.floorsContainer}>
-              {renderFloor(lowerFloor, "TẦNG DƯỚI")}
-              {renderFloor(upperFloor, "TẦNG TRÊN")}
-            </View>
-          </ScrollView>
-
-          {/* Selected Seats Info */}
-          {selectedCabins.length > 0 && (
-            <View style={styles.selectedSeatsInfo}>
-              <Text style={styles.selectedSeatsTitle}>Ghế đã chọn:</Text>
-              <View style={styles.selectedSeatsContainer}>
-                {selectedCabins.map((cabin, index) => (
-                  <View key={index} style={styles.selectedSeatItem}>
-                    <Text style={styles.selectedSeatNumber}>
-                      {cabin.number}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Bottom Bar */}
-          <View style={styles.bottomBar}>
-            <View style={styles.priceContainer}>
-              <Text style={styles.selectedSeatsText}>
-                Đã chọn {selectedCabins.length} chỗ
-              </Text>
-              <Text style={styles.totalPrice}>
-                {totalPrice.toLocaleString("vi-VN")}đ
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                selectedCabins.length === 0 && styles.disabledButton,
-              ]}
-              disabled={selectedCabins.length === 0}
-              onPress={handleContinue}
-            >
-              <Text style={styles.continueButtonText}>Tiếp tục</Text>
-            </TouchableOpacity>
+            ))}
           </View>
-
-          {/* Room Type Selection Modal */}
-          {is24DoubleRooms && (
-            <Modal
-              visible={showRoomModal}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowRoomModal(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>
-                      Mã giường: {selectedCabin?.number}
-                    </Text>
-                    <TouchableOpacity onPress={() => setShowRoomModal(false)}>
-                      <Text style={styles.modalCloseButton}>Đóng</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={styles.modalDescription}>
-                    Đây là giường có thể nằm tối đa 2 khách.{"\n"}
-                    Giá vé sẽ tương ứng với số lượng khách.
-                  </Text>
-
-                  <View style={styles.roomTypeContainer}>
-                    <TouchableOpacity
-                      style={styles.roomTypeButton}
-                      onPress={() => handleRoomTypeSelect("double")}
-                    >
-                      <Text style={styles.roomTypeTitle}>Giường phòng đôi</Text>
-                      <Text style={styles.roomTypePrice}>{trip.price1}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.roomTypeButton}
-                      onPress={() => handleRoomTypeSelect("single")}
-                    >
-                      <Text style={styles.roomTypeTitle}>Giường phòng đơn</Text>
-                      <Text style={styles.roomTypePrice}>{trip.price}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          )}
-        </SafeAreaView>
+        </View>
       )}
-    </View>
+
+      {/* Bottom Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.selectedSeatsText}>
+            Đã chọn {selectedCabins.length} chỗ
+          </Text>
+          <Text style={styles.totalPrice}>
+            {totalPrice.toLocaleString("vi-VN")}đ ▲
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            selectedCabins.length === 0 && styles.disabledButton,
+          ]}
+          disabled={selectedCabins.length === 0}
+          onPress={handleContinue}
+        >
+          <Text style={styles.continueButtonText}>Tiếp tục</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* --- BẮT ĐẦU THAY ĐỔI: Bỏ Modal chọn phòng --- */}
+      {/* {is24DoubleRooms && (
+        <Modal
+          visible={showRoomModal}
+          ...
+        >
+         ...
+        </Modal>
+      )} */}
+      {/* --- KẾT THÚC THAY ĐỔI --- */}
+    </SafeAreaView>
   );
+  // --- KẾT THÚC THAY ĐỔI: Đã đóng SafeAreaView ---
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "white",
   },
   header: {
     backgroundColor: "#4A90E2",
@@ -675,9 +588,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   legendIcon: {
-    marginBottom: 4,
-    width: 40,
-    height: 40,
+    width: 20,
+    height: 20,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -815,12 +727,12 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
   priceContainer: {
     flex: 1,
@@ -854,9 +766,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   continueButton: {
-    backgroundColor: "#FFD700",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    backgroundColor: "#FFC107",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
     borderRadius: 8,
   },
   disabledButton: {
