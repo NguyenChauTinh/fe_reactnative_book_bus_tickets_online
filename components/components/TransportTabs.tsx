@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import BikeIcon from "./icons/BikeIcon"
 import BusIcon from "./icons/BusIcon"
 import PlaneIcon from "./icons/PlaneIcon"
 import TrainIcon from "./icons/TrainIcon"
-import BikeIcon from "./icons/BikeIcon"
 
 export default function TransportTabs() {
   const [activeTab, setActiveTab] = useState("bus")
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     color: "#7F8C8D",
   },
   activeTabLabel: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "600",
   },
 })

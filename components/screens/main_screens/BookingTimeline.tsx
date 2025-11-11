@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   activeCircle: {
-    borderColor: "#4A90E2",
+    borderColor: "#007AFF",
     backgroundColor: "#e3f2fd",
   },
   completedCircle: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   activeStepName: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "bold",
   },
   completedStepName: {

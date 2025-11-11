@@ -36,8 +36,8 @@ const SearchIcon = () => (
 
 const LocationIcon = () => (
   <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="12" r="3" fill="#4A90E2" />
-    <Path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="#4A90E2" strokeWidth="2" />
+    <Circle cx="12" cy="12" r="3" fill="#007AFF" />
+    <Path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="#007AFF" strokeWidth="2" />
   </Svg>
 );
 
@@ -45,21 +45,21 @@ const MapIcon = () => (
   <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <Path
       d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" // Đây là đường viền của bản đồ
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M8 2v16" // Đây là đường gấp ở giữa
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M16 6v16" // Đây là đường gấp ở giữa
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   activeStepText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   },
   addressLink: {
     fontSize: 14,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
     marginLeft: 8,
   },
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   mapButtonText: {
     fontSize: 12,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
     marginTop: 2,
   },

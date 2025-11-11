@@ -113,7 +113,7 @@ const AccountScreen = ({ navigation }: { navigation: any }) => {
         <TouchableOpacity style={styles.bannerContainer}>
           <Image
             source={{
-              uri: "https://placehold.co/600x150/4A90E2/FFFFFF?text=Banner+Quang+Cao",
+              uri: "https://placehold.co/600x150/007AFF/FFFFFF?text=Banner+Quang+Cao",
             }} // Thay bằng link banner thật
             style={styles.bannerImage}
             resizeMode="contain"
@@ -188,7 +188,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 20,
-    paddingTop: 50, // Cho an toàn trên iOS
   },
   userInfo: {
     flexDirection: "row",

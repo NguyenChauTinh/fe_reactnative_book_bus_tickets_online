@@ -227,9 +227,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#007AFF", // Màu xanh dương
+    backgroundColor: "#007AFF", 
     padding: 16,
-    paddingTop: 50, // An toàn
     alignItems: "center",
   },
   headerLeft: {

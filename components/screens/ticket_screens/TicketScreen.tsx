@@ -458,7 +458,7 @@ const TicketScreen: React.FC = () => {
       {loading ? (
         <ActivityIndicator
           size="large"
-          color="#4A90E2"
+          color="#007AFF"
           style={styles.loading}
         />
       ) : (
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -518,14 +518,14 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: "#4A90E2",
+    borderBottomColor: "#007AFF",
   },
   tabText: {
     fontSize: 16,
     color: "#666666",
   },
   activeTabText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "600",
   },
   content: {
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   busIcon: {
     width: 80,
     height: 80,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",

@@ -31,7 +31,7 @@ const FilterIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <Path
       d="M3 6H21M7 12H17M10 18H14"
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
     />
@@ -41,7 +41,7 @@ const SortIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <Path
       d="M3 6H21M7 12H17M10 18H14"
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
     />
@@ -49,10 +49,10 @@ const SortIcon = () => (
 );
 const TimeIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="12" r="10" stroke="#4A90E2" strokeWidth="2" />
+    <Circle cx="12" cy="12" r="10" stroke="#007AFF" strokeWidth="2" />
     <Path
       d="M12 6V12L16 14"
-      stroke="#4A90E2"
+      stroke="#007AFF"
       strokeWidth="2"
       strokeLinecap="round"
     />
@@ -279,7 +279,7 @@ export default function SearchResultsScreen({ navigation, route }) {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10 }}>Đang tải danh sách chuyến...</Text>
       </View>
     );
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -584,11 +584,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   timeSlotTextSelected: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "bold",
   },
   closeButton: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     borderRadius: 8,
     paddingVertical: 14,
     marginTop: 20,

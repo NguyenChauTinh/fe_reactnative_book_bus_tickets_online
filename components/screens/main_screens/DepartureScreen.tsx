@@ -67,7 +67,7 @@ export default function DepartureScreen({ navigation, route }) {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10 }}>Đang tải địa điểm...</Text>
       </View>
     );
@@ -75,7 +75,7 @@ export default function DepartureScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* <StatusBar backgroundColor="#4A90E2" barStyle="light-content" /> */}
+      {/* <StatusBar backgroundColor="#007AFF" barStyle="light-content" /> */}
 
       <View style={styles.header}>
         <BackButton onPress={() => navigation.goBack()} />
@@ -107,7 +107,7 @@ export default function DepartureScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
   },
   header: {
     flexDirection: "row",

@@ -63,7 +63,7 @@ export default function DateSelectionScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#007AFF" barStyle="light-content" />
 
       <View style={styles.fixedHeader}>
         <View style={styles.topHeader}>
@@ -131,10 +131,10 @@ export default function DateSelectionScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
   },
   fixedHeader: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
   },
   topHeader: {
     flexDirection: "row",
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   weekDays: {
     flexDirection: "row",
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     paddingHorizontal: 16,
     paddingBottom: 8,
   },

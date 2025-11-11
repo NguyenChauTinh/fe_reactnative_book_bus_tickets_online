@@ -78,7 +78,7 @@ export default function MainScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#007AFF" barStyle="light-content" />
 
       <Header />
 

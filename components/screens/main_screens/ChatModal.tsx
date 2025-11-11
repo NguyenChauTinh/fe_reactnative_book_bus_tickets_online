@@ -118,7 +118,7 @@ export const ChatModal = ({ visible, onClose }) => {
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#4A90E2" />
+            <ActivityIndicator size="small" color="#007AFF" />
             <Text style={styles.loadingText}>Trợ lý đang nhập...</Text>
           </View>
         )}
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 16,
-    color: "#4A90E2",
+    color: "#007AFF",
   },
   chatList: {
     flex: 1,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
   },
   botMessage: {
     alignSelf: "flex-start",
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   sendButton: {
     paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     borderRadius: 20,
   },
   sendButtonDisabled: {

@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   ticketCode: {
     fontWeight: "bold",
-    color: "#4A90E2",
+    color: "#007AFF",
   },
   discountValue: {
     color: "green",
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   confirmButton: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",

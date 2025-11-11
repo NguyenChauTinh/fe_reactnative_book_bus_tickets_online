@@ -1,7 +1,7 @@
-import Svg, { Rect, Circle } from "react-native-svg"
+import Svg, { Circle, Rect } from "react-native-svg"
 
 export default function TrainIcon({ active = false }) {
-  const color = active ? "#4A90E2" : "#BDC3C7"
+  const color = active ? "#007AFF" : "#BDC3C7"
 
   return (
     <Svg width="24" height="24" viewBox="0 0 24 24">

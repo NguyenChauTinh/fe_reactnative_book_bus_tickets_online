@@ -383,7 +383,7 @@ export default function SeatSelectionScreen({ navigation, route }) {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10 }}>Đang tải sơ đồ ghế...</Text>
       </View>
     );
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   activeStepText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#4A90E2",
+    borderColor: "#007AFF",
   },
   noticeText: {
     color: "#1976d2",
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailsLink: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 14,
     textDecorationLine: "underline",
   },
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     fontSize: 16,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   modalDescription: {

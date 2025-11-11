@@ -28,7 +28,7 @@ const BackIcon = () => (
 
 const BusIcon = () => (
   <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <Rect x="3" y="6" width="18" height="12" rx="2" fill="#4A90E2" />
+    <Rect x="3" y="6" width="18" height="12" rx="2" fill="#007AFF" />
     <Rect x="5" y="8" width="4" height="3" fill="white" />
     <Rect x="15" y="8" width="4" height="3" fill="white" />
     <Circle cx="7" cy="17" r="1" fill="#666" />
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   activeStepText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   detailsLink: {
     fontSize: 14,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   busInfo: {
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
   },
   redDot: {
     width: 8,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   },
   changeButton: {
     fontSize: 14,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   cancellationInfo: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     fontSize: 14,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   contactInfo: {

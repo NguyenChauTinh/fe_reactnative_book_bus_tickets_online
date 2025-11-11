@@ -740,7 +740,7 @@ export default PaymentScreen;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  selectedOption: { borderColor: "#4A90E2", backgroundColor: "#e3f2fd" },
+  selectedOption: { borderColor: "#007AFF", backgroundColor: "#e3f2fd" },
   optionText: { marginLeft: 16, fontSize: 16, fontWeight: "600" },
   optionTextSub: { marginLeft: 16, fontSize: 14, color: "#666", marginTop: 4 },
   promotionSection: { marginHorizontal: 16, marginBottom: 16, zIndex: 1 },
@@ -898,11 +898,11 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   otpInputBoxFilled: {
-    borderColor: "#4A90E2",
+    borderColor: "#007AFF",
     backgroundColor: "#FFFFFF",
   },
   verificationButton: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     padding: 14,
     borderRadius: 8,
     width: "100%",
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   resendButtonText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 14,
   },
   closeModalButton: {

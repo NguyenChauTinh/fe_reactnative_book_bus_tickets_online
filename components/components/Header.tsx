@@ -1,10 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 import ChevronRightIcon from "./icons/ChevronRightIcon";
 import VexereIcon from "./icons/VexereIcon";
 
 export default function Header() {
+    const { user } = useAuth();
+  
   const navigation = useNavigation();
+  
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
@@ -16,7 +20,7 @@ export default function Header() {
         style={styles.rightSection}
         onPress={() => navigation.navigate("AccountTab" as never)}
       >
-        <Text style={styles.greeting}>Xin chào</Text>
+        <Text style={styles.greeting}>Xin chào  </Text><Text style={{fontWeight: "bold",  color: "white"}}>{user?.hoVaTen}</Text>
         <ChevronRightIcon />
       </TouchableOpacity>
     </View>
@@ -27,7 +31,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import ArrowRightIcon from "./icons/ArrowRightIcon"
 import DepartureIcon from "./icons/DepartureIcon"
 import DestinationIcon from "./icons/DestinationIcon"
-import ArrowRightIcon from "./icons/ArrowRightIcon"
 
 export default function RecentSearches() {
   const searches = [
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   },
   clearAll: {
     fontSize: 14,
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   searchItem: {

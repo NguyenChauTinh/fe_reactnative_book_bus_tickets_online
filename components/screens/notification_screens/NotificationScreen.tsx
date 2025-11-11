@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     padding: 16,
   },
   headerTitle: {
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: "#4A90E2",
+    borderBottomColor: "#007AFF",
   },
   tabText: {
     fontSize: 16,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   activeTabText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "600",
   },
   content: {
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     marginLeft: 8,
     marginTop: 4,
   },

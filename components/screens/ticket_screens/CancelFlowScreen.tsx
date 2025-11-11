@@ -120,7 +120,7 @@ const CancelFlowScreen: React.FC = () => {
 
   const renderLoading = () => (
     <View style={styles.centered}>
-      <ActivityIndicator size="large" color="#4A90E2" />
+      <ActivityIndicator size="large" color="#007AFF" />
     </View>
   );
 
@@ -144,7 +144,7 @@ const CancelFlowScreen: React.FC = () => {
                   <MaterialCommunityIcons
                     name="checkbox-marked" // Luôn luôn được chọn
                     size={24}
-                    color={"#4A90E2"} // Màu xanh
+                    color={"#007AFF"} // Màu xanh
                   />
                   <View style={styles.ticketInfo}>
                     <Text style={styles.ticketSeat}>
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F2F5",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#4A90E230", // Xanh nhạt
+    backgroundColor: "#007AFF30", // Xanh nhạt
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   modalIconText: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#4A90E2", // Xanh đậm
+    color: "#007AFF", // Xanh đậm
   },
   modalTitle: {
     fontSize: 20,

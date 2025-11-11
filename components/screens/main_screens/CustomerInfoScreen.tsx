@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   activeStepText: {
-    color: "#4A90E2",
+    color: "#007AFF",
     fontSize: 18,
     marginTop: 4,
     fontWeight: "bold",
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsLink: {
-    color: "#4A90E2",
+    color: "#007AFF",
     textDecorationLine: "underline",
   },
   bottomBar: {

@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F2F5", // Màu nền xám nhạt
   },
   header: {
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#007AFF",
     padding: 16,
     flexDirection: "row",
     // justifyContent: "space-between",
