@@ -33,13 +33,15 @@ interface VeXe {
   _id: string;
   maVe: string;
   trangThaiThanhToan: string;
-  phuongThucThanhToan: string; // vd: "KHI_LEN_XE"
+  phuongThucThanhToan: string;
   chiTiet: ChiTietVe[];
   tongTien: number; //
 }
 interface ChiTietVe {
   _id: string;
   maChoNgoi: string;
+  trangThaiChiTiet: string;
+  ngayHuy?: string | Date;
 }
 interface ChuyenXe {
   _id: string;
@@ -166,9 +168,10 @@ const TicketDetailScreen: React.FC = () => {
       const chuyenXeData: ChuyenXe = chuyenXeResponse.data;
 
       // Tải Tuyến Đường
-      const tuyenDuongResponse = await api_trip_schedule_service.getTuyenDuong(
-        chuyenXeData.tuyenDuong
-      );
+      const tuyenDuongResponse =
+        await api_trip_schedule_service.getTuyenDuongData(
+          chuyenXeData.tuyenDuong
+        );
       if (!tuyenDuongResponse.success || !tuyenDuongResponse.data) {
         throw new Error("Không tải được chi tiết tuyến đường.");
       }
@@ -192,7 +195,6 @@ const TicketDetailScreen: React.FC = () => {
     fetchDetails();
   }, [fetchDetails]);
 
-  // ✅ 8. Các hàm xử lý
   const handleCopyMaVe = () => {
     if (veXe?.maVe) {
       Clipboard.setString(veXe.maVe);
@@ -205,23 +207,12 @@ const TicketDetailScreen: React.FC = () => {
   };
 
   const handleCancelOrder = () => {
-    Alert.alert(
-      "Xác nhận hủy",
-      "Bạn có chắc chắn muốn hủy đơn hàng này không?",
-      [
-        { text: "Không" },
-        {
-          text: "Hủy đơn",
-          style: "destructive",
-          onPress: () => {
-            console.log("...Đang gọi API hủy vé...");
-            // ⚠️ Thêm logic gọi API hủy vé ở đây
-            // Sau khi hủy thành công, quay lại màn hình trước
-            // navigation.goBack();
-          },
-        },
-      ]
-    );
+    if (!veXe) return;
+
+    // Chuyển sang màn hình Hủy Vé mới, truyền ID của vé master
+    navigation.navigate("CancelFlowScreen", {
+      veXeId: veXe._id,
+    });
   };
 
   // ===========================================
@@ -262,6 +253,35 @@ const TicketDetailScreen: React.FC = () => {
   const paymentStatus = mapApiPaymentStatus(veXe.trangThaiThanhToan);
   const paymentMethod = mapApiPaymentMethodToText(veXe.phuongThucThanhToan);
 
+  const activeChiTiet = veXe.chiTiet.filter(
+    (ct) =>
+      ct.trangThaiChiTiet !== "DA_HUY" && ct.trangThaiChiTiet !== "DA_HOAN_TIEN"
+  );
+  const isFullyCancelled = activeChiTiet.length === 0;
+
+  // 2. Tạo nội dung cho banner (nếu cần)
+  let cancellationText = "";
+  if (isFullyCancelled) {
+    const firstCancelledTicket = veXe.chiTiet.find(
+      (ct) => ct.trangThaiChiTiet === "DA_HUY" && ct.ngayHuy
+    );
+
+    // Mặc định dùng new Date() nếu không tìm thấy (fallback)
+    const cancelledDate =
+      firstCancelledTicket && firstCancelledTicket.ngayHuy
+        ? new Date(firstCancelledTicket.ngayHuy)
+        : new Date(); // Fallback
+
+    const cancelledTimeStr = `${String(cancelledDate.getHours()).padStart(
+      2,
+      "0"
+    )}:${String(cancelledDate.getMinutes()).padStart(2, "0")}`;
+
+    const cancelledDateStr = formatDateString(cancelledDate); // Dùng lại helper
+
+    cancellationText = `Vé đã bị hủy vào lúc ${cancelledTimeStr} • ${cancelledDateStr}`;
+  }
+
   // ⚠️ Dữ liệu bị thiếu từ API getChuyenXeById
   const tenNhaXe = "Không rõ nhà xe"; // API không trả về
   const tenLoaiXe = chuyenXe.loaiXe?.tenLoaiXe || "Không rõ loại xe";
@@ -278,12 +298,18 @@ const TicketDetailScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chi tiết giao dịch</Text>
       </View>
-      {/* 1. THANH BANNER ĐỎ */}
-      <View style={styles.redBanner}>
-        <Text style={styles.redBannerText}>
-          Chuyến đi sẽ bắt đầu lúc {tripTimeStr} • {formattedDate}
-        </Text>
-      </View>
+      {/* 1. THANH BANNER (ĐỎ hoặc XÁM) */}
+      {isFullyCancelled ? (
+        <View style={styles.grayBanner}>
+          <Text style={styles.grayBannerText}>{cancellationText}</Text>
+        </View>
+      ) : (
+        <View style={styles.redBanner}>
+          <Text style={styles.redBannerText}>
+            Chuyến đi sẽ bắt đầu lúc {tripTimeStr} • {formattedDate}
+          </Text>
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* 2. CARD THÔNG TIN CHUYẾN ĐI (Ảnh image_cc4a04.jpg) */}
@@ -600,8 +626,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  grayBanner: {
+    backgroundColor: "#8E8E93", // Màu xám (iOS system gray)
+    padding: 12,
+    alignItems: "center",
+  },
+  grayBannerText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   scrollContainer: {
-    paddingBottom: 100, // Đảm bảo không bị che bởi footer
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: "#FFFFFF",

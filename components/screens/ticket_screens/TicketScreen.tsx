@@ -29,6 +29,7 @@ interface MasterTicket {
   seatList: string; // Danh sách ghế (vd: "A1, A2")
   chuyenXeId: string; // Dùng để truyền sang màn hình chi tiết
   xe: string;
+  chiTietIds: string[];
 }
 
 // ⛔ 3. Bỏ mockTickets.
@@ -57,21 +58,32 @@ const formatDateString = (dateStr: string | Date): string => {
 };
 
 /**
- * Chuyển đổi trạng thái từ API (backend) sang trạng thái của Tab (frontend)
- * (Giữ nguyên hàm này, nó vẫn dùng được cho veXe.trangThai)
+ * [HÀM MỚI] Quyết định Tab (View) dựa trên mảng chiTiet
+ * Quyết định xem vé master nên nằm ở tab "current", "completed", hay "cancelled".
  */
-const mapApiStatusToFrontend = (
-  apiStatus: string,
-  tripDateStr: string | Date
+const getFrontendStatusFromChiTiet = (
+  chiTietList: any[], // Giả định mảng chiTiet
+  tripDateStr: string | Date | undefined
 ): "current" | "completed" | "cancelled" => {
-  // 1. Ưu tiên hàng đầu: Vé đã hủy
-  if (apiStatus === "DA_HUY") {
+  if (!chiTietList || chiTietList.length === 0) {
     return "cancelled";
   }
 
-  // 2. Phân loại "Đã đi" hay "Hiện tại"
+  // 1. Đếm số vé *không* bị hủy
+  // (Giả định các trạng thái active là DAT_CHO, DA_THANH_TOAN, DA_CHUYEN)
+  const activeChiTiet = chiTietList.filter(
+    (ct) =>
+      ct.trangThaiChiTiet !== "DA_HUY" && ct.trangThaiChiTiet !== "DA_HOAN_TIEN"
+  );
+
+  // 2. Nếu không có vé nào active -> Tab "Đã hủy"
+  if (activeChiTiet.length === 0) {
+    return "cancelled";
+  }
+
+  // 3. Nếu có ít nhất 1 vé active, phân loại "Đã đi" hay "Hiện tại"
   if (!tripDateStr) {
-    return "current";
+    return "current"; // Mặc định là 'current' nếu thiếu ngày
   }
 
   try {
@@ -86,7 +98,7 @@ const mapApiStatusToFrontend = (
       return "current";
     }
   } catch (error) {
-    return "current";
+    return "current"; // Lỗi thì trả về 'current'
   }
 };
 
@@ -193,11 +205,8 @@ const TicketScreen: React.FC = () => {
             .map((item) => item.maChoNgoi)
             .join(", ");
 
-          // ⚠️ Chú ý: Đảm bảo 'veXe.trangThaiThanhToan' chứa các giá trị
-          // mà hàm mapApiStatusToFrontend và mapApiBookingStatusToPaymentText
-          // có thể xử lý (ví dụ: "DA_HUY", "CHUA_THANH_TOAN", v.v.)
-          const frontendStatus = mapApiStatusToFrontend(
-            veXe.trangThaiThanhToan, // <-- DÙNG TRẠNG THÁI CỦA VÉ XE
+          const frontendStatus = getFrontendStatusFromChiTiet(
+            veXe.chiTiet, // <-- Truyền toàn bộ mảng chiTiet
             chuyenXe?.ngayKhoiHanh
           );
 
@@ -205,10 +214,12 @@ const TicketScreen: React.FC = () => {
             veXe.trangThaiThanhToan // <-- DÙNG TRẠNG THÁI CỦA VÉ XE
           );
 
+          const chiTietIds = veXe.chiTiet.map((ct: any) => ct._id);
           // Gọi API cho từng tuyến
-          const routeResponse = await api_trip_schedule_service.getTuyenDuong(
-            chuyenXe?.tuyenDuong
-          );
+          const routeResponse =
+            await api_trip_schedule_service.getTuyenDuongData(
+              chuyenXe?.tuyenDuong
+            );
 
           console.log("[TicketScreen] Route Response:", routeResponse);
 
@@ -224,6 +235,7 @@ const TicketScreen: React.FC = () => {
             totalPrice: `${totalPrice.toLocaleString("vi-VN")}đ`,
             seatList: seatList,
             chuyenXeId: chuyenXe?._id || "",
+            chiTietIds: chiTietIds,
           };
         });
 
@@ -293,13 +305,9 @@ const TicketScreen: React.FC = () => {
       </Text>
     </View>
   );
-  // ⛔ Bỏ hàm getButtonText (không dùng nữa)
 
-  // ✅ 12. Viết lại hoàn toàn hàm render card
   const renderMasterTicketCard = (ticket: MasterTicket) => {
-    // Xử lý sự kiện khi nhấn nút
     const handleViewDetails = () => {
-      // ⚠️ Đảm bảo bạn có màn hình tên là "TicketDetailScreen" trong Stack Navigator
       navigation.navigate("TicketDetailScreen", {
         veXeId: ticket.id,
         chuyenXeId: ticket.chuyenXeId,
@@ -307,10 +315,10 @@ const TicketScreen: React.FC = () => {
     };
 
     const handleCancel = () => {
-      // ⚠️ Thêm logic hủy vé ở đây
-      console.log("Hủy vé:", ticket.maVe);
-      // (Có thể gọi API, sau đó refresh lại danh sách)
-      // onRefresh();
+      // Thay vì Alert, chúng ta điều hướng đến màn hình mới
+      navigation.navigate("CancelFlowScreen", {
+        veXeId: ticket.id, // Truyền ID của vé master
+      });
     };
 
     return (

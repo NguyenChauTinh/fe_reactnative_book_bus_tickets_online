@@ -1,15 +1,23 @@
-// PaymentScreen.tsx
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  forwardRef, // 👈 THÊM
+  useEffect,
+  useImperativeHandle, // 👈 THÊM
+  useMemo,
+  useRef, // 👈 THÊM
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  NativeSyntheticEvent, // 👈 THÊM
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TextInputKeyPressEventData, // 👈 THÊM
   TouchableOpacity,
   View,
 } from "react-native";
@@ -51,6 +59,87 @@ const QRIcon = ({ size = 30, color = "#007AFF" }) => (
   </Svg>
 );
 
+const OTP_LENGTH = 6;
+
+interface OtpInputProps {
+  onCodeFilled: (code: string) => void;
+}
+
+export interface OtpInputHandle {
+  clear: () => void;
+}
+
+// Định nghĩa component OtpInput ngay trong file này
+const OtpInput = forwardRef<OtpInputHandle, OtpInputProps>(
+  ({ onCodeFilled }, ref) => {
+    const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(""));
+    const inputs = useRef<TextInput[]>([]);
+
+    useImperativeHandle(ref, () => ({
+      clear() {
+        setOtp(new Array(OTP_LENGTH).fill(""));
+        inputs.current[0]?.focus();
+      },
+    }));
+
+    const handleChange = (text: string, index: number) => {
+      const newDigit = text.slice(-1);
+      const newOtp = [...otp];
+      newOtp[index] = newDigit;
+      setOtp(newOtp);
+
+      if (newDigit && index < OTP_LENGTH - 1) {
+        inputs.current[index + 1]?.focus();
+      }
+
+      if (newOtp.every((digit) => digit !== "")) {
+        const finalCode = newOtp.join("");
+        onCodeFilled(finalCode);
+        inputs.current[OTP_LENGTH - 1]?.blur();
+      }
+    };
+
+    const handleBackspace = (
+      event: NativeSyntheticEvent<TextInputKeyPressEventData>,
+      index: number
+    ) => {
+      if (event.nativeEvent.key === "Backspace") {
+        if (otp[index] === "") {
+          if (index > 0) {
+            inputs.current[index - 1]?.focus();
+          }
+        }
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    };
+
+    return (
+      <View style={styles.otpContainerInternal}>
+        {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+          <TextInput
+            key={index}
+            ref={(el) => (inputs.current[index] = el as TextInput)}
+            style={[
+              styles.otpInputBox,
+              otp[index] ? styles.otpInputBoxFilled : null,
+            ]}
+            onChangeText={(text) => handleChange(text, index)}
+            onKeyPress={(e) => handleBackspace(e, index)}
+            value={otp[index]}
+            maxLength={1}
+            keyboardType="numeric"
+            textContentType="oneTimeCode"
+            autoComplete="sms-otp"
+            textAlign="center"
+          />
+        ))}
+      </View>
+    );
+  }
+);
+
 const PaymentScreen = ({ navigation, route }) => {
   const {
     trip,
@@ -78,6 +167,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const [otpCode, setOtpCode] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [countdown, setCountdown] = useState(59);
+  const otpInputRef = useRef<OtpInputHandle>(null);
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -265,7 +355,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.18:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.37:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -295,19 +385,20 @@ const PaymentScreen = ({ navigation, route }) => {
       return;
     }
 
-    // Hiển thị loading trong modal (nếu bạn muốn)
-    // hoặc thêm một state loading riêng cho nút "Thanh toán"
-    setVerificationLoading(true);
+    setVerificationLoading(true); // Hiển thị loading (tạm thời)
 
     try {
-      // ✅ THAY THẾ CODE CŨ BẰNG API THẬT
       const response = await Api_Auth_Customer.requestOtp({
         soDienThoai: customerInfo.phone,
       });
 
       if (response.success) {
+        // Xóa mã cũ (nếu có) trước khi mở
+        setOtpCode("");
+        otpInputRef.current?.clear();
+        // Mở modal
         setIsVerificationModalVisible(true);
-        // setCountdown(59); // (Bỏ comment nếu bạn làm
+        setCountdown(59);
       } else {
         Alert.alert(
           "Lỗi",
@@ -318,35 +409,31 @@ const PaymentScreen = ({ navigation, route }) => {
       console.error("Lỗi gửi OTP:", error);
       Alert.alert("Lỗi hệ thống", "Không thể gửi mã OTP. Vui lòng thử lại.");
     } finally {
-      setVerificationLoading(false); // Ẩn loading
+      setVerificationLoading(false);
     }
-
-    // Xóa phần code "Tạm thời" mở modal ở đây
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerify = async (codeToVerify: string) => {
     setVerificationLoading(true);
 
     try {
-      // ✅ THAY THẾ CODE CŨ BẰNG API THẬT
       const response = await Api_Auth_Customer.verifyOtp({
         soDienThoai: customerInfo.phone,
-        otp: otpCode, // State chứa mã người dùng nhập
+        otp: codeToVerify,
       });
 
       if (response.success) {
-        // Nếu thành công:
-        setIsVerificationModalVisible(false); // Đóng modal
-        setOtpCode(""); // Xóa mã
+        setIsVerificationModalVisible(false);
+        setOtpCode("");
 
-        // Gọi hàm đặt vé thật (hàm này đã có sẵn)
         await proceedToBooking();
       } else {
-        // Nếu thất bại:
         Alert.alert(
           "Mã OTP không đúng",
           response.message || "Vui lòng kiểm tra và thử lại."
         );
+        otpInputRef.current?.clear();
+        setOtpCode("");
       }
     } catch (error) {
       console.error("Lỗi xác thực OTP:", error);
@@ -354,17 +441,27 @@ const PaymentScreen = ({ navigation, route }) => {
         "Lỗi hệ thống",
         "Mã OTP không đúng. Vui lòng kiểm tra và thử lại."
       );
+      otpInputRef.current?.clear();
+      setOtpCode("");
     } finally {
       setVerificationLoading(false);
     }
+  };
 
-    // Xóa toàn bộ phần "setTimeout" giả lập ở đây
+  const handleVerifyOtp = () => {
+    if (otpCode.length < 6) return;
+    handleVerify(otpCode);
+  };
+
+  const handleOtpFilled = (code: string) => {
+    setOtpCode(code);
+    handleVerify(code);
   };
 
   const handleWebViewNavigationStateChange = (navState) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.18:3005/payment-return")) {
+    if (url.includes("http://192.168.1.37:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -420,16 +517,12 @@ const PaymentScreen = ({ navigation, route }) => {
               nhập mã để tiếp tục.
             </Text>
 
-            {/* TODO: Thêm component nhập OTP (6 số) ở đây */}
-            {/* Tạm thời dùng TextInput đơn giản */}
-            <TextInput
-              style={styles.otpInput}
-              placeholder="Nhập mã OTP"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={otpCode}
-              onChangeText={setOtpCode}
-            />
+            <View style={styles.otpInputContainer}>
+              <OtpInput
+                ref={otpInputRef}
+                onCodeFilled={handleOtpFilled} // 👈 5. Gán hàm auto-submit
+              />
+            </View>
 
             <TouchableOpacity
               style={[
@@ -437,7 +530,7 @@ const PaymentScreen = ({ navigation, route }) => {
                 (otpCode.length < 6 || verificationLoading) &&
                   styles.disabledButton,
               ]}
-              onPress={handleVerifyOtp} // Chúng ta sẽ tạo hàm này ở bước 4
+              onPress={handleVerifyOtp}
               disabled={otpCode.length < 6 || verificationLoading}
             >
               {verificationLoading ? (
@@ -782,15 +875,30 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 20,
   },
-  otpInput: {
+  otpInputContainer: {
     width: "100%",
-    height: 50,
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 8,
-    textAlign: "center",
-    fontSize: 20,
+    paddingHorizontal: 16,
     marginBottom: 20,
+  },
+  otpContainerInternal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  otpInputBox: {
+    width: 44,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderRadius: 8,
+    backgroundColor: "#F9F9F9",
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  otpInputBoxFilled: {
+    borderColor: "#4A90E2",
+    backgroundColor: "#FFFFFF",
   },
   verificationButton: {
     backgroundColor: "#4A90E2",

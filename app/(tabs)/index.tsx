@@ -24,6 +24,7 @@ import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 
+import CancelFlowScreen from "@/components/screens/ticket_screens/CancelFlowScreen";
 import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -78,6 +79,7 @@ export type RootStackParamList = {
   ResetPassword: { phoneNumber: string };
   VerificationCodeRegister: { phoneNumber: string };
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
+  CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -191,7 +193,7 @@ export default function App() {
   //     // const userId = await AsyncStorage.getItem("userId");
   //     if (!userId) return;
 
-  //     const socket = io("http://192.168.1.18:8081", {
+  //     const socket = io("http://192.168.1.37:8081", {
   //       query: { userId },
   //       transports: ["websocket"],
   //     });
@@ -334,6 +336,11 @@ export default function App() {
             name="TicketDetailScreen"
             component={TicketDetailScreen}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CancelFlowScreen"
+            component={CancelFlowScreen}
+            options={{ headerShown: false }} // Tắt header mặc định vì đã có header tùy chỉnh
           />
           {/* ================================ */}
         </Stack.Navigator>
