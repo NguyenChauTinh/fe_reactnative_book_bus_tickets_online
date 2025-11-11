@@ -24,6 +24,7 @@ import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 
+import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -76,6 +77,7 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { phoneNumber: string };
   VerificationCodeRegister: { phoneNumber: string };
+  TicketDetailScreen: { veXeId: string; chuyenXeId: string };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -189,7 +191,7 @@ export default function App() {
   //     // const userId = await AsyncStorage.getItem("userId");
   //     if (!userId) return;
 
-  //     const socket = io("http://192.168.1.15:8081", {
+  //     const socket = io("http://192.168.1.18:8081", {
   //       query: { userId },
   //       transports: ["websocket"],
   //     });
@@ -326,6 +328,11 @@ export default function App() {
           <Stack.Screen
             name="BookingSuccessScreen"
             component={BookingSuccessScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="TicketDetailScreen"
+            component={TicketDetailScreen}
             options={{ headerShown: false }}
           />
           {/* ================================ */}

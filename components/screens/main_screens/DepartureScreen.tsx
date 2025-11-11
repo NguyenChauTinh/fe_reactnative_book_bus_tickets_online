@@ -31,10 +31,6 @@ export default function DepartureScreen({ navigation, route }) {
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
-        console.log(
-          `Finding 'don' locations related to destination ${destinationId}:`,
-          response
-        );
 
         if (Array.isArray(response)) {
           setLocations(response);

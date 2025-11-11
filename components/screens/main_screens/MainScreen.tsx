@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import DateSelector from "../../components/DateSelector";
 import FeatureIcons from "../../components/FeatureIcons";
 import Header from "../../components/Header";
@@ -77,11 +76,8 @@ export default function MainScreen({ navigation }) {
     // setDestination(null); // (Tùy chọn)
   };
 
-  console.log("Current Departure State:", departureLocation);
-  console.log("Current Destination State:", destination);
-
   return (
-    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+    <View style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       <Header />
@@ -136,17 +132,17 @@ export default function MainScreen({ navigation }) {
         <RecentSearches />
       </ScrollView>
       <AiChatbot />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   content: {
     flex: 1,
+    backgroundColor: "white",
   },
   bookingCard: {
     backgroundColor: "white",

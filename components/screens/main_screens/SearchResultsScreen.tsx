@@ -176,7 +176,6 @@ export default function SearchResultsScreen({ navigation, route }) {
             destination._id
           );
 
-        console.log("Fetched bus trips:", response.data);
         setAllTrips(response.data || []);
       } catch (error) {
         console.error("Error fetching bus trips:", error);
@@ -203,9 +202,6 @@ export default function SearchResultsScreen({ navigation, route }) {
     // 1. Lọc các chuyến sắp chạy (nếu là hôm nay)
     if (todayInfo.isSearchingForToday) {
       const filterTime = todayInfo.currentMinutes + 60;
-      console.log(
-        `Đang lọc chuyến xe cho HÔM NAY. Giờ hiện tại: ${todayInfo.currentMinutes} phút. Chỉ hiển thị chuyến sau: ${filterTime} phút.`
-      );
 
       processedTrips = processedTrips.filter((trip) => {
         const tripDate = trip.ngayKhoiHanh.split("T")[0];

@@ -1,8 +1,8 @@
 import createApiManager from "./Api_Manager.js";
 
 // const API_BASE_URL =
-//   'http://192.168.1.15:3002/api/v1';
-const API_BASE_URL = "http://192.168.1.15:3002/api/v1";
+//   'http://192.168.1.18:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.18:3002/api/v1";
 
 console.log("API_BASE_URL == ", API_BASE_URL);
 
@@ -27,6 +27,14 @@ export const Api_Auth_Customer = {
 
   logout: async () => {
     return apiClient.post("/tai-khoan-khach-hang/logout");
+  },
+
+  requestOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/request-otp", data);
+  },
+
+  verifyOtp: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/verify", data);
   },
 };
 

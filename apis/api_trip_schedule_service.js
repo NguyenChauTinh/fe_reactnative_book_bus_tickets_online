@@ -1,8 +1,8 @@
 import createApiManager from "./Api_Manager.js";
 
 // const API_BASE_URL =
-//   'http://192.168.1.15:3002/api/v1';
-const API_BASE_URL = "http://192.168.1.15:3001/api/v1";
+//   'http://192.168.1.18:3002/api/v1';
+const API_BASE_URL = "http://192.168.1.18:3001/api/v1";
 
 console.log("API_BASE_URL == ", API_BASE_URL);
 
@@ -52,5 +52,10 @@ export const api_trip_schedule_service = {
   getMultipleChuyenXeByIds: async (chuyenXeIds) => {
     // Gọi đến endpoint mới bạn vừa tạo ở Bước 1
     return tripApiClient.post("/chuyen-xe/get-by-ids", { ids: chuyenXeIds });
+  },
+
+  // router.get("/lay-tuyen-duong/:id", getTuyenDuong);
+  getTuyenDuong: async (id) => {
+    return tripApiClient.get(`/tuyen-duong/lay-tuyen-duong/${id}`);
   },
 };

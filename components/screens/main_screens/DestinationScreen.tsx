@@ -34,10 +34,6 @@ export default function DestinationScreen({ navigation, route }) {
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
-        console.log(
-          `Finding 'tra' locations related to departure ${departureId}:`,
-          response
-        );
 
         // ✅ Gán dữ liệu vào state
         if (Array.isArray(response)) {
@@ -58,7 +54,6 @@ export default function DestinationScreen({ navigation, route }) {
   }, [departureId]);
 
   const handleLocationSelect = (location) => {
-    console.log("Location selected:", JSON.stringify(location, null, 2));
     onSelect(location);
     navigation.goBack();
   };

@@ -23,9 +23,9 @@ const parseHHMMToMinutes = (timeString) => {
 
 // URL API (Giữ nguyên)
 const GIAVE_API_URL =
-  "http://192.168.1.15:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
+  "http://192.168.1.18:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
 const TUYEN_DUONG_API_URL =
-  "http://192.168.1.15:3001/api/v1/tuyen-duong/lay-tuyen-duong";
+  "http://192.168.1.18:3001/api/v1/tuyen-duong/lay-tuyen-duong";
 
 // (Hàm callYourTripAPI giữ nguyên)
 const callYourTripAPI = async (departure, destination, date) => {

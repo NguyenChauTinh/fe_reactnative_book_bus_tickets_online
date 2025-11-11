@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
+import { Api_Auth_Customer } from "../../../apis/api_auth";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
 import PaymentCountdown from "./PaymentCountdown";
@@ -72,6 +73,11 @@ const PaymentScreen = ({ navigation, route }) => {
   const [promoInputValue, setPromoInputValue] = useState("");
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [showGateway, setShowGateway] = useState(false);
+  const [isVerificationModalVisible, setIsVerificationModalVisible] =
+    useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [countdown, setCountdown] = useState(59);
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -246,7 +252,7 @@ const PaymentScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleContinue = async () => {
+  const proceedToBooking = async () => {
     if (!selectedPaymentMethod) return;
 
     if (selectedPaymentMethod === "TAI_XE") {
@@ -259,7 +265,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.15:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.18:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -283,10 +289,82 @@ const PaymentScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleContinue = async () => {
+    if (!selectedPaymentMethod) {
+      Alert.alert("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
+
+    // Hiển thị loading trong modal (nếu bạn muốn)
+    // hoặc thêm một state loading riêng cho nút "Thanh toán"
+    setVerificationLoading(true);
+
+    try {
+      // ✅ THAY THẾ CODE CŨ BẰNG API THẬT
+      const response = await Api_Auth_Customer.requestOtp({
+        soDienThoai: customerInfo.phone,
+      });
+
+      if (response.success) {
+        setIsVerificationModalVisible(true);
+        // setCountdown(59); // (Bỏ comment nếu bạn làm
+      } else {
+        Alert.alert(
+          "Lỗi",
+          response.message || "Không thể gửi mã OTP. Vui lòng thử lại."
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi gửi OTP:", error);
+      Alert.alert("Lỗi hệ thống", "Không thể gửi mã OTP. Vui lòng thử lại.");
+    } finally {
+      setVerificationLoading(false); // Ẩn loading
+    }
+
+    // Xóa phần code "Tạm thời" mở modal ở đây
+  };
+
+  const handleVerifyOtp = async () => {
+    setVerificationLoading(true);
+
+    try {
+      // ✅ THAY THẾ CODE CŨ BẰNG API THẬT
+      const response = await Api_Auth_Customer.verifyOtp({
+        soDienThoai: customerInfo.phone,
+        otp: otpCode, // State chứa mã người dùng nhập
+      });
+
+      if (response.success) {
+        // Nếu thành công:
+        setIsVerificationModalVisible(false); // Đóng modal
+        setOtpCode(""); // Xóa mã
+
+        // Gọi hàm đặt vé thật (hàm này đã có sẵn)
+        await proceedToBooking();
+      } else {
+        // Nếu thất bại:
+        Alert.alert(
+          "Mã OTP không đúng",
+          response.message || "Vui lòng kiểm tra và thử lại."
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi xác thực OTP:", error);
+      Alert.alert(
+        "Lỗi hệ thống",
+        "Mã OTP không đúng. Vui lòng kiểm tra và thử lại."
+      );
+    } finally {
+      setVerificationLoading(false);
+    }
+
+    // Xóa toàn bộ phần "setTimeout" giả lập ở đây
+  };
+
   const handleWebViewNavigationStateChange = (navState) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.15:3005/payment-return")) {
+    if (url.includes("http://192.168.1.18:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -327,6 +405,71 @@ const PaymentScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </SafeAreaView>
       </Modal>
+
+      <Modal
+        visible={isVerificationModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsVerificationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.verificationModal}>
+            <Text style={styles.verificationTitle}>Xác minh số điện thoại</Text>
+            <Text style={styles.verificationSubtitle}>
+              Mã xác thực đã được gửi đến số +{customerInfo.phone}. Vui lòng
+              nhập mã để tiếp tục.
+            </Text>
+
+            {/* TODO: Thêm component nhập OTP (6 số) ở đây */}
+            {/* Tạm thời dùng TextInput đơn giản */}
+            <TextInput
+              style={styles.otpInput}
+              placeholder="Nhập mã OTP"
+              keyboardType="number-pad"
+              maxLength={6}
+              value={otpCode}
+              onChangeText={setOtpCode}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.verificationButton,
+                (otpCode.length < 6 || verificationLoading) &&
+                  styles.disabledButton,
+              ]}
+              onPress={handleVerifyOtp} // Chúng ta sẽ tạo hàm này ở bước 4
+              disabled={otpCode.length < 6 || verificationLoading}
+            >
+              {verificationLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.verificationButtonText}>Tiếp tục</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={() => {
+                // TODO: Gọi API gửi lại OTP ở đây
+                setCountdown(59); // Reset đếm ngược
+                console.log("Gửi lại OTP...");
+              }}
+            >
+              <Text style={styles.resendButtonText}>
+                Gửi lại mã {countdown > 0 ? `sau 00:${countdown}` : ""}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setIsVerificationModalVisible(false)}
+            >
+              <Text style={styles.closeModalText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {loading ? (
         <ActivityIndicator style={{ flex: 1 }} size="large" color="#0000ff" />
       ) : (
@@ -614,5 +757,65 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  verificationModal: {
+    width: "90%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+  },
+  verificationTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  verificationSubtitle: {
+    fontSize: 15,
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 20,
+  },
+  otpInput: {
+    width: "100%",
+    height: 50,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
+    textAlign: "center",
+    fontSize: 20,
+    marginBottom: 20,
+  },
+  verificationButton: {
+    backgroundColor: "#4A90E2",
+    padding: 14,
+    borderRadius: 8,
+    width: "100%",
+    alignItems: "center",
+  },
+  verificationButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  resendButton: {
+    marginTop: 16,
+  },
+  resendButtonText: {
+    color: "#4A90E2",
+    fontSize: 14,
+  },
+  closeModalButton: {
+    marginTop: 10,
+  },
+  closeModalText: {
+    color: "#999",
+    fontSize: 14,
   },
 });
