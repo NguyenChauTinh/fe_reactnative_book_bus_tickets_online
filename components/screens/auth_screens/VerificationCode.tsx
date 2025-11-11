@@ -17,8 +17,7 @@ import {
   View,
 } from "react-native";
 import { Api_Auth_Customer } from "../../../apis/api_auth.js";
-
-// --- Định nghĩa màu sắc (Nhất quán với các file khác) ---
+import { useAuth } from "../../../contexts/AuthContext";
 const COLORS = {
   primaryBlue: "#007AFF",
   headerBlue: "#2A8CFF",
@@ -59,6 +58,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const { login } = useAuth();
 
   // --- Logic đếm ngược ---
   useEffect(() => {
@@ -165,14 +165,29 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         };
 
         const response = await Api_Auth_Customer.verifyLoginOtp(payload);
-        const { token } = response;
-        navigation.replace("Main");
+        const { token, userId } = response;
 
-        // TODO: Lưu  vào AsyncStorage
-        // await AsyncStorage.setItem('token', token);
-        console.log("Đăng nhập thành công, Token:", token);
+        if (!token || !userId) {
+          Alert.alert(
+            "Lỗi đăng nhập",
+            "Không nhận được token hoặc userId từ server."
+          );
+          setIsLoading(false);
+          return;
+        }
+       const user = {
+          khachHangId: response.khachHangId,
+          hoVaTen: response.hoVaTen, 
+          soDienThoai: phoneNumber,
+          email: response.email, 
+          taiKhoanId: userId, 
+        };
+        Alert.alert(
+          "Đăng nhập (Giả định)",
+          "Đăng nhập thành công với dữ liệu giả định. Cần tạo API getUserData."
+        );
 
-        // Alert.alert('Thành công', 'Đăng nhập thành công!');
+        await login(token, user);
       }
     } catch (err: any) {
       const errorMessage =

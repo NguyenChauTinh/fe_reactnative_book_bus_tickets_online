@@ -17,6 +17,7 @@ import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
+import { useAuth } from "../../../contexts/AuthContext";
 import PaymentCountdown from "./PaymentCountdown";
 
 const BackIcon = () => (
@@ -72,7 +73,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const [promoInputValue, setPromoInputValue] = useState("");
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [showGateway, setShowGateway] = useState(false);
-
+  const { user } = useAuth();
   useEffect(() => {
     const fetchPromotions = async () => {
       setLoading(true);
@@ -166,29 +167,28 @@ const PaymentScreen = ({ navigation, route }) => {
     paymentMethod,
     vnpTransactionNo = null
   ) => {
-    // --- BẮT ĐẦU LOGIC CHIA GIẢM GIÁ (LÀM TRÒN 3 SỐ) ---
     const numTickets = selectedSeats.length;
-    let discountDistributed = 0; // Số tiền đã chia
-
-    // Tính số tiền giảm giá cho 1 vé (làm tròn 3 chữ số)
-    // Ví dụ: 10000 / 3 = 3333.3333... -> 3333.333
+    let discountDistributed = 0;
     const discountPerTicket =
       Math.round((discountAmount / numTickets) * 1000) / 1000;
-    // --- KẾT THÚC LOGIC CHIA GIẢM GIÁ ---
+
+    if (!user || !user.taiKhoanId) {
+      Alert.alert(
+        "Lỗi xác thực",
+        "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
+      );
+      setLoading(false);
+      return;
+    }
 
     const chiTietVe = selectedSeats.map((seat, index) => {
       let ticketDiscount = 0;
 
-      // Nếu không phải vé cuối cùng
       if (index < numTickets - 1) {
-        ticketDiscount = discountPerTicket; // 3333.333
-        discountDistributed += ticketDiscount; // Cộng dồn
+        ticketDiscount = discountPerTicket; 
+        discountDistributed += ticketDiscount; 
       } else {
-        // Vé cuối cùng sẽ nhận phần còn lại để đảm bảo tổng chính xác
-        // Ví dụ: 10000 - (3333.333 * 2) = 10000 - 6666.666 = 3333.334
         ticketDiscount = discountAmount - discountDistributed;
-
-        // Làm tròn vé cuối cùng này lại 3 chữ số (nếu cần)
         ticketDiscount = Math.round(ticketDiscount * 1000) / 1000;
       }
 
@@ -202,7 +202,7 @@ const PaymentScreen = ({ navigation, route }) => {
         diemTra: selectedDropoff.name,
         giaVeCoBan: seat.price,
         phuThu: 0,
-        giamGia: ticketDiscount, // Gán tiền giảm giá đã chia
+        giamGia: ticketDiscount, 
         hinhThucThanhToan: null,
         trangThaiChiTiet:
           paymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
@@ -215,12 +215,12 @@ const PaymentScreen = ({ navigation, route }) => {
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
-      userId : "userId"
+      userId: user.taiKhoanId,
     };
 
-try {
+    try {
       setLoading(true);
-      
+
       const response = await api_booking_service.createTicket(ticketPayload);
       console.log("response = ", response);
       if (response.success) {
@@ -234,10 +234,7 @@ try {
           discountAmount,
         });
       } else {
-        Alert.alert(
-          "Lỗi",
-          response.message || "Có lỗi xảy ra khi đặt vé." 
-        );
+        Alert.alert("Lỗi", response.message || "Có lỗi xảy ra khi đặt vé.");
       }
     } catch (error) {
       Alert.alert(
@@ -262,7 +259,7 @@ try {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.10:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.25:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,

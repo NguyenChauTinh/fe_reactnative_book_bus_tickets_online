@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const SERVICES = {
-  trip_schedule_service: "http://192.168.1.10:3001",
-  booking_service: "http://192.168.1.10:3005",
-  api_promotion_service: "http://192.168.1.10:3004",
+  trip_schedule_service: "http://192.168.1.25:3001",
+  booking_service: "http://192.168.1.25:3005",
+  api_promotion_service: "http://192.168.1.25:3004",
 };
 
 // Tạo một instance axios theo service

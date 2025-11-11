@@ -28,6 +28,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { StyleSheet } from "react-native";
+import { AuthProvider, useAuth } from "../../contexts/AuthContext";
 import { SocketProvider } from "../../contexts/SocketContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -180,154 +181,157 @@ function AccountStackNavigator() {
     </AccountStack.Navigator>
   );
 }
+const RootNavigator: React.FC = () => {
+  // Lấy token và isLoading từ context
+  // isLoading là trạng thái chờ khi app đang kiểm tra AsyncStorage
+  const { token, isLoading } = useAuth();
 
-export default function App() {
-  // useEffect(() => {
-  //   const setupSocket = async () => {
-  //     const userId = "1";
-  //     // const userId = await AsyncStorage.getItem("userId");
-  //     if (!userId) return;
-
-  //     const socket = io("http://localhost:8081", {
-  //       query: { userId },
-  //       transports: ["websocket"],
-  //     });
-
-  //     socket.on("connect", () => {
-  //       console.log("Socket connected");
-  //     });
-
-  //     socket.on("disconnect", () => {
-  //       console.log("Socket disconnected");
-  //     });
-  //   };
-
-  //   setupSocket();
-  // }, []);
+  // Khi AuthProvider đang load, ta đã hiển thị ActivityIndicator rồi
+  // nên ở đây ta có thể return null hoặc check lại isLoading
+  if (isLoading) {
+    // AuthProvider đã xử lý loading, nhưng ta có thể check lại
+    return null;
+  }
 
   return (
+    <Stack.Navigator
+      // Quyết định màn hình bắt đầu dựa trên việc có token hay không
+      // initialRouteName={token ? "Main" : "Welcome"} // Cách này cũng được
+      screenOptions={{
+        headerShown: false,
+        animation: "none",
+      }}
+    >
+      {token == null ? (
+        // --- CHƯA ĐĂNG NHẬP: Hiển thị các màn hình Auth ---
+        <>
+          <Stack.Screen
+            name="Welcome"
+            component={Welcome}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={Register}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerificationCode"
+            component={VerificationCode}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPassword}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPassword}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerificationCodeRegister"
+            component={VerificationCodeRegister}
+            options={{ headerShown: false }}
+          />
+        </>
+      ) : (
+        // --- ĐÃ ĐĂNG NHẬP: Hiển thị các màn hình chính của App ---
+        <>
+          {/* Main Tab Navigator */}
+          <Stack.Screen
+            name="Main"
+            component={MainTabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Ticket"
+            component={TicketStackNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notification"
+            component={NotificationStackNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Account"
+            component={AccountStackNavigator}
+            options={{ headerShown: false }}
+          />
+          {/* =========================== */}
+          {/* Các màn hình con (không nằm trong Tab) */}
+          <Stack.Screen
+            name="DateSelectionScreen"
+            component={DateSelectionScreen}
+          />
+          <Stack.Screen
+            name="DestinationScreen"
+            component={DestinationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DepartureScreen"
+            component={DepartureScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SearchResultsScreen"
+            component={SearchResultsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SeatSelectionScreen"
+            component={SeatSelectionScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CustomerInfoScreen"
+            component={CustomerInfoScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DropoffPointScreen"
+            component={DropoffPointScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PickupPointScreen"
+            component={PickupPointScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="TripInfoScreen"
+            component={TripInfoScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentScreen"
+            component={PaymentScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="BookingSuccessScreen"
+            component={BookingSuccessScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+};
+export default function App() {
+  return (
     <SocketProvider>
-      <Stack.Navigator
-        initialRouteName="Welcome"
-        screenOptions={{
-          headerShown: false,
-          animation: "none", // Disable animations
-        }}
-      >
-        <Stack.Screen
-          name="Welcome"
-          component={Welcome}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={Register}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="VerificationCode"
-          component={VerificationCode}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPassword}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ResetPassword"
-          component={ResetPassword}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="VerificationCodeRegister"
-          component={VerificationCodeRegister}
-          options={{ headerShown: false }}
-        />
-        {/* Main Tab Navigator */}
-        <Stack.Screen
-          name="Main"
-          component={MainTabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Ticket"
-          component={TicketStackNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Notification"
-          component={NotificationStackNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Account"
-          component={AccountStackNavigator}
-          options={{ headerShown: false }}
-        />
-        {/* =========================== */}
-        {/* Main screen */}
-        <Stack.Screen
-          name="DateSelectionScreen"
-          component={DateSelectionScreen}
-        />
-        <Stack.Screen
-          name="DestinationScreen"
-          component={DestinationScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DepartureScreen"
-          component={DepartureScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SearchResultsScreen"
-          component={SearchResultsScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SeatSelectionScreen"
-          component={SeatSelectionScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CustomerInfoScreen"
-          component={CustomerInfoScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DropoffPointScreen"
-          component={DropoffPointScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PickupPointScreen"
-          component={PickupPointScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="TripInfoScreen"
-          component={TripInfoScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PaymentScreen"
-          component={PaymentScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="BookingSuccessScreen"
-          component={BookingSuccessScreen}
-          options={{ headerShown: false }}
-        />
-        {/* ================================ */}
-      </Stack.Navigator>
+       <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
     </SocketProvider>
   );
 }

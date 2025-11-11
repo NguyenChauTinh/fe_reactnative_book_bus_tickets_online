@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { useAuth } from '../../../contexts/AuthContext';
 const AccountScreen = ({ navigation }: { navigation: any }) => {
+  const { user, logout } = useAuth();
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -142,7 +143,7 @@ const AccountScreen = ({ navigation }: { navigation: any }) => {
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
+        onPress={logout}
       >
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
