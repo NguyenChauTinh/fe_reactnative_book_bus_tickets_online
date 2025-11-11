@@ -1,5 +1,13 @@
 "use client";
 
+import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
+import BackIcon from "@/components/components/icons/BackIcon";
+import {
+  Feather,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,21 +22,8 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-// ✅ 1. Import hooks và icons
-import {
-  Feather,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-
-// ✅ 2. Import API services (giống màn hình trước)
-import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
-import BackIcon from "@/components/components/icons/BackIcon";
 import { api_booking_service } from "../../../apis/api_booking_service";
 
-// ✅ 3. Định nghĩa Interface (giả định)
-// (Bạn cần điều chỉnh dựa trên API thật của mình)
 interface VeXe {
   _id: string;
   maVe: string;

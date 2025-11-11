@@ -1,5 +1,6 @@
 "use client";
 
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   Image,
@@ -9,283 +10,305 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from "../../../contexts/AuthContext";
+
+const getInitials = (name?: string) => {
+  if (!name) return "";
+  const words = name.split(" ");
+  if (words.length >= 2) {
+    // Lấy chữ cái đầu của 2 từ cuối
+    return `${words[words.length - 2][0]}${
+      words[words.length - 1][0]
+    }`.toUpperCase();
+  } else if (words.length === 1) {
+    // Lấy 2 chữ cái đầu nếu chỉ có 1 từ
+    return words[0].substring(0, 2).toUpperCase();
+  }
+  return "";
+};
+
+// Component con cho từng mục menu
+const MenuItem = ({
+  icon,
+  name,
+  onPress,
+  hasNav = true,
+  badge = "",
+}: {
+  icon: string;
+  name: string;
+  onPress: () => void;
+  hasNav?: boolean;
+  badge?: string;
+}) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+    <Ionicons
+      name={icon as any}
+      size={22}
+      color="#007AFF"
+      style={styles.menuIcon}
+    />
+    <Text style={styles.menuText}>{name}</Text>
+    {badge ? <Text style={styles.badge}>{badge}</Text> : null}
+    {hasNav && (
+      <Ionicons
+        name="chevron-forward-outline"
+        size={20}
+        color="#BDBDBD"
+        style={styles.menuArrow}
+      />
+    )}
+  </TouchableOpacity>
+);
+
 const AccountScreen = ({ navigation }: { navigation: any }) => {
+  // Lấy user và hàm logout từ Context
   const { user, logout } = useAuth();
+
+  const initials = getInitials(user?.hoVaTen);
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <Image
-            source={{
-              uri: "https://images2.thanhnien.vn/528068263637045248/2024/1/25/e093e9cfc9027d6a142358d24d2ee350-65a11ac2af785880-17061562929701875684912.jpg",
-            }} // Replace with actual image path
-            style={styles.avatar}
-          />
-          <Text style={styles.userName}>Tình</Text>
+          {/* Avatar với chữ cái đầu */}
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </View>
+          <View>
+            <Text style={styles.userName}>{user?.hoVaTen || "Khách"}</Text>
+            <Text style={styles.userStatus}>Thành viên Mới</Text>
+          </View>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate("AccountInfoScreen")}
         >
-          <Text style={styles.settingsText}>Chỉnh sửa</Text>
+          <Text style={styles.editLink}>Chỉnh sửa</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Menu Items */}
-      <View style={styles.menu}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate("Invite")}
-        >
-          <View style={styles.menuIcon}>
-            <Text style={styles.iconText}>🎁</Text>
-          </View>
-          <Text style={styles.menuText}>Ưu đãi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate("InviteFriends")}
-        >
-          <View style={styles.menuIcon}>
-            <Text style={styles.iconText}>🎉</Text>
-          </View>
-          <Text style={styles.menuText}>Giới thiệu bạn qua Mời</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView>
+        {/* Menu Items Section 1 */}
+        <View style={styles.menuSection}>
+          <MenuItem
+            icon="star-outline"
+            name="Điểm thưởng của tôi"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="pricetag-outline"
+            name="Ưu đãi"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="gift-outline"
+            name="Giới thiệu nhận quà"
+            onPress={() => {}}
+            badge="Mới"
+          />
+        </View>
 
-      {/* Banner */}
-      <View style={styles.banner}>
-        <Image
-          source={{
-            uri: "https://images2.thanhnien.vn/528068263637045248/2024/1/25/e093e9cfc9027d6a142358d24d2ee350-65a11ac2af785880-17061562929701875684912.jpg",
-          }} // Replace with actual banner image path
-          style={styles.bannerImage}
-          resizeMode="cover"
-        />
-      </View>
-
-      {/* Address */}
-      <TouchableOpacity style={styles.addressItem}>
-        <View style={styles.addressIcon}>
-          <Text style={styles.iconText}>📍</Text>
-        </View>
-        <Text style={styles.addressText}>Quận lý thế</Text>
-      </TouchableOpacity>
-
-      {/* Additional Options */}
-      <TouchableOpacity
-        style={styles.optionItem}
-        onPress={() => navigation.navigate("TripHistory")}
-      >
-        <View style={styles.optionIcon}>
-          <Text style={styles.iconText}>📅</Text>
-        </View>
-        <Text style={styles.optionText}>Danh sách chuyến đi</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.optionItem}
-        onPress={() => navigation.navigate("TripRating")}
-      >
-        <View style={styles.optionIcon}>
-          <Text style={styles.iconText}>⭐</Text>
-        </View>
-        <Text style={styles.optionText}>Đánh giá chuyến đi</Text>
-        <Text style={styles.versionText}>v8.9.30p</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.optionItem}
-        onPress={() => navigation.navigate("Support")}
-      >
-        <View style={styles.optionIcon}>
-          <Text style={styles.iconText}>❓</Text>
-        </View>
-        <Text style={styles.optionText}>Trung tâm Hỗ trợ</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.optionItem}
-        onPress={() => navigation.navigate("Inbox")}
-      >
-        <View style={styles.optionIcon}>
-          <Text style={styles.iconText}>📩</Text>
-        </View>
-        <Text style={styles.optionText}>Góp ý</Text>
-      </TouchableOpacity>
-
-      {/* Language Selection */}
-      <View style={styles.languageContainer}>
-        <TouchableOpacity
-          style={styles.languageItem}
-          onPress={() => navigation.navigate("Vietnamese")}
-        >
+        {/* Banner */}
+        <TouchableOpacity style={styles.bannerContainer}>
           <Image
             source={{
-              uri: "https://images2.thanhnien.vn/528068263637045248/2024/1/25/e093e9cfc9027d6a142358d24d2ee350-65a11ac2af785880-17061562929701875684912.jpg",
-            }}
-            style={styles.flagIcon}
+              uri: "https://placehold.co/600x150/4A90E2/FFFFFF?text=Banner+Quang+Cao",
+            }} // Thay bằng link banner thật
+            style={styles.bannerImage}
+            resizeMode="contain"
           />
-          <Text style={styles.languageText}>Tiếng Việt</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.languageItem}
-          onPress={() => navigation.navigate("English")}
-        >
-          <Image
-            source={{
-              uri: "https://images2.thanhnien.vn/528068263637045248/2024/1/25/e093e9cfc9027d6a142358d24d2ee350-65a11ac2af785880-17061562929701875684912.jpg",
-            }}
-            style={styles.flagIcon}
-          />
-          <Text style={styles.languageText}>English</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Logout */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={logout}
-      >
-        <Text style={styles.logoutText}>Đăng xuất</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Menu Items Section 2 */}
+        <View style={styles.menuSection}>
+          <MenuItem
+            icon="card-outline"
+            name="Quản lý thẻ"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="chatbubble-ellipses-outline"
+            name="Đánh giá chuyến đi"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="settings-outline"
+            name="Cài đặt"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="help-circle-outline"
+            name="Trung tâm Hỗ trợ"
+            onPress={() => {}}
+          />
+          <MenuItem icon="mail-outline" name="Góp ý" onPress={() => {}} />
+        </View>
+
+        {/* Language Selection */}
+        <View style={styles.menuSection}>
+          <View style={styles.languageContainer}>
+            <TouchableOpacity style={styles.languageButtonActive}>
+              <Text style={styles.languageFlag}>🇻🇳</Text>
+              <Text style={styles.languageTextActive}>Tiếng Việt</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.languageButton}>
+              <Text style={styles.languageFlag}>🇬🇧</Text>
+              <Text style={styles.languageText}>English</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Logout Button */}
+        <View style={styles.menuSection}>
+          <MenuItem
+            icon="log-out-outline"
+            name="Đăng xuất"
+            onPress={logout} // Gọi hàm logout từ context
+            hasNav={false}
+          />
+        </View>
+
+        {/* Version Text */}
+        <Text style={styles.versionText}>v8.9.35p</Text>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F0F2F5", // Màu nền xám nhạt
   },
   header: {
+    backgroundColor: "#007AFF", // Màu xanh dương
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#4A90E2",
-    padding: 16,
     alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingTop: 50, // Cho an toàn trên iOS
   },
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
   },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#4CAF50", // Màu xanh lá cho avatar
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   userName: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "bold",
   },
-  settingsText: {
+  userStatus: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  editLink: {
     color: "#FFFFFF",
     fontSize: 16,
-    textDecorationLine: "underline",
     fontWeight: "600",
   },
-  menu: {
+  menuSection: {
     backgroundColor: "#FFFFFF",
-    paddingVertical: 8,
+    marginTop: 8,
+    marginHorizontal: 8,
+    borderRadius: 8,
+    overflow: "hidden", // Để bo góc
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: "#F0F2F5",
   },
   menuIcon: {
     width: 24,
-    height: 24,
-    marginRight: 8,
-    justifyContent: "center",
+    marginRight: 16,
     alignItems: "center",
-  },
-  iconText: {
-    fontSize: 16,
   },
   menuText: {
     fontSize: 16,
     color: "#333333",
   },
-  banner: {
-    marginVertical: 8,
+  badge: {
+    backgroundColor: "#E53935",
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 8,
+    overflow: "hidden",
+  },
+  menuArrow: {
+    marginLeft: "auto",
+  },
+  bannerContainer: {
+    marginTop: 8,
+    paddingHorizontal: 8,
   },
   bannerImage: {
     width: "100%",
-    height: 120,
-  },
-  addressItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-    marginBottom: 8,
-  },
-  addressIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  addressText: {
-    fontSize: 16,
-    color: "#333333",
-  },
-  optionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-    marginBottom: 8,
-  },
-  optionIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333333",
-  },
-  versionText: {
-    fontSize: 12,
-    color: "#999999",
+    height: 100, // Điều chỉnh chiều cao banner
+    borderRadius: 8,
   },
   languageContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
-    marginBottom: 8,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  languageItem: {
+  languageButton: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 8,
+    borderRadius: 6,
+    marginRight: 10,
   },
-  flagIcon: {
-    width: 24,
-    height: 16,
+  languageButtonActive: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 6,
+    marginRight: 10,
+    backgroundColor: "#E3F2FD",
+  },
+  languageFlag: {
+    fontSize: 20,
     marginRight: 8,
   },
   languageText: {
     fontSize: 16,
-    color: "#333333",
+    color: "#666",
   },
-  logoutButton: {
-    padding: 12,
-    alignItems: "center",
-  },
-  logoutText: {
+  languageTextActive: {
     fontSize: 16,
-    color: "#4A90E2",
+    color: "#007AFF",
     fontWeight: "600",
-    textDecorationLine: "underline",
+  },
+  versionText: {
+    textAlign: "center",
+    color: "#9E9E9E",
+    fontSize: 12,
+    marginVertical: 16,
   },
 });
 

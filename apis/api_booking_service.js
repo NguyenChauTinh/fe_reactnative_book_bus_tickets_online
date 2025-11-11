@@ -1,13 +1,8 @@
 import createApiManager from "./Api_Manager.js";
 
 // const API_BASE_URL =
-<<<<<<< HEAD
 //   'http://localhost:3002/api/v1';
 const API_BASE_URL = "http://192.168.1.25:3005/api/v1";
-=======
-//   'http://192.168.1.37:3002/api/v1';
-const API_BASE_URL = "http://192.168.1.37:3005/api/v1";
->>>>>>> origin/tinh_0311
 
 console.log("API_BASE_URL == ", API_BASE_URL);
 
