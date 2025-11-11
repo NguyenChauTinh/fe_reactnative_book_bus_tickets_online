@@ -28,6 +28,7 @@ interface MasterTicket {
   totalPrice: string; // TỔNG tiền của tất cả chiTiet
   seatList: string; // Danh sách ghế (vd: "A1, A2")
   chuyenXeId: string; // Dùng để truyền sang màn hình chi tiết
+  xe: string;
 }
 
 // ⛔ 3. Bỏ mockTickets.
@@ -219,7 +220,7 @@ const TicketScreen: React.FC = () => {
             route: routeResponse?.data?.tenTuyen || "Không rõ tuyến", // Giả định API trả về 'tenTuyen'
             time: chuyenXe ? formatMinutesToHHMM(chuyenXe.gioKhoiHanh) : "N/A",
             date: chuyenXe ? formatDateString(chuyenXe.ngayKhoiHanh) : "N/A",
-            providerName: chuyenXe?.nhaXe?.tenNhaXe || "Không rõ nhà xe",
+            providerName: chuyenXe?.xe?.bienSo || "Không rõ biển số", // Giả định dùng biển số xe
             totalPrice: `${totalPrice.toLocaleString("vi-VN")}đ`,
             seatList: seatList,
             chuyenXeId: chuyenXe?._id || "",
@@ -661,7 +662,7 @@ const styles = StyleSheet.create({
   },
   masterCardActions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 16,
     paddingTop: 8,
@@ -676,6 +677,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   masterCancelButtonText: {
     color: "#333333",
@@ -684,6 +688,9 @@ const styles = StyleSheet.create({
   },
   masterDetailButton: {
     backgroundColor: "#1E3A8A", // Màu xanh đậm
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   masterDetailButtonText: {
     color: "#FFFFFF",

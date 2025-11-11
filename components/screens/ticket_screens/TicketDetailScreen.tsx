@@ -6,12 +6,14 @@ import {
   Alert,
   Clipboard,
   Linking,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 // ✅ 1. Import hooks và icons
 import {
   Feather,
@@ -130,6 +132,7 @@ const TicketDetailScreen: React.FC = () => {
   const [veXe, setVeXe] = useState<VeXe | null>(null);
   const [chuyenXe, setChuyenXe] = useState<ChuyenXe | null>(null);
   const [tuyenDuong, setTuyenDuong] = useState<TuyenDuong | null>(null);
+  const [isQrModalVisible, setIsQrModalVisible] = useState(false);
 
   // ✅ 7. Logic tải dữ liệu
   const fetchDetails = useCallback(async () => {
@@ -331,7 +334,6 @@ const TicketDetailScreen: React.FC = () => {
                 style={{ marginLeft: 16 }}
               />
 
-              {/* ✅ ĐÂY LÀ PHẦN ĐÃ SỬA */}
               <Text
                 style={[styles.passengerText, { flex: 1 }]} // Thêm { flex: 1 }
                 numberOfLines={1} // Thêm 1 dòng
@@ -408,7 +410,10 @@ const TicketDetailScreen: React.FC = () => {
 
             {/* Buttons */}
             <View style={styles.tripButtons}>
-              <TouchableOpacity style={styles.qrButton}>
+              <TouchableOpacity
+                style={styles.qrButton}
+                onPress={() => setIsQrModalVisible(true)}
+              >
                 <MaterialCommunityIcons name="qrcode" size={20} color="#333" />
                 <Text style={styles.qrButtonText}>Xem QR vé</Text>
               </TouchableOpacity>
@@ -512,6 +517,42 @@ const TicketDetailScreen: React.FC = () => {
           <Text style={styles.footerButtonSecondaryText}>Đặt lại</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isQrModalVisible}
+        onRequestClose={() => setIsQrModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => setIsQrModalVisible(false)} // Đóng khi nhấn bên ngoài
+        >
+          <View
+            style={styles.modalContainer}
+            onStartShouldSetResponder={() => true} // Ngăn click xuyên qua
+          >
+            {/* ⚠️ CHÚ Ý: Thay đổi đường dẫn logo cho đúng! */}
+            <QRCode
+              value={veXe?.maVe || "NO_TICKET_ID"}
+              size={220}
+              logo={require("../../../assets/images/icon.png")} // ⚠️ THAY ĐƯỜNG DẪN NÀY
+              logoSize={40}
+              logoBackgroundColor="#FFFFFF"
+            />
+
+            <Text style={styles.modalQrText}>Mã vé: {veXe?.maVe}</Text>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setIsQrModalVisible(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -903,6 +944,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+  },
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    width: "85%", // Chiều rộng của modal
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalQrText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  modalCloseButton: {
+    backgroundColor: "#1E3A8A", // Dùng màu xanh đậm
+    paddingVertical: 12,
+    borderRadius: 8,
+    width: "100%", // Nút "Đóng" rộng full
+  },
+  modalCloseButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
 
