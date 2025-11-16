@@ -320,7 +320,7 @@ const PaymentScreen = ({ navigation, route }) => {
       maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
-      userId: "userId",
+      userId: "60c72b2f5f1b2c001f6e8d9e",
     };
 
     try {
@@ -364,7 +364,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.37:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.22:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -392,7 +392,7 @@ const PaymentScreen = ({ navigation, route }) => {
       try {
         const response = await axios.post(
           // Đây là URL backend mới bạn cần tạo (ví dụ)
-          "http://192.168.1.37:3005/api/v1/payment/create-momo-url",
+          "http://192.168.1.22:3005/api/v1/payment/create-momo-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -423,32 +423,34 @@ const PaymentScreen = ({ navigation, route }) => {
       return;
     }
 
-    setVerificationLoading(true); // Hiển thị loading (tạm thời)
+    await proceedToBooking();
 
-    try {
-      const response = await Api_Auth_Customer.requestOtp({
-        soDienThoai: customerInfo.phone,
-      });
+    // setVerificationLoading(true); // Hiển thị loading (tạm thời)
 
-      if (response.success) {
-        // Xóa mã cũ (nếu có) trước khi mở
-        setOtpCode("");
-        otpInputRef.current?.clear();
-        // Mở modal
-        setIsVerificationModalVisible(true);
-        setCountdown(59);
-      } else {
-        Alert.alert(
-          "Lỗi",
-          response.message || "Không thể gửi mã OTP. Vui lòng thử lại."
-        );
-      }
-    } catch (error) {
-      console.error("Lỗi gửi OTP:", error);
-      Alert.alert("Lỗi hệ thống", "Không thể gửi mã OTP. Vui lòng thử lại.");
-    } finally {
-      setVerificationLoading(false);
-    }
+    // try {
+    //   const response = await Api_Auth_Customer.requestOtp({
+    //     soDienThoai: customerInfo.phone,
+    //   });
+
+    //   if (response.success) {
+    //     // Xóa mã cũ (nếu có) trước khi mở
+    //     setOtpCode("");
+    //     otpInputRef.current?.clear();
+    //     // Mở modal
+    //     setIsVerificationModalVisible(true);
+    //     setCountdown(59);
+    //   } else {
+    //     Alert.alert(
+    //       "Lỗi",
+    //       response.message || "Không thể gửi mã OTP. Vui lòng thử lại."
+    //     );
+    //   }
+    // } catch (error) {
+    //   console.error("Lỗi gửi OTP:", error);
+    //   Alert.alert("Lỗi hệ thống", "Không thể gửi mã OTP. Vui lòng thử lại.");
+    // } finally {
+    //   setVerificationLoading(false);
+    // }
   };
 
   const handleVerify = async (codeToVerify: string) => {
@@ -500,7 +502,7 @@ const PaymentScreen = ({ navigation, route }) => {
     const { url } = navState;
 
     // 1. XỬ LÝ URL TRẢ VỀ CỦA VNPAY (Giữ nguyên)
-    if (url.includes("http://192.168.1.37:3005/payment-return")) {
+    if (url.includes("http://192.168.1.22:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -523,7 +525,7 @@ const PaymentScreen = ({ navigation, route }) => {
     // 2. THÊM XỬ LÝ URL TRẢ VỀ CỦA MOMO
     // ===================================
     // (Giả sử URL trả về của bạn là 'momo-return')
-    if (url.includes("http://192.168.1.37:3005/momo-return")) {
+    if (url.includes("http://192.168.1.22:3005/momo-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 

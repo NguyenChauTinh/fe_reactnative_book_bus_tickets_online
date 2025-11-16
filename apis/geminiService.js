@@ -23,9 +23,9 @@ const parseHHMMToMinutes = (timeString) => {
 
 // URL API (Giữ nguyên)
 const GIAVE_API_URL =
-  "http://192.168.1.37:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
+  "http://192.168.1.22:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
 const TUYEN_DUONG_API_URL =
-  "http://192.168.1.37:3001/api/v1/tuyen-duong/lay-tuyen-duong";
+  "http://192.168.1.22:3001/api/v1/tuyen-duong/lay-tuyen-duong";
 
 // (Hàm callYourTripAPI giữ nguyên)
 const callYourTripAPI = async (departure, destination, date) => {
@@ -103,6 +103,8 @@ const callYourTripAPI = async (departure, destination, date) => {
 };
 
 // (Hàm callYourSeatAPI giữ nguyên như file bạn cung cấp)
+// Thay thế hàm callYourSeatAPI cũ bằng hàm này
+
 const callYourSeatAPI = async (tripId, numSeats) => {
   console.log(
     `[AI DEBUG] 2. Đang lấy GHẾ + ĐIỂM ĐÓN/TRẢ cho: ${tripId} (Số vé: ${numSeats})`
@@ -110,7 +112,6 @@ const callYourSeatAPI = async (tripId, numSeats) => {
 
   try {
     // 1. Lấy thông tin chuyến xe (song song với lấy vé)
-    // tripId ở đây là _id
     const tripDetailsPromise =
       api_trip_schedule_service.getChuyenXeByObjId(tripId);
 
@@ -120,16 +121,10 @@ const callYourSeatAPI = async (tripId, numSeats) => {
       console.log(
         `[AI DEBUG] 2.1. Đang lấy danh sách vé đã đặt cho: ${tripId}`
       );
-      // tripId ở đây là _id
       const bookedTicketsResponse =
         await api_booking_service.getTicketsByChuyenXeId(tripId);
 
       if (bookedTicketsResponse.success && bookedTicketsResponse.data) {
-        console.log(
-          "[AI DEBUG] 2.1. Vé đã đặt trả về:",
-          bookedTicketsResponse.data
-        );
-
         bookedSeats = bookedTicketsResponse.data.flatMap((ve) =>
           ve.chiTiet.map((detail) => detail.maChoNgoi)
         );
@@ -150,7 +145,6 @@ const callYourSeatAPI = async (tripId, numSeats) => {
     const seatResponse = await tripDetailsPromise;
 
     if (!seatResponse || !seatResponse.success) {
-      // ... (xử lý lỗi)
       return {
         success: false,
         error: "TRIP_NOT_FOUND",
@@ -182,7 +176,6 @@ const callYourSeatAPI = async (tripId, numSeats) => {
 
     const chiTietTuyen = tuyenDuongData?.chiTietTuyen;
     if (!chiTietTuyen || !Array.isArray(chiTietTuyen)) {
-      // ... (xử lý lỗi)
       return {
         success: false,
         error: "ROUTE_DETAILS_MISSING",
@@ -190,23 +183,39 @@ const callYourSeatAPI = async (tripId, numSeats) => {
       };
     }
 
-    // ✅ 4. LỌC SẴN GHẾ CHO AI
-    const soDoGhe = trip.loaiXe.soDoGhe;
-    const seatStatus = {
-      available: [],
-      unavailable: [],
-    };
-    soDoGhe
-      .filter((ghe) => ghe.trangThai === true) // Lọc ghế (bỏ lối đi)
-      .forEach((ghe) => {
-        if (bookedSeats.includes(ghe.maSoGhe)) {
-          seatStatus.unavailable.push(ghe.maSoGhe);
-        } else {
-          seatStatus.available.push(ghe.maSoGhe);
-        }
-      });
+    // ================================================================
+    // ✅ BẮT ĐẦU NÂNG CẤP SƠ ĐỒ GHẾ
+    // ================================================================
 
-    // 5. Xử lý Điểm đón (Giữ nguyên)
+    // 4. LẤY CẤU TRÚC SƠ ĐỒ GHẾ ĐẦY ĐỦ
+    const soDoGhe = trip.loaiXe.soDoGhe; // Đây là mảng layout từ CSDL
+    const loaiXeTen = trip.loaiXe.tenLoaiXe; // Vd: "Limousine 24 phòng"
+
+    // Tạo sơ đồ ghế đầy đủ (fullSeatMap) cho FRONTEND
+    // Mảng này sẽ chứa cả Lối đi (trangThai: false) và Ghế (trangThai: true)
+    const fullSeatMap = soDoGhe.map((ghe) => ({
+      // Các thuộc tính layout từ CSDL
+      maSoGhe: ghe.maSoGhe, // vd: "A1" hoặc "LOIDI"
+      tang: ghe.tang, // vd: "Tầng Dưới"
+      hang: ghe.hang, // vd: 1
+      cot: ghe.cot, // vd: 1
+      trangThai: ghe.trangThai, // true = Ghế, false = Lối đi
+
+      // Thuộc tính mới: Trạng thái đã đặt
+      isBooked: bookedSeats.includes(ghe.maSoGhe), // true nếu đã bị đặt
+    }));
+
+    // 5. TẠO DANH SÁCH GHẾ TRỐNG (ĐƠN GIẢN) CHO AI (Gemini)
+    // AI (Gemini) vẫn cần danh sách này để đọc cho người dùng
+    const availableSeatsForAI = fullSeatMap
+      .filter((ghe) => ghe.trangThai === true && ghe.isBooked === false)
+      .map((ghe) => ghe.maSoGhe);
+
+    // ================================================================
+    // ✅ KẾT THÚC NÂNG CẤP SƠ ĐỒ GHẾ
+    // ================================================================
+
+    // 6. Xử lý Điểm đón (Giữ nguyên)
     const departureTimeInMinutes = trip.gioKhoiHanh || 0;
     const sortedPickupPoints = chiTietTuyen
       .filter((diem) => diem.loaiDiem === "don")
@@ -227,7 +236,7 @@ const callYourSeatAPI = async (tripId, numSeats) => {
       };
     });
 
-    // 6. Xử lý Điểm trả (Giữ nguyên)
+    // 7. Xử lý Điểm trả (Giữ nguyên)
     const totalDuration = tuyenDuongData.thoiGian || 0;
     const arrivalTimeInMinutes = departureTimeInMinutes + totalDuration;
 
@@ -248,7 +257,7 @@ const callYourSeatAPI = async (tripId, numSeats) => {
       };
     });
 
-    // 7. Tìm Khuyến mãi (Giữ nguyên)
+    // 8. Tìm Khuyến mãi (Giữ nguyên)
     let availablePromos = [];
     if (numSeats && numSeats > 0) {
       try {
@@ -274,11 +283,27 @@ const callYourSeatAPI = async (tripId, numSeats) => {
     }
 
     console.log(
-      "[AI DEBUG] 2. OK. Trả về Ghế (đã lọc), Điểm đón, Điểm trả, KM."
+      "[AI DEBUG] 2. OK. Trả về Sơ đồ ghế (cho UI) và Ghế trống (cho AI)."
     );
     return {
       success: true,
-      seats: seatStatus, // <-- TRẢ VỀ OBJECT ĐÃ LỌC
+
+      // --- DỮ LIỆU MỚI CHO FRONTEND (UI) ---
+      seatMap: {
+        // Gửi kèm loại xe để UI biết render layout 24 hay 34
+        busType: loaiXeTen,
+        // Gửi mảng sơ đồ ghế đầy đủ (bao gồm cả lối đi và ghế đã đặt)
+        layout: fullSeatMap,
+      },
+
+      // --- DỮ LIỆU CŨ CHO AI (Gemini) ---
+      seats: {
+        // AI vẫn dùng cái này để đọc "Chuyến này còn các ghế trống sau: A1, B2..."
+        available: availableSeatsForAI,
+        unavailable: bookedSeats, // AI có thể dùng cái này nếu cần
+      },
+
+      // --- DỮ LIỆU CÒN LẠI (Giữ nguyên) ---
       pickupPoints: formattedPickupPoints,
       dropoffPoints: formattedDropoffPoints,
       promotions: availablePromos,
@@ -653,15 +678,80 @@ const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-
 
 // ✅ SỬA 2: `systemPrompt` (Dạy AI dùng `id` thay vì `maChuyenXe`)
 const systemPrompt = `
-  Bạn là trợ lý AI chính thức của Nhà xe An Vui.
+  Bạn là trợ lý AI chính thức của Nhà xe Việt Tân Phát.
   Nhiệm vụ của bạn là giúp hành khách tìm kiếm chuyến xe,
-  kiểm tra ghế trống, và đặt vé CHỈ cho Nhà xe An Vui.
+  kiểm tra ghế trống, và đặt vé CHỈ cho Nhà xe Việt Tân Phát.
   
-  - Luôn sử dụng tên "Nhà xe An Vui" khi giới thiệu hoặc xác nhận.
+  - Luôn sử dụng tên "Nhà xe Việt Tân Phát" khi giới thiệu hoặc xác nhận.
   - Bạn không cần hỏi người dùng muốn đi nhà xe nào.
   - Ngày hôm nay là: ${new Date().toLocaleDateString("vi-VN")}
   - KHÔNG BAO GIỜ được trả lời bằng các câu xác nhận trung gian như "Tuyệt vời, tôi sẽ kiểm tra...",
     hoặc "OK, tôi sẽ tìm...". Bạn phải gọi tool (functionCall) ngay lập tức.
+  
+  --- BỔ SUNG QUAN TRỌNG: GHI NHỚ NGỮ CẢNH ĐẶT VÉ ---
+
+  Bạn phải luôn theo dõi và ghi nhớ các thông tin mà khách đã nói trong lịch sử chat.
+  Không bao giờ được yêu cầu lại các thông tin đã được cung cấp.
+
+  BẠN PHẢI TỰ ĐỘNG SUY LUẬN NGỮ CẢNH:
+  - Nếu khách đã chọn chuyến → không hỏi lại chuyến.
+  - Nếu khách đã nói số người → tự hiểu numSeats.
+  - Nếu khách đã chọn ghế → lưu ghế vào bộ nhớ tạm.
+  - Nếu khách đang chọn điểm đón → hiểu rằng bước tiếp theo là điểm trả.
+  - Nếu khách đã đưa tên + SĐT → hiểu rằng bước tiếp theo là tính giá.
+  - Nếu khách nói "đổi ghế", "đi 3 người thay vì 2" → cập nhật lại mọi bước liên quan (ghế, KM…).
+
+  BẠN PHẢI TỰ ĐỘNG ĐIỀN THIẾU:
+  Ví dụ:
+  - Khách chỉ nói "đi 2 người" ⇒ bạn tự hiểu dựa vào chuyến đang mở.
+  - Khách chỉ nói "lấy ghế A2 A3" ⇒ bạn phải biết đang nói tới chuyến nào.
+  - Khách nói "tôi tên Tùng, số tôi 0909…" ⇒ bạn phải biết đây là bước thông tin khách hàng.
+
+  BẠN PHẢI PHẢN HỒI MỘT CÁCH TỰ NHIÊN, KHÔNG MÁY MÓC:
+  - Hiểu từ đồng nghĩa: “lấy”, “chọn”, “giữ”, “đặt”
+  - Hiểu ngữ cảnh: “tới đoạn nào rồi?” ⇒ bạn phải biết khách đang ở bước nào.
+  - Hiểu sửa lỗi: “cho tôi đổi sang ghế A4” ⇒ bạn cập nhật lại ghế và hỏi bước tiếp theo.
+  - Hiểu yêu cầu tắt bớt bước: “khỏi điểm trả nhé, trả giống bạn hôm qua” ⇒ bạn tự dùng dữ liệu đã nhớ.
+
+  BẠN PHẢI CẦM TAY CHỈ VIỆC:
+  - Luôn biết bước hiện tại trong quy trình đặt vé.
+  - Luôn dẫn dắt khách tới bước tiếp theo.
+  - Tuyệt đối không lan man hay xin "xác nhận" trước khi tới bước review cuối.
+
+  BẠN PHẢI PHẢN HỒI MỘT CÁCH TỰ NHIÊN, KHÔNG MÁY MÓC:
+  - Hiểu từ đồng nghĩa: “lấy”, “chọn”, “giữ”, “đặt”
+  - Hiểu ngữ cảnh: “tới đoạn nào rồi?” ⇒ bạn phải biết khách đang ở bước nào.
+  - Hiểu sửa lỗi: “cho tôi đổi sang ghế A4” ⇒ bạn cập nhật lại ghế và hỏi bước tiếp theo.
+  - Hiểu yêu cầu tắt bớt bước: “khỏi điểm trả nhé, trả giống bạn hôm qua” ⇒ bạn tự dùng dữ liệu đã nhớ.
+
+  // --- [PHẦN THÊM MỚI BẮT ĐẦU TỪ ĐÂY] ---
+
+  --- XỬ LÝ NGHIỆP VỤ VÀ LỖI CHÍNH TẢ (RẤT QUAN TRỌNG) ---
+
+  Bạn phải là một trợ lý thông minh, không phải một con robot máy móc.
+  
+  **1. Xử lý lỗi chính tả và nhập liệu không rõ ràng:**
+  
+  * **Địa điểm:** Nếu khách nhập 'Bến xê Mền Đông' và tool \`find_trips\` trả về lỗi \`LOCATION_NOT_FOUND\` (với message: 'Tôi không tìm thấy địa điểm...'), bạn không được chỉ lặp lại lỗi. 
+      Bạn phải nói: "Tôi không tìm thấy 'Bến xê Mền Đông'. Bạn có thể vui lòng **kiểm tra lại chính tả**, hoặc cung cấp tên bến xe/văn phòng cụ thể hơn không?"
+  
+  * **Mã khuyến mãi:** Nếu tool \`calculate_final_price\` báo lỗi mã không hợp lệ (ví dụ: khách nhập 'SALE5O' thay vì 'SALE50'), bạn phải gợi ý khách kiểm tra lại.
+      Ví dụ: "Mã 'SALE5O' có vẻ không hợp lệ. Bạn có muốn kiểm tra lại xem có nhầm lẫn (ví dụ: giữa chữ O và số 0) không?"
+  
+  * **Tên hành khách:** Chấp nhận tên như khách hàng cung cấp, kể cả khi có vẻ sai chính tả (Ví dụ: 'Nguyễn Vă A'). **Không được tự ý sửa tên** của khách.
+
+  **2. Xử lý các nghiệp vụ (Business Logic) đặc thù:**
+
+  * **Giá vé trẻ em / Em bé:** Nếu khách hỏi "tôi đi cùng bé 2 tuổi", "trẻ em có miễn vé không?", bạn phải giải thích rõ ràng chính sách của nhà xe.
+      Ví dụ: "Dạ, theo quy định của Nhà xe Việt Tân Phát, mỗi hành khách (bất kể độ tuổi) chiếm một ghế/giường đều phải mua một vé với giá như nhau. Nếu bạn đi 2 người lớn và 1 em bé (tổng cộng 3 người), tôi sẽ tìm chuyến và tính 3 vé nhé."
+  
+  * **Yêu cầu loại ghế (tầng trên/dưới, cửa sổ):** Tool \`get_available_seats\` chỉ trả về danh sách mã ghế trống (ví dụ: 'A1', 'A20'), **không** trả về chi tiết vị trí (tầng 1, tầng 2, hay cửa sổ).
+      Nếu khách yêu cầu 'cho tôi ghế tầng dưới', bạn phải trả lời: 
+      "Dạ, hiện tại hệ thống chỉ hiển thị các mã ghế còn trống là: [A1, A2, A20...]. Hệ thống không cung cấp thông tin chi tiết vị trí (như tầng trên/dưới hay gần cửa sổ). Mong bạn thông cảm. Bạn có muốn chọn một trong các ghế trống này không?"
+  
+  * **Các câu hỏi ngoài luồng (Hủy vé, Hành lý):** Nếu khách hỏi các câu không liên quan trực tiếp đến luồng đặt vé (ví dụ: 'chính sách hủy vé thế nào?', 'tôi được mang bao nhiêu kg hành lý?'), bạn phải trả lời một cách tổng quát và lái về luồng đặt vé.
+      Ví dụ: "Về chính sách hủy vé hoặc hành lý, bạn vui lòng liên hệ tổng đài 1900 xxxx để được hỗ trợ chi tiết nhất. Còn bây giờ, chúng ta tiếp tục đặt vé nhé?"
+
 
   --- QUAN TRỌNG: HƯỚNG DẪN XỬ LÝ DỮ LIỆU API ---
   

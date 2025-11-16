@@ -1,6 +1,7 @@
 // BookingSuccessScreen.tsx
 import React from "react";
 import {
+  Alert, // ✅ 1. Thêm Alert
   ScrollView,
   StyleSheet,
   Text,
@@ -8,25 +9,22 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Circle, Path, Svg } from 'react-native-svg';
+import { Circle, Path, Svg } from "react-native-svg";
 // --- ICONS ---
 const COLORS = {
-  primary: '#007AFF', // Màu xanh dương của iOS
-  success: '#34C759', // Màu xanh lá cây của iOS
-  white: '#FFFFFF',
-  textPrimary: '#000000',
-  textSecondary: '#6C757D',
-  background: '#F0F2F5',
-  cardBackground: '#FFFFFF',
-  borderColor: '#E0E0E0',
+  primary: "#007AFF",
+  success: "#34C759",
+  white: "#FFFFFF",
+  textPrimary: "#000000",
+  textSecondary: "#6C757D",
+  background: "#F0F2F5",
+  cardBackground: "#FFFFFF",
+  borderColor: "#E0E0E0",
 };
 
 const CheckmarkIcon = () => (
-  // <svg> -> <Svg>
   <Svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-    {/* <circle> -> <Circle> */}
     <Circle cx="12" cy="12" r="10" fill={COLORS.success} />
-    {/* <path> -> <Path> */}
     <Path
       d="M9 12L11 14L15 10"
       stroke={COLORS.white}
@@ -37,10 +35,10 @@ const CheckmarkIcon = () => (
   </Svg>
 );
 
-// Hàm tiện ích để hiển thị tên phương thức thanh toán
 const getPaymentMethodName = (method) => {
   if (method === "TAI_XE") return "Thanh toán khi lên xe";
   if (method === "VNPAY") return "Đã thanh toán (VNPAY)";
+  if (method === "MOMO") return "Đã thanh toán (MoMo)"; // ✅ 2. Thêm MoMo
   return "Chưa xác định";
 };
 
@@ -55,9 +53,26 @@ const BookingSuccessScreen = ({ navigation, route }) => {
     discountAmount,
   } = route.params;
 
-  // Lấy thông tin chi tiết từ vé đầu tiên (giả định chung thông tin)
   const firstDetail = ticketInfo.chiTiet[0];
   const seatNumbers = ticketInfo.chiTiet.map((t) => t.maChoNgoi).join(", ");
+
+  // ✅ 3. Thêm hàm điều hướng sang Chi tiết vé
+  const handleViewTicket = () => {
+    // Kiểm tra xem chúng ta có đủ ID để điều hướng không
+    if (!ticketInfo?._id || !trip?._id) {
+      Alert.alert(
+        "Lỗi",
+        "Không thể tải chi tiết vé. Vui lòng thử lại từ mục 'Vé của tôi'."
+      );
+      return;
+    }
+
+    // Điều hướng sang màn hình Chi tiết, mang theo ID vé và ID chuyến
+    navigation.navigate("TicketDetailScreen", {
+      veXeId: ticketInfo._id,
+      chuyenXeId: trip._id,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -140,19 +155,27 @@ const BookingSuccessScreen = ({ navigation, route }) => {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Thanh toán</Text>
             <Text style={styles.infoValue}>
-              {getPaymentMethodName(firstDetail.hinhThucThanhToan)}
+              {/* ✅ 4. Cập nhật để lấy TT thanh toán từ `ticketInfo` (master)
+                   thay vì `firstDetail` (detail) */}
+              {getPaymentMethodName(ticketInfo.hinhThucThanhToan)}
             </Text>
           </View>
         </View>
       </ScrollView>
 
-      {/* Nút xác nhận */}
+      {/* ✅ 5. Cập nhật Nút xác nhận */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.confirmButton}
+          style={styles.bottomButtonSecondary}
           onPress={() => navigation.navigate("Main")} // Quay về màn hình đầu tiên
         >
-          <Text style={styles.confirmButtonText}>Xác nhận</Text>
+          <Text style={styles.bottomButtonSecondaryText}>Về trang chủ</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.bottomButtonPrimary}
+          onPress={handleViewTicket} // Nút mới
+        >
+          <Text style={styles.bottomButtonPrimaryText}>Xem vé</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -161,13 +184,14 @@ const BookingSuccessScreen = ({ navigation, route }) => {
 
 export default BookingSuccessScreen;
 
+// ✅ 6. Cập nhật styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
   scrollContent: {
-    paddingBottom: 100, // Để chừa không gian cho nút bottom bar
+    paddingBottom: 100,
   },
   successContainer: {
     alignItems: "center",
@@ -243,16 +267,37 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    flexDirection: "row", // Thêm
+    justifyContent: "space-between", // Thêm
   },
-  confirmButton: {
+  // Bỏ 'confirmButton' và 'confirmButtonText'
+  // Thêm các style mới cho 2 nút
+  bottomButtonSecondary: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#4A90E2",
+    marginRight: 8,
+  },
+  bottomButtonSecondaryText: {
+    color: "#4A90E2",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  bottomButtonPrimary: {
+    flex: 1,
     backgroundColor: "#4A90E2",
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",
+    marginLeft: 8,
   },
-  confirmButtonText: {
+  bottomButtonPrimaryText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

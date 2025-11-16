@@ -80,6 +80,7 @@ export type RootStackParamList = {
   VerificationCodeRegister: { phoneNumber: string };
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
   CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
+  TicketScreen: undefined;
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -193,7 +194,7 @@ export default function App() {
   //     // const userId = await AsyncStorage.getItem("userId");
   //     if (!userId) return;
 
-  //     const socket = io("http://192.168.1.37:8081", {
+  //     const socket = io("http://192.168.1.22:8081", {
   //       query: { userId },
   //       transports: ["websocket"],
   //     });
