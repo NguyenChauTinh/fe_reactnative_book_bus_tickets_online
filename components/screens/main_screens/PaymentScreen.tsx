@@ -364,7 +364,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.22:3005/api/v1/payment/create-vnpay-url",
+          "http://192.168.1.21:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -392,7 +392,7 @@ const PaymentScreen = ({ navigation, route }) => {
       try {
         const response = await axios.post(
           // Đây là URL backend mới bạn cần tạo (ví dụ)
-          "http://192.168.1.22:3005/api/v1/payment/create-momo-url",
+          "http://192.168.1.21:3005/api/v1/payment/create-momo-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -502,7 +502,7 @@ const PaymentScreen = ({ navigation, route }) => {
     const { url } = navState;
 
     // 1. XỬ LÝ URL TRẢ VỀ CỦA VNPAY (Giữ nguyên)
-    if (url.includes("http://192.168.1.22:3005/payment-return")) {
+    if (url.includes("http://192.168.1.21:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -525,7 +525,7 @@ const PaymentScreen = ({ navigation, route }) => {
     // 2. THÊM XỬ LÝ URL TRẢ VỀ CỦA MOMO
     // ===================================
     // (Giả sử URL trả về của bạn là 'momo-return')
-    if (url.includes("http://192.168.1.22:3005/momo-return")) {
+    if (url.includes("http://192.168.1.21:3005/momo-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
