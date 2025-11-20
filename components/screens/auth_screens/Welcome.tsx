@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Image,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
@@ -101,7 +101,7 @@ const Welcome: React.FC = () => {
           duration={1000}
           style={styles.brandName}
         >
-          Việt Tân Phát
+          SmartBus
         </Animatable.Text>
         <Animatable.Text
           animation="fadeInDown"
@@ -162,7 +162,7 @@ const Welcome: React.FC = () => {
             style={styles.flagImage}
           />
           <Text style={styles.copyrightText}>
-            © 2024 Việt Tân Phát. Đã đăng ký bản quyền.
+            © 2024 SmartBus. Đã đăng ký bản quyền.
           </Text>
         </Animatable.View>
         

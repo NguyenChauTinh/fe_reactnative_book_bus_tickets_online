@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput as RNTextInput,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -182,10 +181,6 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           email: response.email, 
           taiKhoanId: userId, 
         };
-        Alert.alert(
-          "Đăng nhập (Giả định)",
-          "Đăng nhập thành công với dữ liệu giả định. Cần tạo API getUserData."
-        );
 
         await login(token, user);
       }
@@ -201,7 +196,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.headerBlue} />
 
       {/* --- Header (Giống Login) --- */}
@@ -293,7 +288,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
 import DateSelector from "../../components/DateSelector";
 import FeatureIcons from "../../components/FeatureIcons";
@@ -23,14 +23,9 @@ export default function MainScreen({ navigation }) {
         console.log("Location received for Departure:", location);
         setDepartureLocation(location);
 
-        // ✅ THAY ĐỔI: Bỏ comment dòng này.
-        // Khi chọn điểm đi mới, ta phải xóa điểm đến cũ
-        // vì nó có thể không còn hợp lệ.
         setDestination(null);
       },
 
-      // ✅ THAY ĐỔI: Xóa ID điểm đến.
-      // Luôn gửi `null` để DepartureScreen luôn tải danh sách đầy đủ.
       destinationId: null,
     });
   };

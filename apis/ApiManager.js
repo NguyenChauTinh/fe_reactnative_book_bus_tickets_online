@@ -1,12 +1,11 @@
 import axios from "axios";
 
 const SERVICES = {
-  trip_schedule_service: "http://192.168.1.25:3001",
-  booking_service: "http://192.168.1.25:3005",
-  api_promotion_service: "http://192.168.1.25:3004",
+  trip_schedule_service: "http://172.20.10.4:3001",
+  booking_service: "http://172.20.10.4:3005",
+  api_promotion_service: "http://172.20.10.4:3004",
 };
 
-// Tạo một instance axios theo service
 const createAxiosInstance = (service) => {
   if (!SERVICES[service]) {
     throw new Error(`Service ${service} not found`);
@@ -21,19 +20,10 @@ const createAxiosInstance = (service) => {
     responseType: "json",
   });
 
-  // Gắn token mỗi lần request
-  // instance.interceptors.request.use((config) => {
-  //   const token = localStorage.getItem("token"); // Hoặc AsyncStorage nếu React Native
-  //   if (token) {
-  //     config.headers["Authorization"] = `Bearer ${token}`;
-  //   }
-  //   return config;
-  // });
 
   return instance;
 };
 
-// Hàm gọi API chung
 const request = async (service, method, url, data = null, params = null) => {
   try {
     const axiosInstance = createAxiosInstance(service);
@@ -59,7 +49,6 @@ const request = async (service, method, url, data = null, params = null) => {
   }
 };
 
-// Định nghĩa các phương thức API
 export const ApiManager = {
   get: async (service, url, { params } = {}) =>
     request(service, "get", url, null, params),

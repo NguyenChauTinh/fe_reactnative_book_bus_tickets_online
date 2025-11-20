@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -13,7 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Path, Polygon, Rect, Svg } from "react-native-svg";
 import BookingTimeline from "../main_screens/BookingTimeline";
-// SVG Icons
+
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../contexts/AuthContext";
+
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
@@ -51,12 +54,19 @@ export default function CustomerInfoScreen({ navigation, route }) {
     returnDate,
   } = route.params;
 
+  // 2. LẤY USER TỪ CONTEXT
+  const { user } = useAuth();
+
   const [customerInfo, setCustomerInfo] = useState({
-    name: "Châu Tình",
-    phone: "0372374651",
-    email: "chautinh05122@gmail.com",
+    name: "", // Sửa: Bỏ dấu cách
+    phone: "",
+    email: "",
   });
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // 3. THÊM STATE CHO CHECKBOX
+  const [isBookingForSelf, setIsBookingForSelf] = useState(false);
+
+  // const [agreedToTerms, setAgreedToTerms] = useState(false); // Biến này chưa dùng, tạm ẩn
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
@@ -64,9 +74,40 @@ export default function CustomerInfoScreen({ navigation, route }) {
       ...prev,
       [field]: value,
     }));
+    // 4. Nếu người dùng tự gõ, bỏ tick checkbox
+    // (Vì thông tin đang gõ có thể khác với thông tin của user)
+    if (isBookingForSelf) {
+      setIsBookingForSelf(false);
+    }
+  };
+
+  // 5. HÀM XỬ LÝ KHI NHẤN CHECKBOX
+  const handleCheckboxToggle = () => {
+    const newValue = !isBookingForSelf;
+    setIsBookingForSelf(newValue);
+
+    if (newValue && user) {
+      // Nếu tick vào "Đặt cho bản thân" VÀ user tồn tại
+      // Tự động điền thông tin vào form
+      setCustomerInfo({
+        name: user.hoVaTen,
+        phone: user.soDienThoai,
+        email: user.email || "", // Đảm bảo email không phải undefined
+      });
+    } else {
+      // Nếu bỏ tick, xóa thông tin form
+      setCustomerInfo({
+        name: "",
+        phone: "",
+        email: "",
+      });
+    }
   };
 
   const handleContinue = () => {
+    // TODO: Thêm kiểm tra validation (tên, sđt, email) ở đây trước khi chuyển
+    // Ví dụ: if (customerInfo.name.trim().length === 0) { ... }
+
     navigation.navigate("TripInfoScreen", {
       trip,
       selectedSeats,
@@ -82,11 +123,10 @@ export default function CustomerInfoScreen({ navigation, route }) {
   };
 
   const isFormValid =
-    customerInfo.name &&
-    customerInfo.phone &&
-    customerInfo.email &&
-    agreedToTerms;
-
+    customerInfo.name.trim() &&
+    customerInfo.phone.trim() &&
+    customerInfo.email.trim();
+  // agreedToTerms; // Tạm thời bỏ qua
   return (
     <View style={{ flex: 1, justifyContent: "center" }}>
       {loading ? (
@@ -116,6 +156,24 @@ export default function CustomerInfoScreen({ navigation, route }) {
           <ScrollView style={styles.content}>
             <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
+
+              {/* 6. THÊM CHECKBOX UI TẠI ĐÂY */}
+              {user && ( // Chỉ hiển thị nếu đã đăng nhập
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={handleCheckboxToggle}
+                >
+                  <Ionicons
+                    name={
+                      isBookingForSelf ? "checkbox-outline" : "square-outline"
+                    }
+                    size={24}
+                    color="#007AFF"
+                    style={styles.checkboxIcon}
+                  />
+                  <Text style={styles.checkboxLabel}>Đặt vé cho bản thân</Text>
+                </TouchableOpacity>
+              )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Tên người đi *</Text>
@@ -159,21 +217,6 @@ export default function CustomerInfoScreen({ navigation, route }) {
                   bạn cung cấp.
                 </Text>
               </View>
-
-              {/* <View style={styles.termsContainer}>
-                <Text style={styles.termsText}>
-                  Bằng việc nhấn nút Tiếp tục, bạn đồng ý với{" "}
-                  <TouchableOpacity>
-                    <Text style={styles.termsLink}>
-                      Chính sách bảo mật thông tin
-                    </Text>
-                  </TouchableOpacity>{" "}
-                  và{" "}
-                  <TouchableOpacity>
-                    <Text style={styles.termsLink}>Quy chế</Text>
-                  </TouchableOpacity>
-                </Text>
-              </View> */}
             </View>
           </ScrollView>
 
@@ -185,18 +228,16 @@ export default function CustomerInfoScreen({ navigation, route }) {
               </Text>
             </View>
             <TouchableOpacity
-              style={[styles.continueButton]}
+              style={[
+                styles.continueButton,
+                !isFormValid && styles.disabledButton, // Thêm style disable
+              ]}
               onPress={handleContinue}
+              disabled={!isFormValid} // Thêm prop disable
             >
               <Text style={styles.continueButtonText}>Tiếp tục</Text>
             </TouchableOpacity>
           </View>
-
-          {/* <View style={styles.paymentNoteContainer}>
-            <Text style={styles.paymentNoteText}>
-              Bạn có thể mua thêm tiện ích ở bước tiếp theo
-            </Text>
-          </View> */}
         </SafeAreaView>
       )}
     </View>
@@ -232,83 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.9,
   },
-  detailsButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  detailsButtonText: {
-    color: "white",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
-  progressContainer: {
-    backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  progressStep: {
-    alignItems: "center",
-    flex: 1,
-  },
-  activeStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  completedStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inactiveStepCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepNumber: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  inactiveStepNumber: {
-    color: "white",
-    fontSize: 12,
-  },
-  activeStepText: {
-    color: "#007AFF",
-    fontSize: 18,
-    marginTop: 4,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-  },
-  completedStepText: {
-    color: "#4CAF50",
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "bold",
-  },
-  inactiveStepText: {
-    color: "#ccc",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  progressLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 4,
-  },
   content: {
     flex: 1,
   },
@@ -317,6 +281,25 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 8,
     padding: 16,
+  },
+  // 7. BỔ SUNG STYLE CHO CHECKBOX
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20, // Tạo khoảng cách với ô input Tên
+    backgroundColor: "#f4f9ff",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#007AFF",
+  },
+  checkboxIcon: {
+    marginRight: 10,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
   },
   sectionTitle: {
     fontSize: 18,
@@ -346,26 +329,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 12,
   },
-  countryCodeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    minWidth: 100,
-  },
-  countryCode: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 8,
-    marginRight: 4,
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: "#666",
-  },
   phoneInputContainer: {
     flex: 1,
   },
@@ -388,18 +351,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4CAF50",
     lineHeight: 20,
-  },
-  termsContainer: {
-    marginTop: 10,
-  },
-  termsText: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  termsLink: {
-    color: "#007AFF",
-    textDecorationLine: "underline",
   },
   bottomBar: {
     backgroundColor: "white",
@@ -435,17 +386,5 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  paymentNoteContainer: {
-    backgroundColor: "white",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  paymentNoteText: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
   },
 });

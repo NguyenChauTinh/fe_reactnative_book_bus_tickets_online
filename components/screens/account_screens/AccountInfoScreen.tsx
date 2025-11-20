@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
+  ActivityIndicator, // 1. IMPORT THÊM
   Alert,
   Platform,
   ScrollView,
@@ -13,47 +14,92 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Api_KhachHang } from "../../../apis/api_auth.js";
 import { useAuth } from "../../../contexts/AuthContext";
 
 const getInitials = (name?: string) => {
   if (!name) return "";
   const words = name.split(" ");
   if (words.length >= 2) {
+    // Lấy chữ cái đầu của 2 từ cuối
     return `${words[words.length - 2][0]}${
       words[words.length - 1][0]
     }`.toUpperCase();
   } else if (words.length === 1) {
+    // Lấy 2 chữ cái đầu nếu chỉ có 1 từ
     return words[0].substring(0, 2).toUpperCase();
   }
   return "";
 };
 
 const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
-  const { user: contextUser, logout } = useAuth();
+  const { user: contextUser, logout, login, token } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: contextUser?.hoVaTen || "",
+    hoVaTen: contextUser?.hoVaTen || "",
     phone: contextUser?.soDienThoai || "",
     email: contextUser?.email || "",
-    birthDate: contextUser?.ngaySinh || "",
-    gender: contextUser?.gioiTinh || "Nam",
+    ngaySinh: contextUser?.ngaySinh || "",
+    gioiTinh: contextUser?.gioiTinh || "Nam",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || (formData.birthDate ? new Date(formData.birthDate) : new Date());
+    const currentDate =
+      selectedDate ||
+      (formData.ngaySinh ? new Date(formData.ngaySinh) : new Date());
     setShowDatePicker(Platform.OS === "ios");
-    setFormData({ ...formData, birthDate: currentDate.toISOString().split("T")[0] });
+    setFormData({
+      ...formData,
+      ngaySinh: currentDate.toISOString().split("T")[0],
+    });
   };
 
-  const handleSave = () => {
-    Alert.alert("Thành công", "Thông tin đã được lưu.", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
+  const handleSave = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    const payload = {
+      userId: contextUser?.taiKhoanId,
+      hoVaTen: formData.hoVaTen,
+      email: formData.email,
+      ngaySinh: formData.ngaySinh || contextUser?.ngaySinh,
+      gioiTinh: formData.gioiTinh || contextUser?.gioiTinh,
+    };
+
+    try {
+      const updatedProfile = await Api_KhachHang.updateMyProfile(payload);
+      console.log("Response == ", updatedProfile);
+      
+      if (token && contextUser) {
+        const updatedUser = {
+          ...contextUser, 
+          hoVaTen: updatedProfile.data.hoVaTen,
+          email: updatedProfile.data.email,
+          ngaySinh: updatedProfile.data.ngaySinh,
+          gioiTinh: updatedProfile.data.gioiTinh,
+        };
+        await login(token, updatedUser);
+      }
+
+      Alert.alert("Thành công", updatedProfile.message , [
+        { text: "OK", onPress: () => navigation.goBack() },
+      ]);
+    } catch (error: any) {
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message ||
+          "Không thể cập nhật thông tin. Vui lòng thử lại."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const initials = getInitials(formData.name);
+  // Lấy chữ cái đầu từ state đang chỉnh sửa
+  const initials = getInitials(formData.hoVaTen);
 
   return (
     <View style={styles.container}>
@@ -69,6 +115,7 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
           <Text style={styles.headerTitle}>Thông tin tài khoản</Text>
         </View>
 
+        {/* 5. Sửa hàm Đăng xuất (dùng logout từ context) */}
         <TouchableOpacity onPress={logout}>
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </TouchableOpacity>
@@ -88,23 +135,29 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
       </View>
 
       <ScrollView>
+        {/* Avatar */}
         <View style={styles.avatarContainer}>
+          {/* 6. Hiển thị avatar với initials từ state */}
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
         </View>
 
+        {/* Form Fields - 7. Cập nhật value và onChangeText */}
         <View style={styles.formContainer}>
           <View style={styles.inputRow}>
             <Text style={styles.label}>Họ và tên *</Text>
             <TextInput
               style={styles.input}
-              value={formData.name}
-              onChangeText={(text) => setFormData({ ...formData, name: text })}
+              value={formData.hoVaTen}
+              onChangeText={(text) =>
+                setFormData({ ...formData, hoVaTen: text })
+              }
             />
           </View>
           <View style={styles.inputRow}>
             <Text style={styles.label}>Số điện thoại *</Text>
+            {/* Input số điện thoại (giả định không cho sửa) */}
             <View style={[styles.input, styles.disabledInput]}>
               <Text style={styles.disabledText}>🇻🇳 (+84)</Text>
               <Text style={[styles.disabledText, { marginLeft: 10 }]}>
@@ -122,6 +175,7 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
             />
           </View>
 
+          {/* Thông báo xác thực */}
           <View style={styles.verifiedMessage}>
             <Ionicons name="shield-checkmark" size={16} color="#006600" />
             <Text style={styles.verifiedText}>
@@ -137,7 +191,7 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={styles.dateText}>
-                {formData.birthDate || "DD/MM/YYYY"}
+                {formData.ngaySinh || "DD/MM/YYYY"}
               </Text>
               <Ionicons name="calendar-outline" size={20} color="#666" />
             </TouchableOpacity>
@@ -145,7 +199,9 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
               <DateTimePicker
                 testID="dateTimePicker"
                 value={
-                  formData.birthDate ? new Date(formData.birthDate) : new Date()
+                  formData.ngaySinh
+                    ? new Date(formData.ngaySinh)
+                    : new Date()
                 }
                 mode="date"
                 display="default"
@@ -159,14 +215,14 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
               <TouchableOpacity
                 style={[
                   styles.genderButton,
-                  formData.gender === "Nam" && styles.selectedGender,
+                  formData.gioiTinh === "Nam" && styles.selectedGender,
                 ]}
-                onPress={() => setFormData({ ...formData, gender: "Nam" })}
+                onPress={() => setFormData({ ...formData, gioiTinh: "Nam" })}
               >
                 <Text
                   style={[
                     styles.genderText,
-                    formData.gender === "Nam" && styles.selectedGenderText,
+                    formData.gioiTinh === "Nam" && styles.selectedGenderText,
                   ]}
                 >
                   Nam
@@ -175,14 +231,14 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
               <TouchableOpacity
                 style={[
                   styles.genderButton,
-                  formData.gender === "Nữ" && styles.selectedGender,
+                  formData.gioiTinh === "Nữ" && styles.selectedGender,
                 ]}
-                onPress={() => setFormData({ ...formData, gender: "Nữ" })}
+                onPress={() => setFormData({ ...formData, gioiTinh: "Nữ" })}
               >
                 <Text
                   style={[
                     styles.genderText,
-                    formData.gender === "Nữ" && styles.selectedGenderText,
+                    formData.gioiTinh === "Nữ" && styles.selectedGenderText,
                   ]}
                 >
                   Nữ
@@ -191,14 +247,14 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
               <TouchableOpacity
                 style={[
                   styles.genderButton,
-                  formData.gender === "Khác" && styles.selectedGender,
+                  formData.gioiTinh === "Khác" && styles.selectedGender,
                 ]}
-                onPress={() => setFormData({ ...formData, gender: "Khác" })}
+                onPress={() => setFormData({ ...formData, gioiTinh: "Khác" })}
               >
                 <Text
                   style={[
                     styles.genderText,
-                    formData.gender === "Khác" && styles.selectedGenderText,
+                    formData.gioiTinh === "Khác" && styles.selectedGenderText,
                   ]}
                 >
                   Khác
@@ -211,8 +267,17 @@ const AccountInfoScreen = ({ navigation }: { navigation: any }) => {
 
       {/* Save Button */}
       <View style={styles.saveButtonContainer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Lưu</Text>
+        {/* 8. CẬP NHẬT NÚT LƯU */}
+        <TouchableOpacity
+          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>Lưu</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -227,8 +292,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#007AFF", 
+    backgroundColor: "#007AFF", // Màu xanh dương
     padding: 16,
+    // ĐÃ XÓA paddingTop: 50
     alignItems: "center",
   },
   headerLeft: {
@@ -369,6 +435,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#B0BEC5", 
   },
   saveButtonText: {
     color: "#FFFFFF",

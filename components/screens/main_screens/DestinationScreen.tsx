@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,40 +8,50 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 import BackButton from "../../components/BackButton";
 import SearchInput from "../../components/SearchInput";
 import LocationIcon from "../../components/icons/LocationIcon";
 
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+};
+
 export default function DestinationScreen({ navigation, route }) {
-  // ✅ THAY ĐỔI: Nhận thêm 'departureId'
   const { onSelect, departureId } = route.params;
-  const [locations, setLocations] = useState([]);
+
+  const [popularLocations, setPopularLocations] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // 4. Sử dụng Debounce
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   useEffect(() => {
-    const fetchLocation = async () => {
+    const fetchPopularLocations = async () => {
       try {
         setLoading(true);
-        // ✅ THAY ĐỔI: Gọi API mới với tham số
         const params = {
-          findType: "tra", // Màn hình này tìm điểm TRẢ
-          relatedId: departureId, // ID của điểm ĐI đã chọn (hoặc null)
+          findType: "tra", 
+          relatedId: departureId, 
         };
-
-        // Giả sử bạn đã tạo hàm 'getDiaDiemKetNoi' trong service
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
-
-        // ✅ Gán dữ liệu vào state
-        if (Array.isArray(response)) {
-          setLocations(response);
-        } else if (response?.data) {
-          // tuỳ theo response structure (Axios hoặc fetch)
-          setLocations(response.data);
-        }
+        const data = response?.data || (Array.isArray(response) ? response : []);
+        setPopularLocations(data);
+        setSearchResults([]);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách địa điểm đến:", error);
       } finally {
@@ -49,9 +59,34 @@ export default function DestinationScreen({ navigation, route }) {
       }
     };
 
-    fetchLocation();
-    // ✅ THAY ĐỔI: Thêm dependency
+    fetchPopularLocations();
   }, [departureId]);
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (debouncedSearchQuery.trim() === "") {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      try {
+        setIsSearching(true);
+        const response = await api_trip_schedule_service.timDiaDiemTheoTen(
+          debouncedSearchQuery
+        );
+        const data = response?.data || (Array.isArray(response) ? response : []);
+        setSearchResults(data);
+      } catch (error) {
+        console.error("Lỗi khi tìm địa điểm:", error.message);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [debouncedSearchQuery]);
 
   const handleLocationSelect = (location) => {
     onSelect(location);
@@ -68,9 +103,13 @@ export default function DestinationScreen({ navigation, route }) {
     </TouchableOpacity>
   );
 
+  const displayedLocations = searchQuery.trim()
+    ? searchResults
+    : popularLocations;
+
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10 }}>Đang tải địa điểm...</Text>
       </View>
@@ -78,7 +117,7 @@ export default function DestinationScreen({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar backgroundColor="#007AFF" barStyle="light-content" />
 
       <View style={styles.header}>
@@ -87,24 +126,43 @@ export default function DestinationScreen({ navigation, route }) {
       </View>
 
       <View style={styles.content}>
-        <SearchInput placeholder="Tên tỉnh/thành phố, quận/huyện" />
+        <SearchInput
+          placeholder="Tên tỉnh/thành phố, quận/huyện"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          isLoading={isSearching}
+        />
 
         <Text style={styles.note}>
           *Lưu ý: Sử dụng tên địa phương trước sáp nhập
         </Text>
 
-        <Text style={styles.sectionTitle}>Địa danh phổ biến</Text>
+        <Text style={styles.sectionTitle}>
+          {searchQuery.trim() ? "Kết quả tìm kiếm" : "Địa danh phổ biến"}
+        </Text>
 
-        <FlatList
-          data={locations}
-          renderItem={renderLocationItem}
-          keyExtractor={(item, index) =>
-            item._id?.toString() || item.maDiaDiem || index.toString()
-          }
-          style={styles.locationList}
-        />
+        {isSearching && !loading ? (
+          <ActivityIndicator color="#007AFF" style={{ marginTop: 20 }} />
+        ) : (
+          <FlatList
+            data={displayedLocations}
+            renderItem={renderLocationItem}
+            keyExtractor={(item, index) =>
+              item._id?.toString() || item.maDiaDiem || index.toString()
+            }
+            style={styles.locationList}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>
+                {searchQuery.trim()
+                  ? "Không tìm thấy địa điểm."
+                  : "Không có địa điểm phổ biến."}
+              </Text>
+            }
+            keyboardShouldPersistTaps="handled" 
+          />
+        )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -155,5 +213,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#2C3E50",
     marginLeft: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#999",
   },
 });

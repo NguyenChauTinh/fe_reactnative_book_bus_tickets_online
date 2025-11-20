@@ -1,7 +1,7 @@
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DepartureIcon from "./icons/DepartureIcon";
 import DestinationIcon from "./icons/DestinationIcon";
-
 export default function LocationSelector({
   departureLocation,
   destination,

@@ -23,9 +23,9 @@ const parseHHMMToMinutes = (timeString) => {
 
 // URL API (Giữ nguyên)
 const GIAVE_API_URL =
-  "http://192.168.1.25:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
+  "http://172.20.10.4:3001/api/v1/gia-ve/tim-gia-ve-ap-dung";
 const TUYEN_DUONG_API_URL =
-  "http://192.168.1.25:3001/api/v1/tuyen-duong/lay-tuyen-duong";
+  "http://172.20.10.4:3001/api/v1/tuyen-duong/lay-tuyen-duong";
 
 // (Hàm callYourTripAPI giữ nguyên)
 const callYourTripAPI = async (departure, destination, date) => {
@@ -43,6 +43,7 @@ const callYourTripAPI = async (departure, destination, date) => {
       console.error("[AI DEBUG] 1. LỖI: Không tìm thấy điểm đi.", resDi);
       return {
         success: false,
+        
         error: "LOCATION_NOT_FOUND",
         message: `Tôi không tìm thấy địa điểm đi: "${departure}".`,
       };
@@ -653,11 +654,11 @@ const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-
 
 // ✅ SỬA 2: `systemPrompt` (Dạy AI dùng `id` thay vì `maChuyenXe`)
 const systemPrompt = `
-  Bạn là trợ lý AI chính thức của Nhà xe An Vui.
+  Bạn là trợ lý AI chính thức của Nhà xe SmartBus.
   Nhiệm vụ của bạn là giúp hành khách tìm kiếm chuyến xe,
-  kiểm tra ghế trống, và đặt vé CHỈ cho Nhà xe An Vui.
+  kiểm tra ghế trống, và đặt vé CHỈ cho Nhà xe SmartBus.
   
-  - Luôn sử dụng tên "Nhà xe An Vui" khi giới thiệu hoặc xác nhận.
+  - Luôn sử dụng tên "Nhà xe SmartBus" khi giới thiệu hoặc xác nhận.
   - Bạn không cần hỏi người dùng muốn đi nhà xe nào.
   - Ngày hôm nay là: ${new Date().toLocaleDateString("vi-VN")}
   - KHÔNG BAO GIỜ được trả lời bằng các câu xác nhận trung gian như "Tuyệt vời, tôi sẽ kiểm tra...",
@@ -691,7 +692,7 @@ const systemPrompt = `
        - BẠN PHẢI duyệt mảng \`functionResult.seats.available\` và liệt kê các ghế đó.
        
        - **Cách hỏi mẫu (Có KM):** "Chuyến này còn các ghế trống sau: [danh sách ghế từ seats.available]. 
-           Tuyệt vời! Vì bạn đi [X] người, Nhà xe An Vui đang có các khuyến mãi sau:
+           Tuyệt vời! Vì bạn đi [X] người, Nhà xe SmartBus đang có các khuyến mãi sau:
            1. Mã \`[maLine]\`: [ghiChu]
            2. Mã \`[maLine]\`: [ghiChu]
            (Bạn có thể chọn mã ở bước sau).
@@ -759,10 +760,10 @@ const systemPrompt = `
   **4. Khi bạn gọi tool \`book_ticket\` (ĐẶT VÉ):**
      - Bạn phải gửi \`id\` (mà bạn đã nhớ) làm tham số \`tripId\`.
      - **Cách trả lời mẫu (Thành công KHÔNG giảm giá):**
-       "Cảm ơn bạn! Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
+       "Cảm ơn bạn! Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe SmartBus."
      - **Cách trả lời mẫu (Thành công CÓ giảm giá):**
        "Cảm ơn bạn! Mã khuyến mãi đã được áp dụng, bạn được giảm [discountAmount] ₫.
-       Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền cuối cùng của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe An Vui."
+       Tôi đã đặt vé thành công (thanh toán khi lên xe). Tổng tiền cuối cùng của bạn là [finalPrice] ₫. Chúc bạn có một chuyến đi vui vẻ với Nhà xe SmartBus."
        
      - **Cách trả lời mẫu (Lỗi khuyến mãi):**
        "Xin lỗi, tôi không thể đặt vé: [nội dung message lỗi, ví dụ: 'Mã khuyến mãi không hợp lệ.']. Bạn có muốn đặt vé mà không dùng mã này không?"

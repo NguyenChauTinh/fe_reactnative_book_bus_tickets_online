@@ -1,3 +1,4 @@
+import AntDesign from '@expo/vector-icons/AntDesign';
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,13 +13,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Giả định 'geminiService' nằm cùng cấp hoặc bạn đã cấu hình đường dẫn đúng
-import { runConversation } from "../../../apis/geminiService"; // "Bộ não" AI của chúng ta
+import { runConversation } from "../../../apis/geminiService";
 
-// Icon (Bạn có thể dùng react-native-vector-icons)
 const ChatIcon = ({ onPress }) => (
   <TouchableOpacity style={styles.chatIconContainer} onPress={onPress}>
-    <Text style={styles.chatIconText}>Đặt</Text>
+    <AntDesign name="wechat-work" size={30} color="white" />
   </TouchableOpacity>
 );
 
@@ -118,7 +117,7 @@ export const ChatModal = ({ visible, onClose }) => {
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color="#4A90E2" />
             <Text style={styles.loadingText}>Trợ lý đang nhập...</Text>
           </View>
         )}
@@ -178,7 +177,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#4A90E2",
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
@@ -216,7 +215,7 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 16,
-    color: "#007AFF",
+    color: "#4A90E2",
   },
   chatList: {
     flex: 1,
@@ -230,7 +229,7 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#4A90E2",
   },
   botMessage: {
     alignSelf: "flex-start",
@@ -278,7 +277,7 @@ const styles = StyleSheet.create({
   sendButton: {
     paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#4A90E2",
     borderRadius: 20,
   },
   sendButtonDisabled: {

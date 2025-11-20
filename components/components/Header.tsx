@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import ChevronRightIcon from "./icons/ChevronRightIcon";

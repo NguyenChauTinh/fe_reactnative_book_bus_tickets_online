@@ -8,7 +8,6 @@ import {
   Modal,
   Platform,
   TextInput as RNTextInput,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -20,10 +19,9 @@ import {
 
 import { Api_Auth_Customer } from "../../../apis/api_auth.js";
 
-// --- Định nghĩa màu sắc cho dễ quản lý ---
 const COLORS = {
-  headerBlue: "#2A8CFF", // Màu xanh dương của header (từ ảnh)
-  buttonBlue: "#0D47A1", // Màu xanh đậm của nút "Đăng nhập"
+  headerBlue: "#2A8CFF", 
+  buttonBlue: "#0D47A1", 
   white: "#FFFFFF",
   black: "#000000",
   lightGray: "#F5F5F5",
@@ -53,6 +51,13 @@ const LoginScreen: React.FC = () => {
         fromScreen: "login",
       });
     } catch (error: any) {
+
+      setIsModalVisible(false);
+
+      setTimeout(() => {
+        phoneInputRef.current?.focus();
+      }, 100); 
+
       Alert.alert(
         "Lỗi",
         error.response?.data?.message ||
@@ -64,7 +69,7 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -267,7 +272,7 @@ const LoginScreen: React.FC = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -419,16 +424,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)", // Nền mờ
-    justifyContent: "flex-end", // Đẩy modal xuống dưới
+    justifyContent: "center", // THAY ĐỔI: 'flex-end' -> 'center'
     alignItems: "center",
+    paddingHorizontal: 20, // Thêm padding ngang để modal không bị dính sát viền
   },
   modalContainer: {
-    width: "100%",
+    width: "100%", // Giữ 100% chiều rộng (của vùng đã có padding)
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 24,
-    paddingBottom: 40, // Thêm padding cho an toàn (nếu có home bar)
+    borderRadius: 16, // THAY ĐỔI: Áp dụng cho cả 4 góc
+    padding: 24, // THAY ĐỔI: Dùng padding 24 cho mọi phía
     alignItems: "stretch",
     shadowColor: "#000",
     shadowOffset: {

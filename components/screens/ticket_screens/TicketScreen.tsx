@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// ✅ 1. Import thêm useNavigation
+
 import { api_trip_schedule_service } from "@/apis/api_trip_schedule_service";
 import { useNavigation } from "@react-navigation/native";
 import { api_booking_service } from "../../../apis/api_booking_service";
+import { useAuth } from "../../../contexts/AuthContext";
 
-// ✅ 2. Cập nhật Interface (từ Chi Tiết sang Vé Xe)
 interface MasterTicket {
   id: string; // veXe._id
   maVe: string; // veXe.maVe
@@ -32,9 +32,7 @@ interface MasterTicket {
   chiTietIds: string[];
 }
 
-// ⛔ 3. Bỏ mockTickets.
 
-// ✅ 4. Giữ nguyên các hàm helper (formatMinutesToHHMM, formatDateString)
 const formatMinutesToHHMM = (totalMinutes: number): string => {
   if (isNaN(totalMinutes)) return "N/A";
   const hours = Math.floor(totalMinutes / 60);
@@ -57,10 +55,6 @@ const formatDateString = (dateStr: string | Date): string => {
   }
 };
 
-/**
- * [HÀM MỚI] Quyết định Tab (View) dựa trên mảng chiTiet
- * Quyết định xem vé master nên nằm ở tab "current", "completed", hay "cancelled".
- */
 const getFrontendStatusFromChiTiet = (
   chiTietList: any[], // Giả định mảng chiTiet
   tripDateStr: string | Date | undefined
@@ -69,21 +63,17 @@ const getFrontendStatusFromChiTiet = (
     return "cancelled";
   }
 
-  // 1. Đếm số vé *không* bị hủy
-  // (Giả định các trạng thái active là DAT_CHO, DA_THANH_TOAN, DA_CHUYEN)
   const activeChiTiet = chiTietList.filter(
     (ct) =>
       ct.trangThaiChiTiet !== "DA_HUY" && ct.trangThaiChiTiet !== "DA_HOAN_TIEN"
   );
 
-  // 2. Nếu không có vé nào active -> Tab "Đã hủy"
   if (activeChiTiet.length === 0) {
     return "cancelled";
   }
 
-  // 3. Nếu có ít nhất 1 vé active, phân loại "Đã đi" hay "Hiện tại"
   if (!tripDateStr) {
-    return "current"; // Mặc định là 'current' nếu thiếu ngày
+    return "current"; 
   }
 
   try {
@@ -98,16 +88,11 @@ const getFrontendStatusFromChiTiet = (
       return "current";
     }
   } catch (error) {
-    return "current"; // Lỗi thì trả về 'current'
+    return "current"; 
   }
 };
 
-// ✅ 5. Thêm hàm helper mới để map trạng thái thanh toán
-/**
- * Chuyển đổi trạng thái API (vd: "CHUA_THANH_TOAN") thành text hiển thị
- */
 const mapApiBookingStatusToPaymentText = (apiStatus: string): string => {
-  // ⚠️ Đây là giả định, bạn cần thay bằng trạng thái thật từ API của bạn
   switch (apiStatus) {
     case "CHUA_THANH_TOAN":
       return "Chưa thanh toán";
@@ -116,8 +101,6 @@ const mapApiBookingStatusToPaymentText = (apiStatus: string): string => {
     case "DA_HUY":
       return "Đã hủy";
     default:
-      // Nếu là trạng thái khác (vd: "DA_DI"), có thể coi là "Đã thanh toán"
-      // hoặc bạn có thể thêm logic riêng
       return "Đã thanh toán";
   }
 };
@@ -127,15 +110,14 @@ const TicketScreen: React.FC = () => {
     "current" | "completed" | "cancelled"
   >("current");
   const [refreshing, setRefreshing] = useState(false);
-  // ✅ 6. Cập nhật tên state cho rõ nghĩa
   const [loading, setLoading] = useState(true);
   const [allMasterTickets, setAllMasterTickets] = useState<MasterTicket[]>([]);
 
-  // ✅ 7. Khởi tạo navigation
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    const userId = "userId"; // <-- ⚠️ THAY THẾ BẰNG USER ID THẬT
+    const userId = user?.taiKhoanId; 
     if (!userId) return;
 
     setLoading(true);

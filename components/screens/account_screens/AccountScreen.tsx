@@ -3,12 +3,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useAuth } from "../../../contexts/AuthContext";
 
@@ -108,18 +107,6 @@ const AccountScreen = ({ navigation }: { navigation: any }) => {
             badge="Mới"
           />
         </View>
-
-        {/* Banner */}
-        <TouchableOpacity style={styles.bannerContainer}>
-          <Image
-            source={{
-              uri: "https://placehold.co/600x150/007AFF/FFFFFF?text=Banner+Quang+Cao",
-            }} // Thay bằng link banner thật
-            style={styles.bannerImage}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-
         {/* Menu Items Section 2 */}
         <View style={styles.menuSection}>
           <MenuItem

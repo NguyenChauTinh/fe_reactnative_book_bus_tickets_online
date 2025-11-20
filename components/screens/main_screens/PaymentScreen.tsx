@@ -1,25 +1,25 @@
 import axios from "axios";
 import React, {
-  forwardRef, // 👈 THÊM
-  useEffect,
-  useImperativeHandle, // 👈 THÊM
-  useMemo,
-  useRef, // 👈 THÊM
-  useState,
+    forwardRef, // 👈 THÊM
+    useEffect,
+    useImperativeHandle, // 👈 THÊM
+    useMemo,
+    useRef, // 👈 THÊM
+    useState,
 } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  NativeSyntheticEvent, // 👈 THÊM
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData, // 👈 THÊM
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    NativeSyntheticEvent, // 👈 THÊM
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TextInputKeyPressEventData, // 👈 THÊM
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
@@ -356,7 +356,7 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://192.168.1.25:3005/api/v1/payment/create-vnpay-url",
+          "http://172.20.10.4:3005/api/v1/payment/create-vnpay-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
