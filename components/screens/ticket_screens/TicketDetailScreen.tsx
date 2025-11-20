@@ -22,15 +22,19 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+// 1. Import hooks và icons
+
+// 2. Import API services
 import { api_booking_service } from "../../../apis/api_booking_service";
 
+// 3. Định nghĩa Interface
 interface VeXe {
   _id: string;
   maVe: string;
   trangThaiThanhToan: string;
   phuongThucThanhToan: string;
   chiTiet: ChiTietVe[];
-  tongTien: number; //
+  tongTien: number;
 }
 interface ChiTietVe {
   _id: string;
@@ -55,14 +59,14 @@ interface TuyenDuong {
   tenTuyen: string;
   diemDon: Diem;
   diemTra: Diem;
-  thoiGianDenDuKien: number; // Phút (vd: 19:10)
+  thoiGianDenDuKien: number;
 }
 interface Diem {
   tenDiem: string;
   diaChi: string;
 }
 
-// ✅ 4. Giữ các hàm helper từ màn hình trước
+// 4. Các hàm helper
 const formatMinutesToHHMM = (totalMinutes: number): string => {
   if (isNaN(totalMinutes)) return "N/A";
   const hours = Math.floor(totalMinutes / 60);
@@ -85,12 +89,11 @@ const formatDateString = (dateStr: string | Date): string => {
   }
 };
 
-// ✅ 5. Hàm helper mới
+// 5. Hàm helper mới
 const getDayOfWeek = (dateStr: string | Date): string => {
   try {
     const date = new Date(dateStr);
     const dayIndex = date.getDay();
-    // Chủ Nhật là 0, T2 là 1
     if (dayIndex === 0) return "CN";
     return `T${dayIndex + 1}`;
   } catch (error) {
@@ -99,7 +102,6 @@ const getDayOfWeek = (dateStr: string | Date): string => {
 };
 
 const mapApiPaymentMethodToText = (apiMethod: string): string => {
-  // ⚠️ Điều chỉnh dựa trên API thật của bạn
   if (apiMethod === "KHI_LEN_XE") return "Khi lên xe";
   if (apiMethod === "VNPAY") return "VNPAY";
   if (apiMethod === "MOMO") return "Momo";
@@ -107,7 +109,6 @@ const mapApiPaymentMethodToText = (apiMethod: string): string => {
 };
 
 const mapApiPaymentStatus = (apiStatus: string) => {
-  // ⚠️ Điều chỉnh dựa trên API thật của bạn
   if (apiStatus === "CHUA_THANH_TOAN") {
     return { text: "Chưa thanh toán", color: "#E74C3C" };
   }
@@ -118,7 +119,7 @@ const mapApiPaymentStatus = (apiStatus: string) => {
 };
 
 // ===========================================
-// ✅ 6. COMPONENT CHÍNH
+// 6. COMPONENT CHÍNH
 // ===========================================
 const TicketDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -131,7 +132,7 @@ const TicketDetailScreen: React.FC = () => {
   const [tuyenDuong, setTuyenDuong] = useState<TuyenDuong | null>(null);
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
 
-  // ✅ 7. Logic tải dữ liệu
+  // 7. Logic tải dữ liệu
   const fetchDetails = useCallback(async () => {
     if (!veXeId || !chuyenXeId) {
       Alert.alert("Lỗi", "Không tìm thấy mã vé hoặc mã chuyến.");
@@ -145,8 +146,6 @@ const TicketDetailScreen: React.FC = () => {
         `[TicketDetail] Đang tải veXeId: ${veXeId}, chuyenXeId: ${chuyenXeId}`
       );
 
-      // ⚠️ Giả định bạn có các hàm API này
-      // Tải song song Vé Xe và Chuyến Xe
       const [veXeResponse, chuyenXeResponse] = await Promise.all([
         api_booking_service.getVeXeById(veXeId),
         api_trip_schedule_service.getChuyenXeByObjId(chuyenXeId),
@@ -162,7 +161,6 @@ const TicketDetailScreen: React.FC = () => {
       const veXeData: VeXe = veXeResponse.data;
       const chuyenXeData: ChuyenXe = chuyenXeResponse.data;
 
-      // Tải Tuyến Đường
       const tuyenDuongResponse =
         await api_trip_schedule_service.getTuyenDuongData(
           chuyenXeData.tuyenDuong
@@ -175,7 +173,6 @@ const TicketDetailScreen: React.FC = () => {
       setChuyenXe(chuyenXeData);
       setTuyenDuong(tuyenDuongResponse.data);
 
-      // Set tiêu đề cho header
       navigation.setOptions({ title: "Chi tiết giao dịch" });
     } catch (error: any) {
       console.error("[TicketDetail] Lỗi tải dữ liệu:", error);
@@ -198,23 +195,20 @@ const TicketDetailScreen: React.FC = () => {
   };
 
   const handleCallSupport = () => {
-    Linking.openURL("tel:01234567890"); // Số từ ảnh
+    Linking.openURL("tel:01234567890");
   };
 
   const handleCancelOrder = () => {
     if (!veXe) return;
-
-    // Chuyển sang màn hình Hủy Vé mới, truyền ID của vé master
     navigation.navigate("CancelFlowScreen", {
       veXeId: veXe._id,
     });
   };
 
   // ===========================================
-  // ✅ 9. RENDER CÁC THÀNH PHẦN
+  // 9. RENDER CÁC THÀNH PHẦN
   // ===========================================
 
-  // (Hiển thị khi đang tải)
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -224,7 +218,6 @@ const TicketDetailScreen: React.FC = () => {
     );
   }
 
-  // (Hiển thị khi lỗi)
   if (!veXe || !chuyenXe || !tuyenDuong) {
     return (
       <View style={styles.centered}>
@@ -261,26 +254,66 @@ const TicketDetailScreen: React.FC = () => {
       (ct) => ct.trangThaiChiTiet === "DA_HUY" && ct.ngayHuy
     );
 
-    // Mặc định dùng new Date() nếu không tìm thấy (fallback)
     const cancelledDate =
       firstCancelledTicket && firstCancelledTicket.ngayHuy
         ? new Date(firstCancelledTicket.ngayHuy)
-        : new Date(); // Fallback
+        : new Date();
 
     const cancelledTimeStr = `${String(cancelledDate.getHours()).padStart(
       2,
       "0"
     )}:${String(cancelledDate.getMinutes()).padStart(2, "0")}`;
 
-    const cancelledDateStr = formatDateString(cancelledDate); // Dùng lại helper
+    const cancelledDateStr = formatDateString(cancelledDate);
 
     cancellationText = `Vé đã bị hủy vào lúc ${cancelledTimeStr} • ${cancelledDateStr}`;
   }
 
-  // ⚠️ Dữ liệu bị thiếu từ API getChuyenXeById
-  const tenNhaXe = "Không rõ nhà xe"; // API không trả về
+  // ⚠️ Dữ liệu bị thiếu từ API
+  const tenNhaXe = "Không rõ nhà xe";
   const tenLoaiXe = chuyenXe.loaiXe?.tenLoaiXe || "Không rõ loại xe";
   const bienSoXe = chuyenXe.xe?.bienSo || "Không rõ biển số";
+
+  // ✅ BẮT ĐẦU: LOGIC XỬ LÝ HỦY VÉ
+  let fullDepartureDate: Date | null = null;
+  if (
+    chuyenXe &&
+    chuyenXe.ngayKhoiHanh &&
+    typeof chuyenXe.gioKhoiHanh === "number"
+  ) {
+    try {
+      const departureDate = new Date(chuyenXe.ngayKhoiHanh);
+      departureDate.setHours(0, 0, 0, 0); // Đặt về 00:00:00 giờ local
+      departureDate.setMinutes(chuyenXe.gioKhoiHanh); // Thêm số phút
+      fullDepartureDate = departureDate;
+    } catch (e) {
+      console.error("Lỗi parse ngày:", chuyenXe.ngayKhoiHanh);
+    }
+  }
+
+  let isCancellable = false;
+
+  // 1. Kiểm tra trạng thái thanh toán
+  const isUnpaid = veXe.trangThaiThanhToan === "CHUA_THANH_TOAN";
+
+  // 2. Kiểm tra thời gian (trước 24h)
+  let isWithinTimeLimit = false;
+  if (fullDepartureDate) {
+    const now = new Date();
+    // Tính thời điểm 24h trước giờ khởi hành
+    const cutoffTime = new Date(fullDepartureDate.getTime());
+    cutoffTime.setHours(cutoffTime.getHours() - 24);
+
+    if (now < cutoffTime) {
+      isWithinTimeLimit = true;
+    }
+  }
+
+  // 3. Quyết định cuối cùng: Phải là vé CHƯA THANH TOÁN và TRONG THỜI GIAN
+  if (isUnpaid && isWithinTimeLimit) {
+    isCancellable = true;
+  }
+  // ✅ KẾT THÚC: LOGIC XỬ LÝ HỦY VÉ
 
   return (
     <View style={styles.container}>
@@ -293,7 +326,7 @@ const TicketDetailScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chi tiết giao dịch</Text>
       </View>
-      {/* 1. THANH BANNER (ĐỎ hoặc XÁM) */}
+      {/* 1. THANH BANNER */}
       {isFullyCancelled ? (
         <View style={styles.grayBanner}>
           <Text style={styles.grayBannerText}>{cancellationText}</Text>
@@ -307,7 +340,7 @@ const TicketDetailScreen: React.FC = () => {
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* 2. CARD THÔNG TIN CHUYẾN ĐI (Ảnh image_cc4a04.jpg) */}
+        {/* 2. CARD THÔNG TIN CHUYẾN ĐI */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Thông tin chuyến đi</Text>
 
@@ -316,9 +349,6 @@ const TicketDetailScreen: React.FC = () => {
               <Text style={styles.tripCardDate}>
                 {dayOfWeek}, {formattedDate}
               </Text>
-              {/* <TouchableOpacity>
-                <Text style={styles.linkText}>Chi tiết</Text>
-              </TouchableOpacity> */}
             </View>
 
             <View style={styles.providerInfo}>
@@ -334,13 +364,6 @@ const TicketDetailScreen: React.FC = () => {
                 </View>
                 <Text style={styles.providerBusType}>{tenLoaiXe}</Text>
               </View>
-              {/* <TouchableOpacity>
-                <MaterialCommunityIcons
-                  name="heart-outline"
-                  size={24}
-                  color="#666"
-                />
-              </TouchableOpacity> */}
             </View>
 
             <View style={styles.passengerInfo}>
@@ -356,9 +379,9 @@ const TicketDetailScreen: React.FC = () => {
               />
 
               <Text
-                style={[styles.passengerText, { flex: 1 }]} // Thêm { flex: 1 }
-                numberOfLines={1} // Thêm 1 dòng
-                ellipsizeMode="tail" // Thêm "..."
+                style={[styles.passengerText, { flex: 1 }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 Ghế: {seatList}
               </Text>
@@ -375,9 +398,6 @@ const TicketDetailScreen: React.FC = () => {
                 <View style={styles.timelineContent}>
                   <View style={styles.timelineHeader}>
                     <Text style={styles.timelineTime}>{tripTimeStr}</Text>
-                    {/* <TouchableOpacity>
-                      <Text style={styles.linkText}>Thay đổi</Text>
-                    </TouchableOpacity> */}
                   </View>
                   <Text style={styles.timelineLocation}>
                     {tuyenDuong.diemDon.tenDiem}
@@ -395,9 +415,6 @@ const TicketDetailScreen: React.FC = () => {
                 <View style={styles.timelineContent}>
                   <View style={styles.timelineHeader}>
                     <Text style={styles.timelineTime}>{arrivalTimeStr}</Text>
-                    {/* <TouchableOpacity>
-                      <Text style={styles.linkText}>Thay đổi</Text>
-                    </TouchableOpacity> */}
                   </View>
                   <Text style={styles.timelineLocation}>
                     {tuyenDuong.diemTra.tenDiem}
@@ -450,7 +467,7 @@ const TicketDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 3. CARD THÔNG TIN THANH TOÁN (Ảnh image_cc49e7.jpg) */}
+        {/* 3. CARD THÔNG TIN THANH TOÁN */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Thông tin thanh toán</Text>
           <View style={styles.infoRow}>
@@ -478,7 +495,7 @@ const TicketDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 4. CARD HƯỚNG DẪN THANH TOÁN (Ảnh image_cc49e7.jpg) */}
+        {/* 4. CARD HƯỚNG DẪN THANH TOÁN */}
         {veXe.trangThaiThanhToan === "CHUA_THANH_TOAN" && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Hướng dẫn thanh toán</Text>
@@ -496,17 +513,7 @@ const TicketDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {/* 5. CARD LƯU Ý QUAN TRỌNG (Ảnh image_cc49e7.jpg) */}
-        {/* <View style={[styles.card, styles.warningCard]}>
-          <Text style={styles.cardTitle}>Lưu ý quan trọng</Text>
-          <Text style={styles.regularText}>
-            Hãy hủy vé khi không còn nhu cầu đi chuyến. SmartBus sẽ yêu cầu bạn
-            thanh toán trước cho những lần sau nếu bạn đặt vé nhưng không đi
-            hoặc hủy vé quá nhiều lần.
-          </Text>
-        </View> */}
-
-        {/* 6. CARD QUẢN LÝ ĐƠN HÀNG (Ảnh image_cc4a0a.jpg) */}
+        {/* 5. CARD QUẢN LÝ ĐƠN HÀNG */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Quản lý đơn hàng</Text>
           <TouchableOpacity style={styles.managementRow}>
@@ -519,26 +526,47 @@ const TicketDetailScreen: React.FC = () => {
             <Text style={styles.managementText}>Trung tâm Hỗ trợ</Text>
             <Feather name="chevron-right" size={20} color="#AAA" />
           </TouchableOpacity>
+
+          {/* ✅ CẬP NHẬT NÚT HỦY ĐƠN HÀNG */}
           <TouchableOpacity
             style={styles.managementRow}
             onPress={handleCancelOrder}
+            disabled={!isCancellable} // Vô hiệu hóa nếu không được phép
           >
-            <Feather name="x-circle" size={22} color="#E74C3C" />
-            <Text style={[styles.managementText, { color: "#E74C3C" }]}>
+            <Feather
+              name="x-circle"
+              size={22}
+              // Đổi màu icon nếu bị vô hiệu hóa
+              color={!isCancellable ? "#BDBDBD" : "#E74C3C"}
+            />
+            <Text
+              style={[
+                styles.managementText,
+                // Đổi màu text nếu bị vô hiệu hóa
+                { color: !isCancellable ? "#BDBDBD" : "#E74C3C" },
+              ]}
+            >
               Hủy đơn hàng
             </Text>
-            <Feather name="chevron-right" size={20} color="#AAA" />
+            <Feather
+              name="chevron-right"
+              size={20}
+              // Đổi màu icon nếu bị vô hiệu hóa
+              color={!isCancellable ? "#BDBDBD" : "#AAA"}
+            />
           </TouchableOpacity>
+          {/* ✅ KẾT THÚC CẬP NHẬT */}
         </View>
       </ScrollView>
 
-      {/* 8. THANH BUTTONS DƯỚI CÙNG (Ảnh image_cc4a0a.jpg) */}
+      {/* 8. THANH BUTTONS DƯỚI CÙNG */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.footerButtonSecondary}>
           <Text style={styles.footerButtonSecondaryText}>Đặt lại</Text>
         </TouchableOpacity>
       </View>
 
+      {/* MODAL QR CODE */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -548,13 +576,12 @@ const TicketDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPressOut={() => setIsQrModalVisible(false)} // Đóng khi nhấn bên ngoài
+          onPressOut={() => setIsQrModalVisible(false)}
         >
           <View
             style={styles.modalContainer}
-            onStartShouldSetResponder={() => true} // Ngăn click xuyên qua
+            onStartShouldSetResponder={() => true}
           >
-            {/* ⚠️ CHÚ Ý: Thay đổi đường dẫn logo cho đúng! */}
             <QRCode
               value={veXe?.maVe || "NO_TICKET_ID"}
               size={220}
@@ -562,9 +589,7 @@ const TicketDetailScreen: React.FC = () => {
               logoSize={40}
               logoBackgroundColor="#FFFFFF"
             />
-
             <Text style={styles.modalQrText}>Mã vé: {veXe?.maVe}</Text>
-
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setIsQrModalVisible(false)}
@@ -579,7 +604,7 @@ const TicketDetailScreen: React.FC = () => {
 };
 
 // ===========================================
-// ✅ 10. STYLESHEET
+// 10. STYLESHEET
 // ===========================================
 const styles = StyleSheet.create({
   centered: {
@@ -590,13 +615,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#F0F2F5", // Màu nền xám nhạt
+    backgroundColor: "#F0F2F5",
   },
   header: {
     backgroundColor: "#007AFF",
     padding: 16,
     flexDirection: "row",
-    // justifyContent: "space-between",
     alignItems: "center",
   },
   headerTitle: {
@@ -622,7 +646,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   grayBanner: {
-    backgroundColor: "#8E8E93", // Màu xám (iOS system gray)
+    backgroundColor: "#8E8E93",
     padding: 12,
     alignItems: "center",
   },
@@ -910,11 +934,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   bannerAd: {
-    height: 100, // Điều chỉnh
+    height: 100,
     marginBottom: 16,
   },
   serviceBanner: {
-    height: 120, // Điều chỉnh
+    height: 120,
     justifyContent: "flex-end",
     padding: 16,
     marginBottom: 12,
@@ -966,7 +990,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1E3A8A", // Màu xanh đậm từ màn hình trước
+    backgroundColor: "#1E3A8A",
     paddingVertical: 12,
     borderRadius: 8,
     marginLeft: 8,
@@ -987,7 +1011,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 24,
     alignItems: "center",
-    width: "85%", // Chiều rộng của modal
+    width: "85%",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -1005,10 +1029,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalCloseButton: {
-    backgroundColor: "#1E3A8A", // Dùng màu xanh đậm
+    backgroundColor: "#1E3A8A",
     paddingVertical: 12,
     borderRadius: 8,
-    width: "100%", // Nút "Đóng" rộng full
+    width: "100%",
   },
   modalCloseButtonText: {
     color: "#FFFFFF",

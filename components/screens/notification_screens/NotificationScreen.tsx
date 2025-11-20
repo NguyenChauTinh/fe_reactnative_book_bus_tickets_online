@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { api_booking_service } from "@/apis/api_booking_service";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,87 +20,49 @@ const BellIcon = () => (
   </View>
 );
 
-// Sample notification data
-const mockNotifications = {
-  trips: [
-    {
-      id: 1,
-      title: "Vé đã được xác nhận",
-      message:
-        "Vé chuyến Hồ Chí Minh → Đà Lạt lúc 08:00 ngày 20/08/2025 đã được xác nhận.",
-      time: "2 giờ trước",
-      isRead: false,
-    },
-    {
-      id: 2,
-      title: "Nhắc nhở chuyến đi",
-      message:
-        "Chuyến xe của bạn sẽ khởi hành trong 30 phút. Vui lòng có mặt tại bến xe.",
-      time: "30 phút trước",
-      isRead: false,
-    },
-    {
-      id: 3,
-      title: "Chuyến đi hoàn thành",
-      message:
-        "Cảm ơn bạn đã sử dụng dịch vụ. Hãy đánh giá chuyến đi để cải thiện chất lượng.",
-      time: "1 ngày trước",
-      isRead: true,
-    },
-    {
-      id: 4,
-      title: "Thay đổi lịch trình",
-      message:
-        "Chuyến xe Hà Nội → Sapa đã thay đổi giờ khởi hành từ 07:00 thành 07:30.",
-      time: "2 ngày trước",
-      isRead: true,
-    },
-  ],
-  promotions: [
-    {
-      id: 5,
-      title: "Giảm 20% cho chuyến đi đầu tiên",
-      message:
-        "Sử dụng mã FIRST20 để được giảm 20% cho chuyến đi đầu tiên của bạn.",
-      time: "1 giờ trước",
-      isRead: false,
-    },
-    {
-      id: 6,
-      title: "Khuyến mãi cuối tuần",
-      message:
-        "Giảm 15% cho tất cả chuyến đi vào thứ 7 và chủ nhật. Áp dụng đến 31/08.",
-      time: "3 giờ trước",
-      isRead: false,
-    },
-    {
-      id: 7,
-      title: "Tích điểm thưởng",
-      message:
-        "Bạn đã tích được 150 điểm thưởng. Đổi ngay để nhận ưu đãi hấp dẫn!",
-      time: "1 ngày trước",
-      isRead: true,
-    },
-    {
-      id: 8,
-      title: "Flash Sale 24h",
-      message:
-        "Giảm đến 30% cho các tuyến hot. Chỉ còn 12 giờ để săn vé giá rẻ!",
-      time: "2 ngày trước",
-      isRead: true,
-    },
-  ],
-};
-
 const NotificationScreen = () => {
   const [activeTab, setActiveTab] = useState("trips");
 
+  // 👈 Dùng state thật thay vì mock
+  const [trips, setTrips] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 👈 Lấy dữ liệu từ API khi màn hình được mở
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        // ⚠️ THAY THẾ: Gọi API thật của bạn
+        // Đây là API bạn đã tạo ở Bước 2.3
+        const userId = "60c72b2f5f1b2c001f6e8d9e";
+        const response: any =
+          await api_booking_service.getNotificationsByUserId(userId);
+
+        const allNotifs = response.data;
+        setTrips(allNotifs.filter((n) => n.type === "trip"));
+        setPromotions(allNotifs.filter((n) => n.type === "promotion"));
+        // }
+      } catch (error) {
+        console.error("Lỗi khi tải thông báo:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []); // Chỉ chạy 1 lần khi mở màn hình
+
   const renderNotificationItem = (notification: any) => (
-    <View key={notification.id} style={styles.notificationItem}>
+    <View key={notification._id} style={styles.notificationItem}>
       <View style={styles.notificationContent}>
         <View style={styles.notificationHeader}>
           <Text style={styles.notificationTitle}>{notification.title}</Text>
-          <Text style={styles.notificationTime}>{notification.time}</Text>
+
+          {/* SỬA DÒNG NÀY: Dùng toLocaleString để thêm giờ */}
+          <Text style={styles.notificationTime}>
+            {new Date(notification.createdAt).toLocaleString("vi-VN")}
+          </Text>
         </View>
         <Text style={styles.notificationMessage}>{notification.message}</Text>
       </View>
@@ -117,10 +81,7 @@ const NotificationScreen = () => {
     </View>
   );
 
-  const currentNotifications =
-    activeTab === "trips"
-      ? mockNotifications.trips
-      : mockNotifications.promotions;
+  const currentNotifications = activeTab === "trips" ? trips : promotions;
 
   return (
     <View style={styles.container}>
@@ -161,9 +122,17 @@ const NotificationScreen = () => {
 
       {/* Content */}
       <ScrollView style={styles.content}>
-        {currentNotifications.length > 0
-          ? currentNotifications.map(renderNotificationItem)
-          : renderEmptyState()}
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#4A90E2"
+            style={{ marginTop: 50 }}
+          />
+        ) : currentNotifications.length > 0 ? (
+          currentNotifications.map(renderNotificationItem)
+        ) : (
+          renderEmptyState()
+        )}
       </ScrollView>
     </View>
   );

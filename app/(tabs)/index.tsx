@@ -80,6 +80,7 @@ export type RootStackParamList = {
   VerificationCodeRegister: { phoneNumber: string };
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
   CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
+  TicketScreen: undefined;
 };
 
 // Stack Navigator cho phần Contact/Friends

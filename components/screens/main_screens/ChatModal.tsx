@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { runConversation } from "../../../apis/geminiService";
 
 const ChatIcon = ({ onPress }) => (
   <TouchableOpacity style={styles.chatIconContainer} onPress={onPress}>
@@ -21,7 +20,6 @@ const ChatIcon = ({ onPress }) => (
   </TouchableOpacity>
 );
 
-// Màn hình Chat Modal
 export const ChatModal = ({ visible, onClose }) => {
   const [messages, setMessages] = useState([
     {
@@ -34,6 +32,11 @@ export const ChatModal = ({ visible, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef(null);
 
+  // ✅ THÊM: Tạo một ID phiên duy nhất khi component được tải
+  // ID này sẽ đại diện cho "phòng chat" của người dùng trên server
+  const [sessionId] = useState(() => Math.random().toString(36).substring(2));
+
+  // ✅ THAY ĐỔI: Hàm handleSend
   const handleSend = async () => {
     if (inputText.trim().length === 0) return;
 
@@ -48,10 +51,33 @@ export const ChatModal = ({ visible, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Gọi "bộ não" AI
-      // Lưu ý: Đảm bảo 'runConversation' được import đúng
-      const botResponseText = await runConversation(userMessage.text);
+      // ⚠️ ĐÂY LÀ THAY ĐỔI LỚN ⚠️
+      // Thay vì gọi 'runConversation' trực tiếp, hãy gọi API backend
 
+      // ❗️ QUAN TRỌNG: Thay 'YOUR_LOCAL_IP' bằng địa chỉ IP của máy tính
+      // Ví dụ: '192.168.1.10' (dùng 'ipconfig' hoặc 'ifconfig' để tìm)
+      // KHÔNG thể dùng 'localhost' vì app điện thoại không hiểu.
+      const API_ENDPOINT = "http://192.168.1.21:3006/api/v1/chat";
+
+      const response = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userInput: userMessage.text,
+          sessionId: sessionId, // Gửi ID phiên chat
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi từ server: " + response.status);
+      }
+
+      const data = await response.json();
+      const botResponseText = data.reply; // Lấy câu trả lời từ server
+
+      // Phần còn lại giữ nguyên
       const botMessage = {
         id: Math.random().toString(),
         text: botResponseText,
@@ -59,10 +85,10 @@ export const ChatModal = ({ visible, onClose }) => {
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Lỗi khi gọi AI:", error);
+      console.error("Lỗi khi gọi API chat:", error);
       const errorMessage = {
         id: Math.random().toString(),
-        text: "Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau.",
+        text: "Xin lỗi, tôi đang gặp sự cố kết nối. Vui lòng thử lại sau.",
         sender: "bot",
       };
       setMessages((prev) => [...prev, errorMessage]);
