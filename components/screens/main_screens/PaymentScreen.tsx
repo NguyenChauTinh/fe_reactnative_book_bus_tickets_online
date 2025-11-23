@@ -10,6 +10,7 @@ import React, {
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   NativeSyntheticEvent, // 👈 THÊM
   SafeAreaView,
@@ -21,6 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
 import { Api_Auth_Customer } from "../../../apis/api_auth";
@@ -177,6 +179,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [countdown, setCountdown] = useState(59);
   const otpInputRef = useRef<OtpInputHandle>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -390,27 +393,29 @@ const PaymentScreen = ({ navigation, route }) => {
     if (selectedPaymentMethod === "MOMO") {
       setLoading(true);
       try {
+        // Gọi API Node.js vừa viết ở trên
         const response = await axios.post(
-          // Đây là URL backend mới bạn cần tạo (ví dụ)
           "http://192.168.1.21:3005/api/v1/payment/create-momo-url",
           {
-            amount: finalPrice,
-            orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
+            amount: finalPrice, // Số tiền (VND)
+            orderInfo: `Vé xe ${trip.maChuyenXe} - Ghế ${selectedSeats
+              .map((s) => s.number)
+              .join(",")}`,
           }
         );
 
-        // Logic hiển thị WebView y hệt VNPAY
         if (response.data && response.data.paymentUrl) {
           setPaymentUrl(response.data.paymentUrl);
-          setShowGateway(true);
+          setShowGateway(true); // Mở WebView
         } else {
-          Alert.alert("Lỗi", "Không thể tạo yêu cầu thanh toán MoMo.");
+          Alert.alert(
+            "Lỗi",
+            response.data.message || "Không thể tạo thanh toán MoMo."
+          );
         }
       } catch (error) {
-        Alert.alert(
-          "Lỗi hệ thống",
-          "Không thể kết nối đến máy chủ thanh toán MoMo."
-        );
+        console.error(error);
+        Alert.alert("Lỗi hệ thống", "Không thể kết nối đến server.");
       } finally {
         setLoading(false);
       }
@@ -562,6 +567,35 @@ const PaymentScreen = ({ navigation, route }) => {
         <SafeAreaView style={{ flex: 1 }} edges={["bottom", "left", "right"]}>
           <WebView
             source={{ uri: paymentUrl }}
+            // 1. Thêm hàm này để bắt link mở App MoMo
+            onShouldStartLoadWithRequest={(request) => {
+              const { url } = request;
+              console.log("WebView check URL:", url);
+
+              // 1. Bắt các link mở app (Deep Link & Universal Link)
+              // Thêm check cho 'applinks.momo.vn' (cả test và production)
+              if (
+                url.startsWith("momo://") ||
+                url.startsWith("momosdk://") ||
+                url.includes("applinks.momo.vn")
+              ) {
+                console.log("Phát hiện link mở app MoMo, đang chuyển hướng...");
+
+                Linking.openURL(url).catch((err) => {
+                  // Lỗi này thường gặp trên Simulator vì không có App MoMo
+                  Alert.alert(
+                    "Không thể mở MoMo",
+                    "Vui lòng kiểm tra xem ứng dụng MoMo đã được cài đặt trên thiết bị chưa."
+                  );
+                  console.error("Lỗi mở link:", err);
+                });
+
+                return false; // NGĂN CHẶN WebView tải link này
+              }
+
+              // 2. Cho phép tải các link thanh toán bình thường
+              return true;
+            }}
             onNavigationStateChange={handleWebViewNavigationStateChange}
             style={{ flex: 1 }}
             cacheEnabled={false}

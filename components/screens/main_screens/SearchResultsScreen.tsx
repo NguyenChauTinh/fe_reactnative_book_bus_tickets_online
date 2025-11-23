@@ -175,7 +175,7 @@ export default function SearchResultsScreen({ navigation, route }) {
             departureLocation._id,
             destination._id
           );
-
+        console.log("Fetched bus trips:", response.data);
         setAllTrips(response.data || []);
       } catch (error) {
         console.error("Error fetching bus trips:", error);
