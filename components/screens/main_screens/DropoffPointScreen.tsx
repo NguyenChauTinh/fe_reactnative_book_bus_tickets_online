@@ -10,11 +10,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BookingTimeline from "../main_screens/BookingTimeline";
-// ✅ 2. Import Svg và các thành phần
 import Svg, { Circle, Path } from "react-native-svg";
+import BookingTimeline from "../main_screens/BookingTimeline";
 
-// ✅ 3. Sửa lại các component SVG
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
