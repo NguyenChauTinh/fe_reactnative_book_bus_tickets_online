@@ -57,7 +57,7 @@ export const ChatModal = ({ visible, onClose }) => {
       // ❗️ QUAN TRỌNG: Thay 'YOUR_LOCAL_IP' bằng địa chỉ IP của máy tính
       // Ví dụ: '192.168.1.10' (dùng 'ipconfig' hoặc 'ifconfig' để tìm)
       // KHÔNG thể dùng 'localhost' vì app điện thoại không hiểu.
-      const API_ENDPOINT = "http://192.168.1.21:3006/api/v1/chat";
+      const API_ENDPOINT = "http://192.168.1.12:3006/api/v1/chat";
 
       const response = await fetch(API_ENDPOINT, {
         method: "POST",

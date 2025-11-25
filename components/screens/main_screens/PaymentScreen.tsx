@@ -1,23 +1,23 @@
 import axios from "axios";
 import React, {
-  forwardRef, // 👈 THÊM
+  forwardRef,
   useEffect,
-  useImperativeHandle, // 👈 THÊM
+  useImperativeHandle,
   useMemo,
-  useRef, // 👈 THÊM
+  useRef,
   useState,
 } from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
-  NativeSyntheticEvent, // 👈 THÊM
+  NativeSyntheticEvent,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TextInputKeyPressEventData, // 👈 THÊM
+  TextInputKeyPressEventData,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -322,13 +322,17 @@ const PaymentScreen = ({ navigation, route }) => {
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
       userId: user.taiKhoanId,
+      email: customerInfo.email,
+      route: trip?.tuyenDuong?.tenTuyen,
+      departureDate: departureDate,
+      selectedPickup: selectedPickup,
     };
 
     try {
       setLoading(true);
 
       const response = await api_booking_service.createTicket(ticketPayload);
-      console.log("response = ", response);
+     
       if (response.success) {
         navigation.navigate("BookingSuccessScreen", {
           ticketInfo: response.data,
@@ -364,25 +368,76 @@ const PaymentScreen = ({ navigation, route }) => {
     if (selectedPaymentMethod === "VNPAY") {
       setLoading(true);
       try {
-        const response = await axios.post(
-          "http://192.168.1.37:3005/api/v1/payment/create-vnpay-url",
-          {
-            amount: finalPrice,
-            orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
-          }
-        );
+        // --- A. Chuẩn bị dữ liệu chi tiết vé (Tương tự createTicketInDatabase) ---
+        const numTickets = selectedSeats.length;
+        let discountDistributed = 0;
+        const discountPerTicket = Math.round((discountAmount / numTickets) * 1000) / 1000;
 
-        if (response.data && response.data.paymentUrl) {
-          setPaymentUrl(response.data.paymentUrl);
-          setShowGateway(true);
+        const chiTietVe = selectedSeats.map((seat, index) => {
+          let ticketDiscount = 0;
+          if (index < numTickets - 1) {
+            ticketDiscount = discountPerTicket;
+            discountDistributed += ticketDiscount;
+          } else {
+            ticketDiscount = discountAmount - discountDistributed;
+            ticketDiscount = Math.round(ticketDiscount * 1000) / 1000;
+          }
+
+          return {
+            chuyenXe: trip._id,
+            tenKhachHang: customerInfo.name,
+            soDienThoai: customerInfo.phone,
+            email: customerInfo.email,
+            maChoNgoi: seat.number,
+            diemDon: selectedPickup.name,
+            diemTra: selectedDropoff.name,
+            diemDonTC: "", // Thêm nếu có
+            diemTraTC: "", // Thêm nếu có
+            giaVeCoBan: seat.price,
+            phuThu: 0,
+            giamGia: ticketDiscount,
+            ghiChu: "",
+            // Không cần set hinhThucThanhToan, Backend sẽ tự set là VNPAY
+          };
+        });
+
+        const bookingData = {
+            chiTiet: chiTietVe,
+            nhanVienTao: "690471e2292bcd0f56f104e8", // ID của admin tạo đơn
+            nhanVienId: "690471e2292bcd0f56f104e8", // ID của admin phụ trách
+            userId: user?.taiKhoanId,
+            amount: finalPrice,
+            maGiamGia: selectedPromoLine ? selectedPromoLine?.campaignId : null,
+        };
+
+        const response = await api_booking_service.createBookingAndPaymentVNPAY(bookingData);
+
+        const paymentUrl = response.paymentUrl || response.data?.paymentUrl;
+        const maHoaDon = response.maHoaDon || response.data?.maHoaDon;
+
+        if (paymentUrl) {
+          navigation.navigate("QRCodeScreen", {
+            paymentUrl: paymentUrl,
+            maHoaDon: maHoaDon,
+            finalPrice: finalPrice,
+            ticketInfo: null, 
+            trip,
+            departureLocation,
+            destination,
+            departureDate,
+            discountAmount,
+            customerInfo,
+            selectedSeats,
+          });
         } else {
-          Alert.alert("Lỗi", "Không thể tạo yêu cầu thanh toán VNPAY.");
+            const msg = response.message || response.data?.message || "Không thể tạo liên kết thanh toán.";
+            Alert.alert("Lỗi", msg);
         }
+
       } catch (error) {
-        Alert.alert(
-          "Lỗi hệ thống",
-          "Không thể kết nối đến máy chủ thanh toán."
-        );
+        console.error("Lỗi VNPAY:", error);
+        const errorMsg = error.response?.data?.message || "Không thể kết nối đến máy chủ thanh toán.";
+        Alert.alert("Thất bại", errorMsg);
       } finally {
         setLoading(false);
       }
@@ -393,7 +448,7 @@ const PaymentScreen = ({ navigation, route }) => {
       try {
         const response = await axios.post(
           // Đây là URL backend mới bạn cần tạo (ví dụ)
-          "http://192.168.1.21:3005/api/v1/payment/create-momo-url",
+          "http://192.168.1.12:3005/api/v1/payment/create-momo-url",
           {
             amount: finalPrice,
             orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
@@ -503,7 +558,7 @@ const PaymentScreen = ({ navigation, route }) => {
     const { url } = navState;
 
     // 1. XỬ LÝ URL TRẢ VỀ CỦA VNPAY (Giữ nguyên)
-    if (url.includes("http://192.168.1.21:3005/payment-return")) {
+    if (url.includes("http://192.168.1.12:3005/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -522,11 +577,8 @@ const PaymentScreen = ({ navigation, route }) => {
       }
     }
 
-    // ===================================
-    // 2. THÊM XỬ LÝ URL TRẢ VỀ CỦA MOMO
-    // ===================================
-    // (Giả sử URL trả về của bạn là 'momo-return')
-    if (url.includes("http://192.168.1.21:3005/momo-return")) {
+   
+    if (url.includes("http://192.168.1.12:3005/momo-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 

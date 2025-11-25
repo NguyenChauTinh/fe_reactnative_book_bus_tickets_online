@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -9,11 +9,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// ✅ SỬA 1: Import Svg và các thành phần
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import BookingTimeline from "../main_screens/BookingTimeline";
 
-// ✅ SỬA 2: Sửa lại toàn bộ Icon SVG
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
@@ -94,8 +92,6 @@ export default function TripInfoScreen({ navigation, route }) {
   const seatNumbers = selectedSeats.map((seat) => seat.number).join(", ");
 
   const handleContinue = () => {
-    // ✅ SỬA 4: Xóa dòng `setLoading(false);`
-    // Bạn không cần set loading gì ở đây, chỉ cần điều hướng
     navigation.navigate("PaymentScreen", {
       trip,
       selectedSeats,
@@ -103,8 +99,8 @@ export default function TripInfoScreen({ navigation, route }) {
       selectedDropoff,
       customerInfo,
       insuranceSelected,
-      totalPrice, // Gửi giá gốc
-      finalPrice, // Gửi giá cuối cùng (đã có bảo hiểm nếu chọn)
+      totalPrice,
+      finalPrice, 
       departureLocation,
       destination,
       departureDate,

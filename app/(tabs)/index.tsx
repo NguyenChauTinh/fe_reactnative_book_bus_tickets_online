@@ -17,15 +17,15 @@ import DropoffPointScreen from "@/components/screens/main_screens/DropoffPointSc
 import MainScreen from "@/components/screens/main_screens/MainScreen";
 import PaymentScreen from "@/components/screens/main_screens/PaymentScreen";
 import PickupPointScreen from "@/components/screens/main_screens/PickupPointScreen";
+import QRCodeScreen from "@/components/screens/main_screens/QRCodeScreen";
 import SearchResultsScreen from "@/components/screens/main_screens/SearchResultsScreen";
 import SeatSelectionScreen from "@/components/screens/main_screens/SeatSelectionScreen";
 import TripInfoScreen from "@/components/screens/main_screens/TripInfoScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
-import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
-
 import CancelFlowScreen from "@/components/screens/ticket_screens/CancelFlowScreen";
 import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
+import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -81,6 +81,7 @@ export type RootStackParamList = {
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
   CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
   TicketScreen: undefined;
+  QRCodeScreen: { paymentUrl: string; maHoaDon: string; finalPrice: number; [key: string]: any}
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -309,6 +310,11 @@ const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="PaymentScreen"
             component={PaymentScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="QRCodeScreen"
+            component={QRCodeScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen
