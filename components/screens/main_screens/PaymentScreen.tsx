@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, {
   forwardRef,
   useEffect,
@@ -368,7 +367,6 @@ const PaymentScreen = ({ navigation, route }) => {
     if (selectedPaymentMethod === "VNPAY") {
       setLoading(true);
       try {
-        // --- A. Chuẩn bị dữ liệu chi tiết vé (Tương tự createTicketInDatabase) ---
         const numTickets = selectedSeats.length;
         let discountDistributed = 0;
         const discountPerTicket = Math.round((discountAmount / numTickets) * 1000) / 1000;
@@ -391,20 +389,19 @@ const PaymentScreen = ({ navigation, route }) => {
             maChoNgoi: seat.number,
             diemDon: selectedPickup.name,
             diemTra: selectedDropoff.name,
-            diemDonTC: "", // Thêm nếu có
-            diemTraTC: "", // Thêm nếu có
+            diemDonTC: "", 
+            diemTraTC: "", 
             giaVeCoBan: seat.price,
             phuThu: 0,
             giamGia: ticketDiscount,
             ghiChu: "",
-            // Không cần set hinhThucThanhToan, Backend sẽ tự set là VNPAY
           };
         });
 
         const bookingData = {
             chiTiet: chiTietVe,
-            nhanVienTao: "690471e2292bcd0f56f104e8", // ID của admin tạo đơn
-            nhanVienId: "690471e2292bcd0f56f104e8", // ID của admin phụ trách
+            nhanVienTao: "690471e2292bcd0f56f104e8",
+            nhanVienId: "690471e2292bcd0f56f104e8",
             userId: user?.taiKhoanId,
             amount: finalPrice,
             maGiamGia: selectedPromoLine ? selectedPromoLine?.campaignId : null,
@@ -442,35 +439,6 @@ const PaymentScreen = ({ navigation, route }) => {
         setLoading(false);
       }
     }
-
-    if (selectedPaymentMethod === "MOMO") {
-      setLoading(true);
-      try {
-        const response = await axios.post(
-          // Đây là URL backend mới bạn cần tạo (ví dụ)
-          "http://192.168.1.12:3005/api/v1/payment/create-momo-url",
-          {
-            amount: finalPrice,
-            orderInfo: `Thanh toan ve xe ${trip.maChuyenXe}`,
-          }
-        );
-
-        // Logic hiển thị WebView y hệt VNPAY
-        if (response.data && response.data.paymentUrl) {
-          setPaymentUrl(response.data.paymentUrl);
-          setShowGateway(true);
-        } else {
-          Alert.alert("Lỗi", "Không thể tạo yêu cầu thanh toán MoMo.");
-        }
-      } catch (error) {
-        Alert.alert(
-          "Lỗi hệ thống",
-          "Không thể kết nối đến máy chủ thanh toán MoMo."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
   };
 
   const handleContinue = async () => {
@@ -480,33 +448,6 @@ const PaymentScreen = ({ navigation, route }) => {
     }
 
     await proceedToBooking();
-
-    // setVerificationLoading(true); // Hiển thị loading (tạm thời)
-
-    // try {
-    //   const response = await Api_Auth_Customer.requestOtp({
-    //     soDienThoai: customerInfo.phone,
-    //   });
-
-    //   if (response.success) {
-    //     // Xóa mã cũ (nếu có) trước khi mở
-    //     setOtpCode("");
-    //     otpInputRef.current?.clear();
-    //     // Mở modal
-    //     setIsVerificationModalVisible(true);
-    //     setCountdown(59);
-    //   } else {
-    //     Alert.alert(
-    //       "Lỗi",
-    //       response.message || "Không thể gửi mã OTP. Vui lòng thử lại."
-    //     );
-    //   }
-    // } catch (error) {
-    //   console.error("Lỗi gửi OTP:", error);
-    //   Alert.alert("Lỗi hệ thống", "Không thể gửi mã OTP. Vui lòng thử lại.");
-    // } finally {
-    //   setVerificationLoading(false);
-    // }
   };
 
   const handleVerify = async (codeToVerify: string) => {
@@ -554,11 +495,10 @@ const PaymentScreen = ({ navigation, route }) => {
     handleVerify(code);
   };
 
-  const handleWebViewNavigationStateChange = (navState) => {
+  const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    // 1. XỬ LÝ URL TRẢ VỀ CỦA VNPAY (Giữ nguyên)
-    if (url.includes("http://192.168.1.12:3005/payment-return")) {
+    if (url.includes("http://192.168.1.12:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -577,32 +517,6 @@ const PaymentScreen = ({ navigation, route }) => {
       }
     }
 
-   
-    if (url.includes("http://192.168.1.12:3005/momo-return")) {
-      setShowGateway(false);
-      setPaymentUrl(null);
-
-      const params = new URLSearchParams(url.split("?")[1]);
-      // MoMo dùng 'resultCode' (thay vì 'vnp_ResponseCode')
-      const resultCode = params.get("resultCode");
-      // MoMo dùng 'transId' (thay vì 'vnp_TransactionNo')
-      const transId = params.get("transId");
-
-      // MoMo trả về "0" là thành công
-      if (resultCode === "0") {
-        Alert.alert("Thành công", "Thanh toán MoMo thành công!");
-        // Gọi hàm tạo vé, truyền "MOMO" và Mã giao dịch của MoMo
-        createTicketInDatabase("MOMO", transId);
-      } else {
-        Alert.alert(
-          "Thất bại",
-          "Thanh toán MoMo không thành công hoặc đã bị hủy."
-        );
-      }
-    }
-    // ===================================
-    // KẾT THÚC XỬ LÝ MOMO
-    // ===================================
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { api_booking_service } from "@/apis/api_booking_service";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,7 +36,9 @@ const NotificationScreen = () => {
       try {
         // ⚠️ THAY THẾ: Gọi API thật của bạn
         // Đây là API bạn đã tạo ở Bước 2.3
-        const userId = "60c72b2f5f1b2c001f6e8d9e";
+        const userData = await AsyncStorage.getItem("userData"); // Giả sử bạn lưu userId trong AsyncStorage
+        const userId = userData ? JSON.parse(userData).taiKhoanId : null;
+        console.log("Fetching notifications for userId:", userId);
         const response: any =
           await api_booking_service.getNotificationsByUserId(userId);
 

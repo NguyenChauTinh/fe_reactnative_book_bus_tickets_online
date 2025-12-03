@@ -16,13 +16,14 @@ export interface User {
   gioiTinh?: "Nam" | "Nữ" | "Khác";
   soDienThoai: string; 
   taiKhoanId: string; 
+  refreshToken?: string;
 }
 
 interface AuthContextType {
   token: string | null;
   user: User | null;
   isLoading: boolean; 
-  login: (token: string, user: User) => Promise<void>;
+  login: (token: string, user: User, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -66,11 +67,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     bootstrapAsync();
   }, []);
 
-  const login = async (newToken: string, newUser: User) => {
+  const login = async (newToken: string, newUser: User, refreshToken: string) => {
     setIsLoading(true);
     try {
       await AsyncStorage.setItem("userToken", newToken);
       await AsyncStorage.setItem("userData", JSON.stringify(newUser));
+      await AsyncStorage.setItem("refreshToken", refreshToken || "");
       setToken(newToken);
       setUser(newUser);
     } catch (e) {
@@ -85,6 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await AsyncStorage.removeItem("userToken");
       await AsyncStorage.removeItem("userData");
+      await AsyncStorage.removeItem("refreshToken");
       setToken(null);
       setUser(null);
     } catch (e) {

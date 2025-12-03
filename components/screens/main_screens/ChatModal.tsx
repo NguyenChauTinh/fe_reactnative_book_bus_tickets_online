@@ -1,4 +1,4 @@
-import AntDesign from '@expo/vector-icons/AntDesign';
+import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,14 +13,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { api_ai_service } from "../../../apis/api_ai_service";
 
-const ChatIcon = ({ onPress }) => (
+const ChatIcon = ({ onPress }: { onPress: () => void }) => (
   <TouchableOpacity style={styles.chatIconContainer} onPress={onPress}>
     <AntDesign name="wechat-work" size={30} color="white" />
   </TouchableOpacity>
 );
 
-export const ChatModal = ({ visible, onClose }) => {
+export const ChatModal = ({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) => {
   const [messages, setMessages] = useState([
     {
       id: "1",
@@ -30,13 +37,10 @@ export const ChatModal = ({ visible, onClose }) => {
   ]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const flatListRef = useRef(null);
+  const flatListRef = useRef<FlatList>(null);
 
-  // ✅ THÊM: Tạo một ID phiên duy nhất khi component được tải
-  // ID này sẽ đại diện cho "phòng chat" của người dùng trên server
   const [sessionId] = useState(() => Math.random().toString(36).substring(2));
 
-  // ✅ THAY ĐỔI: Hàm handleSend
   const handleSend = async () => {
     if (inputText.trim().length === 0) return;
 
@@ -51,33 +55,18 @@ export const ChatModal = ({ visible, onClose }) => {
     setIsLoading(true);
 
     try {
-      // ⚠️ ĐÂY LÀ THAY ĐỔI LỚN ⚠️
-      // Thay vì gọi 'runConversation' trực tiếp, hãy gọi API backend
+      const response = await api_ai_service.sendMessageToAI(
+        userMessage.text,
+        sessionId
+      );
 
-      // ❗️ QUAN TRỌNG: Thay 'YOUR_LOCAL_IP' bằng địa chỉ IP của máy tính
-      // Ví dụ: '192.168.1.10' (dùng 'ipconfig' hoặc 'ifconfig' để tìm)
-      // KHÔNG thể dùng 'localhost' vì app điện thoại không hiểu.
-      const API_ENDPOINT = "http://192.168.1.12:3006/api/v1/chat";
-
-      const response = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userInput: userMessage.text,
-          sessionId: sessionId, // Gửi ID phiên chat
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi từ server: " + response.status);
+      if (!response.success) {
+        throw new Error("Lỗi từ server: " + response.message);
       }
 
-      const data = await response.json();
-      const botResponseText = data.reply; // Lấy câu trả lời từ server
+      const data = response.data || response;
+      const botResponseText = data.reply;
 
-      // Phần còn lại giữ nguyên
       const botMessage = {
         id: Math.random().toString(),
         text: botResponseText,
@@ -103,7 +92,7 @@ export const ChatModal = ({ visible, onClose }) => {
     }
   }, [messages]);
 
-  const renderMessage = ({ item }) => (
+  const renderMessage = ({ item }: { item: any }) => (
     <View
       style={[
         styles.messageContainer,

@@ -1,10 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-// const API_BASE_URL =
-//   'http://localhost:3002/api/v1';
-const API_BASE_URL = "http://192.168.1.12:3001/api/v1";
-
-console.log("API_BASE_URL == ", API_BASE_URL);
+const API_BASE_URL = "http://192.168.1.12:3000/api/v1";
 
 const tripApiClient = createApiManager(API_BASE_URL);
 
@@ -61,5 +57,11 @@ export const api_trip_schedule_service = {
 
   getTuyenDuongData: async (id) => {
     return tripApiClient.get(`/tuyen-duong/lay-tuyen-duong-data/${id}`);
+  },
+
+
+  //GIÁ VÉ
+  getGiaVeApDung: async (params) => {
+    return tripApiClient.get("/gia-ve/tim-gia-ve-ap-dung", { params });
   },
 };

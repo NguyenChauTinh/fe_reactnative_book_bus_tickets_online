@@ -164,7 +164,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         };
 
         const response = await Api_Auth_Customer.verifyLoginOtp(payload);
-        const { token, userId } = response;
+        const { token, userId, refreshToken } = response;
 
         if (!token || !userId) {
           Alert.alert(
@@ -179,10 +179,10 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           hoVaTen: response.hoVaTen, 
           soDienThoai: phoneNumber,
           email: response.email, 
-          taiKhoanId: userId, 
+          taiKhoanId: userId
         };
 
-        await login(token, user);
+        await login(token, user, refreshToken);
       }
     } catch (err: any) {
       const errorMessage =
