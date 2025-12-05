@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  // ✅ BỎ: Modal
   ScrollView,
   StyleSheet,
   Text,
@@ -196,10 +195,6 @@ export default function SeatSelectionScreen({ navigation, route }) {
     route.params;
   const [selectedCabins, setSelectedCabins] = useState([]);
 
-  // --- BẮT ĐẦU THAY ĐỔI: Bỏ state của modal ---
-  // const [showRoomModal, setShowRoomModal] = useState(false);
-  // const [selectedCabin, setSelectedCabin] = useState(null);
-  // --- KẾT THÚC THAY ĐỔI ---
 
   const [loading, setLoading] = useState(true);
   const [occupiedSeats, setOccupiedSeats] = useState([]);

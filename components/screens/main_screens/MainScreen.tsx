@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { ScrollView, StatusBar, StyleSheet, View } from "react-native";
 import DateSelector from "../../components/DateSelector";
 import FeatureIcons from "../../components/FeatureIcons";
@@ -10,17 +11,32 @@ import RecentSearches from "../../components/RecentSearches";
 import SearchButton from "../../components/SearchButton";
 import { AiChatbot } from "./ChatModal";
 
-export default function MainScreen({ navigation }) {
+type Location = {
+  _id: string;
+  tenDiaDiem: string;
+};
+
+export default function MainScreen({ navigation }: { navigation: any }) {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
-  const [departureLocation, setDepartureLocation] = useState(null);
-  const [destination, setDestination] = useState(null);
+  const [departureLocation, setDepartureLocation] = useState<Location | null>(
+    null
+  );
+  const [destination, setDestination] = useState<Location | null>(null);
   const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [returnDate, setReturnDate] = useState<string | null>("");
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchRefreshKey, setSearchRefreshKey] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setSearchRefreshKey(prevKey => prevKey + 1); 
+    }, [])
+  );
 
   const handleDeparturePress = () => {
     navigation.navigate("DepartureScreen", {
-      onSelect: (location) => {
-        console.log("Location received for Departure:", location);
+      onSelect: (location: any) => {
         setDepartureLocation(location);
 
         setDestination(null);
@@ -32,13 +48,11 @@ export default function MainScreen({ navigation }) {
 
   const handleDestinationPress = () => {
     navigation.navigate("DestinationScreen", {
-      onSelect: (location) => {
+      onSelect: (location: any) => {
         console.log("Location received for Destination:", location);
         setDestination(location);
       },
 
-      // ✅ GIỮ NGUYÊN: Vẫn gửi ID của điểm đi.
-      // Logic này đúng: chọn điểm đi sẽ lọc điểm đến.
       departureId: departureLocation?._id,
     });
   };
@@ -48,7 +62,11 @@ export default function MainScreen({ navigation }) {
       isRoundTrip,
       departureDate,
       returnDate,
-      onSelect: (departure, returnDate, updatedRoundTrip) => {
+      onSelect: (
+        departure: string,
+        returnDate: string | null,
+        updatedRoundTrip?: boolean
+      ) => {
         setDepartureDate(departure);
         if (returnDate) setReturnDate(returnDate);
         if (updatedRoundTrip !== undefined) {
@@ -65,11 +83,19 @@ export default function MainScreen({ navigation }) {
     const temp = departureLocation;
     setDepartureLocation(destination);
     setDestination(temp);
-
-    // ✅ CÂN NHẮC: Sau khi swap, điểm đến mới (temp)
-    // có thể không hợp lệ. Bạn có thể muốn reset nó.
-    // setDestination(null); // (Tùy chọn)
   };
+
+  const handleRecentSearchSelect = useCallback((searchItem: any) => {
+    setDepartureLocation({
+      _id: searchItem.diemDiId,
+      tenDiaDiem: searchItem.tenDiemDi,
+    });
+    setDestination({
+      _id: searchItem.diemDenId,
+      tenDiaDiem: searchItem.tenDiemDen,
+    });
+
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -84,7 +110,7 @@ export default function MainScreen({ navigation }) {
             destination={destination?.tenDiaDiem || ""}
             onDeparturePress={handleDeparturePress}
             onDestinationPress={handleDestinationPress}
-            // onSwap={handleSwapLocations}
+            onSwap={handleSwapLocations}
           />
 
           <DateSelector
@@ -102,29 +128,25 @@ export default function MainScreen({ navigation }) {
         </View>
 
         <SearchButton
-          departureLocation={departureLocation}
-          destination={destination}
+          departureLocation={departureLocation || null}
+          destination={destination || null}
           departureDate={departureDate}
           returnDate={returnDate}
           isRoundTrip={isRoundTrip}
           navigation={navigation}
-          onDateSelect={(departure, returnDate, updatedRoundTrip) => {
+          onDateSelect={(departure: string, returnDate?: string | null) => {
             setDepartureDate(departure);
             if (returnDate) setReturnDate(returnDate);
-            if (updatedRoundTrip !== undefined) {
-              setIsRoundTrip(updatedRoundTrip);
-              if (!updatedRoundTrip) {
-                setReturnDate(null);
-              }
-            }
           }}
-          onDepartureSelect={(location) => setDepartureLocation(location)}
-          onDestinationSelect={(location) => setDestination(location)}
+          onDepartureSelect={(location: Location) =>
+            setDepartureLocation({ _id: location._id, tenDiaDiem: location.tenDiaDiem })
+          }
+          onDestinationSelect={(location: Location) => setDestination({ _id: location._id, tenDiaDiem: location.tenDiaDiem })}
         />
 
         <FeatureIcons />
 
-        <RecentSearches />
+        <RecentSearches refreshKey={searchRefreshKey} onSelectRecentSearch={handleRecentSearchSelect} />
       </ScrollView>
       <AiChatbot />
     </View>

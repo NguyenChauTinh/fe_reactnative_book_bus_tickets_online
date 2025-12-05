@@ -2,13 +2,22 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DepartureIcon from "./icons/DepartureIcon";
 import DestinationIcon from "./icons/DestinationIcon";
+
+interface LocationSelectorProps {
+  departureLocation: string;
+  destination: string;
+  onDeparturePress: () => void;
+  onDestinationPress: () => void;
+  onSwap: () => void;
+}
+
 export default function LocationSelector({
   departureLocation,
   destination,
   onDeparturePress,
   onDestinationPress,
   onSwap,
-}) {
+}: LocationSelectorProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.locationRow} onPress={onDeparturePress}>

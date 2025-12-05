@@ -32,6 +32,9 @@ export const Api_Auth_Customer = {
   verifyOtp: async (data) => {
     return apiClient.post("/tai-khoan-khach-hang/check/verify", data);
   },
+  getRecentSearches: async () => {
+    return apiClient.get("/tai-khoan-khach-hang/recent-searches");
+  }
 };
 
 export const Api_KhachHang = {

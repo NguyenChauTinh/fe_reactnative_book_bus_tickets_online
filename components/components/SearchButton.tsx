@@ -1,4 +1,23 @@
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
+
+type Location = {
+  _id: string;
+  tenDiaDiem: string;
+};
+type SearchButtonProps = {
+  departureLocation: Location | null;
+  destination: Location | null;
+  departureDate: string | null;
+  returnDate: string | null;
+  isRoundTrip: boolean;
+  navigation: {
+    navigate: (screen: string, params?: any) => void;
+  };
+  onDateSelect: (date: string) => void;
+  onDepartureSelect: (location: Location) => void;
+  onDestinationSelect: (destination: Location) => void;
+};
 
 export default function SearchButton({
   departureLocation,
@@ -10,9 +29,8 @@ export default function SearchButton({
   onDateSelect,
   onDepartureSelect,
   onDestinationSelect,
-}) {
+}: SearchButtonProps) {
   const handleSearch = () => {
-    // SỬA Ở ĐÂY: Kiểm tra nếu điểm đi CHƯA có thì mới điều hướng
     if (departureLocation == null) {
       navigation.navigate("DepartureScreen", {
         onSelect: onDepartureSelect,
@@ -20,7 +38,6 @@ export default function SearchButton({
       return;
     }
 
-    // SỬA Ở ĐÂY: Kiểm tra nếu điểm đến CHƯA có thì mới điều hướng
     if (destination == null) {
       navigation.navigate("DestinationScreen", {
         onSelect: onDestinationSelect,
@@ -28,7 +45,6 @@ export default function SearchButton({
       return;
     }
 
-    // Các kiểm tra bên dưới đã đúng logic
     if (departureDate == null || departureDate.trim() === "") {
       navigation.navigate("DateSelectionScreen", {
         departureLocation,
@@ -53,7 +69,6 @@ export default function SearchButton({
       return;
     }
 
-    // Khi tất cả thông tin hợp lệ, đi đến màn hình kết quả
     navigation.navigate("SearchResultsScreen", {
       departureLocation,
       destination,

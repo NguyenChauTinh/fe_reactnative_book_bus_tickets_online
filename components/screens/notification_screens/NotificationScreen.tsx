@@ -34,18 +34,14 @@ const NotificationScreen = () => {
     const fetchNotifications = async () => {
       setLoading(true);
       try {
-        // ⚠️ THAY THẾ: Gọi API thật của bạn
-        // Đây là API bạn đã tạo ở Bước 2.3
-        const userData = await AsyncStorage.getItem("userData"); // Giả sử bạn lưu userId trong AsyncStorage
+        const userData = await AsyncStorage.getItem("userData"); 
         const userId = userData ? JSON.parse(userData).taiKhoanId : null;
-        console.log("Fetching notifications for userId:", userId);
         const response: any =
           await api_booking_service.getNotificationsByUserId(userId);
 
         const allNotifs = response.data;
         setTrips(allNotifs.filter((n) => n.type === "trip"));
         setPromotions(allNotifs.filter((n) => n.type === "promotion"));
-        // }
       } catch (error) {
         console.error("Lỗi khi tải thông báo:", error);
       } finally {

@@ -15,7 +15,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
 
-// ====== ICONS (Giữ nguyên) ======
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path
@@ -66,7 +65,6 @@ const parsePrice = (priceStr) => {
   return Number(priceStr.replace(/[^\d]/g, ""));
 };
 
-// ... (Component TimeFilterModal giữ nguyên) ...
 const generateTimeSlots = () => {
   const slots = [{ label: "Tất cả (00:00+)", minutes: 0 }];
   for (let i = 1; i <= 23; i++) {
@@ -126,21 +124,30 @@ const TimeFilterModal = ({ isVisible, onClose, onSelectTime, currentTime }) => {
   );
 };
 
-// =============================================================
-// MÀN HÌNH CHÍNH
-// =============================================================
-export default function SearchResultsScreen({ navigation, route }) {
+interface Trip {
+  id: string;
+  ngayKhoiHanh: string;
+  gioKhoiHanh: number;
+  departureTime: string;
+  duration: string;
+  arrivalTime: string;
+  busType: string;
+  price: string;
+  seatsLeft: string;
+  [key: string]: any;
+}
+
+export default function SearchResultsScreen({ navigation, route }: { navigation: any; route: any }) {
   const { departureLocation, destination, departureDate, returnDate } =
     route.params;
 
   const [loading, setLoading] = useState(true);
-  const [allTrips, setAllTrips] = useState([]);
-  const [displayedTrips, setDisplayedTrips] = useState([]);
+  const [allTrips, setAllTrips] = useState<Trip[]>([]);
+  const [displayedTrips, setDisplayedTrips] = useState<Trip[]>([]);
   const [sortCriteria, setSortCriteria] = useState("time_asc");
   const [isTimeModalVisible, setIsTimeModalVisible] = useState(false);
   const [timeFilter, setTimeFilter] = useState(0);
 
-  // Lấy ngày giờ hiện tại VÀ ngày tìm kiếm
   const [todayInfo] = useState(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -164,16 +171,22 @@ export default function SearchResultsScreen({ navigation, route }) {
     };
   });
 
-  // --- HÀM FETCH DỮ LIỆU (Giữ nguyên) ---
   useEffect(() => {
     const fetchBusTrips = async () => {
+      const diemDiId = departureLocation?._id;
+      const diemDenId = destination?._id;
       setLoading(true);
+      if (!diemDiId || !diemDenId || !todayInfo.formattedSearchDate) {
+        console.warn("Dữ liệu tìm kiếm không đủ. Dừng fetch.", departureLocation, destination, todayInfo.formattedSearchDate);
+        setLoading(false);
+        return;
+      }
       try {
         const response =
           await api_trip_schedule_service.getChuyenXeTheoNgayVaDiaDiem(
             todayInfo.formattedSearchDate,
-            departureLocation._id,
-            destination._id
+            diemDiId,
+            diemDenId
           );
 
         setAllTrips(response.data || []);
@@ -185,9 +198,7 @@ export default function SearchResultsScreen({ navigation, route }) {
       }
     };
 
-    if (departureDate && departureLocation?._id && destination?._id) {
       fetchBusTrips();
-    }
   }, [
     departureDate,
     departureLocation,
@@ -195,40 +206,32 @@ export default function SearchResultsScreen({ navigation, route }) {
     todayInfo.formattedSearchDate,
   ]);
 
-  // --- LOGIC LỌC VÀ SẮP XẾP ---
   useEffect(() => {
     let processedTrips = [...allTrips];
 
-    // 1. Lọc các chuyến sắp chạy (nếu là hôm nay)
     if (todayInfo.isSearchingForToday) {
       const filterTime = todayInfo.currentMinutes + 60;
 
       processedTrips = processedTrips.filter((trip) => {
         const tripDate = trip.ngayKhoiHanh.split("T")[0];
         if (tripDate !== todayInfo.todayString) {
-          return true; // Giữ lại (vì là ngày tương lai)
+          return true; 
         }
-        return trip.gioKhoiHanh > filterTime; // Lọc chuyến của hôm nay
+        return trip.gioKhoiHanh > filterTime;
       });
     }
 
-    // 2. Lọc theo mốc giờ (do người dùng chọn trong modal)
     processedTrips = processedTrips.filter(
       (trip) => trip.gioKhoiHanh >= timeFilter
     );
 
-    // ✅ --- BẮT ĐẦU SỬA LỖI SẮP XẾP --- ✅
-    // 3. Sắp xếp
     processedTrips.sort((a, b) => {
-      // BƯỚC A: Sắp xếp theo NGÀY KHỞI HÀNH trước (Tăng dần)
-      // Chuyển "2025-11-03T00:00:00.000Z" thành đối tượng Date để so sánh
       const dateA = new Date(a.ngayKhoiHanh);
       const dateB = new Date(b.ngayKhoiHanh);
 
       if (dateA < dateB) return -1;
       if (dateA > dateB) return 1;
 
-      // BƯỚC B: Nếu cùng ngày, mới sắp xếp theo tiêu chí phụ (sortCriteria)
       switch (sortCriteria) {
         case "price_asc":
           return parsePrice(a.price) - parsePrice(b.price);
@@ -236,17 +239,15 @@ export default function SearchResultsScreen({ navigation, route }) {
           return parsePrice(b.price) - parsePrice(a.price);
         case "time_asc":
         default:
-          // Giờ khởi hành (sớm nhất)
           return a.gioKhoiHanh - b.gioKhoiHanh;
       }
     });
-    // ✅ --- KẾT THÚC SỬA LỖI SẮP XẾP --- ✅
 
     setDisplayedTrips(processedTrips);
   }, [allTrips, sortCriteria, timeFilter, todayInfo]);
 
   // --- CÁC HÀM XỬ LÝ (handlers) (Giữ nguyên) ---
-  const handleSeatSelection = (trip) => {
+  const handleSeatSelection = (trip: Trip) => {
     navigation.navigate("SeatSelectionScreen", {
       trip,
       departureLocation,
