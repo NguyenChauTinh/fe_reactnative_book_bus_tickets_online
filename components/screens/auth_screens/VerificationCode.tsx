@@ -46,7 +46,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
   navigation,
   route,
 }) => {
-  const { phoneNumber, fromScreen, fullName, email, dob, gender } =
+  const { phoneNumber, fromScreen, method } =
     route.params || {};
 
   const [code, setCode] = useState<string[]>(Array(6).fill(""));
@@ -114,10 +114,10 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
     try {
       if (fromScreen === "register") {
         await Api_Auth_Customer.requestRegisterOtp({
-          soDienThoai: phoneNumber,
+          soDienThoai: phoneNumber, method: method
         });
       } else {
-        await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phoneNumber });
+        await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phoneNumber, method: method });
       }
 
       Alert.alert("Thành công", "Mã xác thực mới đã được gửi.");
@@ -151,6 +151,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           ngaySinh: dob,
           gioiTinh: gender,
           otp: otpCode,
+          method: method
         };
 
         await Api_Auth_Customer.completeRegistration(payload);
@@ -161,6 +162,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         const payload = {
           soDienThoai: phoneNumber,
           otp: otpCode,
+          method: method
         };
 
         const response = await Api_Auth_Customer.verifyLoginOtp(payload);

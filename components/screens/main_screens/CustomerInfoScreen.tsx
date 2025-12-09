@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -152,73 +154,82 @@ export default function CustomerInfoScreen({ navigation, route }) {
           </View>
 
           <BookingTimeline currentStep={4} />
+          <KeyboardAvoidingView
+            style={{ flex: 1 }} // Quan trọng: Đảm bảo nó chiếm đủ không gian
+            behavior={Platform.OS === "ios" ? "padding" : "height"} // Dùng 'padding' cho iOS, 'height' cho Android (hoặc 'height' cho cả hai)
+            keyboardVerticalOffset={0} // Điều chỉnh nếu cần
+          >
+            <ScrollView style={styles.content}>
+              <View style={styles.formSection}>
+                <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
 
-          <ScrollView style={styles.content}>
-            <View style={styles.formSection}>
-              <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
+                {/* 6. THÊM CHECKBOX UI TẠI ĐÂY */}
+                {user && ( // Chỉ hiển thị nếu đã đăng nhập
+                  <TouchableOpacity
+                    style={styles.checkboxContainer}
+                    onPress={handleCheckboxToggle}
+                  >
+                    <Ionicons
+                      name={
+                        isBookingForSelf ? "checkbox-outline" : "square-outline"
+                      }
+                      size={24}
+                      color="#007AFF"
+                      style={styles.checkboxIcon}
+                    />
+                    <Text style={styles.checkboxLabel}>
+                      Đặt vé cho bản thân
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
-              {/* 6. THÊM CHECKBOX UI TẠI ĐÂY */}
-              {user && ( // Chỉ hiển thị nếu đã đăng nhập
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={handleCheckboxToggle}
-                >
-                  <Ionicons
-                    name={
-                      isBookingForSelf ? "checkbox-outline" : "square-outline"
-                    }
-                    size={24}
-                    color="#007AFF"
-                    style={styles.checkboxIcon}
-                  />
-                  <Text style={styles.checkboxLabel}>Đặt vé cho bản thân</Text>
-                </TouchableOpacity>
-              )}
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Tên người đi *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={customerInfo.name}
-                  onChangeText={(value) => handleInputChange("name", value)}
-                  placeholder="Nhập tên người đi"
-                />
-              </View>
-
-              <View style={styles.phoneInputGroup}>
-                <View style={styles.phoneInputContainer}>
-                  <Text style={styles.inputLabel}>Số điện thoại *</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Tên người đi *</Text>
                   <TextInput
-                    style={styles.phoneInput}
-                    value={customerInfo.phone}
-                    onChangeText={(value) => handleInputChange("phone", value)}
-                    placeholder="Nhập số điện thoại"
-                    keyboardType="phone-pad"
+                    style={styles.textInput}
+                    value={customerInfo.name}
+                    onChangeText={(value) => handleInputChange("name", value)}
+                    placeholder="Nhập tên người đi"
                   />
                 </View>
-              </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
-                  Email để nhận thông tin vé *
-                </Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={customerInfo.email}
-                  onChangeText={(value) => handleInputChange("email", value)}
-                  placeholder="Nhập email"
-                  keyboardType="email-address"
-                />
-              </View>
+                <View style={styles.phoneInputGroup}>
+                  <View style={styles.phoneInputContainer}>
+                    <Text style={styles.inputLabel}>Số điện thoại *</Text>
+                    <TextInput
+                      style={styles.phoneInput}
+                      value={customerInfo.phone}
+                      onChangeText={(value) =>
+                        handleInputChange("phone", value)
+                      }
+                      placeholder="Nhập số điện thoại"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                </View>
 
-              <View style={styles.noticeContainer}>
-                <Text style={styles.noticeText}>
-                  ✅ Thông tin đơn hàng sẽ được gửi đến số điện thoại và email
-                  bạn cung cấp.
-                </Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    Email để nhận thông tin vé *
+                  </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={customerInfo.email}
+                    onChangeText={(value) => handleInputChange("email", value)}
+                    placeholder="Nhập email"
+                    keyboardType="email-address"
+                  />
+                </View>
+
+                <View style={styles.noticeContainer}>
+                  <Text style={styles.noticeText}>
+                    ✅ Thông tin đơn hàng sẽ được gửi đến số điện thoại và email
+                    bạn cung cấp.
+                  </Text>
+                </View>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
 
           <View style={styles.bottomBar}>
             <View style={styles.priceContainer}>

@@ -20,8 +20,8 @@ import {
 import { Api_Auth_Customer } from "../../../apis/api_auth.js";
 
 const COLORS = {
-  headerBlue: "#2A8CFF", 
-  buttonBlue: "#0D47A1", 
+  headerBlue: "#2A8CFF",
+  buttonBlue: "#0D47A1",
   white: "#FFFFFF",
   black: "#000000",
   lightGray: "#F5F5F5",
@@ -38,25 +38,25 @@ const LoginScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const phoneInputRef = useRef<RNTextInput>(null);
 
-  const handleRequestOtp = async () => {
+  const handleRequestOtp = async (method: "phone" | "email") => {
     if (isLoading) return;
     setIsLoading(true);
 
     try {
-      await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phone });
+      await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phone, method: method });
 
       setIsModalVisible(false);
       navigation.navigate("VerificationCode", {
         phoneNumber: phone,
         fromScreen: "login",
+        method: method,
       });
     } catch (error: any) {
-
       setIsModalVisible(false);
 
       setTimeout(() => {
         phoneInputRef.current?.focus();
-      }, 100); 
+      }, 100);
 
       Alert.alert(
         "Lỗi",
@@ -68,7 +68,7 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  return (
+ return (
     <View style={styles.safeArea}>
       <Modal
         visible={isModalVisible}
@@ -79,23 +79,21 @@ const LoginScreen: React.FC = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>
-              Mã xác thực sẽ được gửi đến số
+              Chọn phương thức nhận mã xác thực (OTP) cho số
               <Text style={{ fontWeight: "bold" }}>
                 {" "}
-                {/* Định dạng lại số điện thoại */}
                 +84{phone.startsWith("0") ? phone.substring(1) : phone}
-              </Text>{" "}
-              qua tin nhắn Zalo
+              </Text>
             </Text>
 
-            {/* Nút Tiếp tục (Zalo) */}
+            {/* Nút 1: Gửi qua Zalo/SMS (Phương thức: phone) */}
             <TouchableOpacity
               style={styles.modalButtonPrimary}
-              onPress={handleRequestOtp}
+              onPress={() => handleRequestOtp('phone')} // THAY ĐỔI: Gửi method 'phone'
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={COLORS.white} /> // <-- THÊM MỚI
+                <ActivityIndicator color={COLORS.white} />
               ) : (
                 <>
                   <Ionicons
@@ -104,15 +102,17 @@ const LoginScreen: React.FC = () => {
                     color={COLORS.white}
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={styles.modalButtonTextPrimary}>Tiếp tục</Text>
+                  <Text style={styles.modalButtonTextPrimary}>
+                    Gửi mã qua Zalo/SMS
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
 
-            {/* Nút Gửi qua SMS */}
+            {/* Nút 2: Gửi qua Email (Phương thức: email) */}
             <TouchableOpacity
               style={styles.modalButtonSecondary}
-              onPress={handleRequestOtp}
+              onPress={() => handleRequestOtp('email')} // THAY ĐỔI: Gửi method 'email'
               disabled={isLoading}
             >
               {isLoading ? (
@@ -120,13 +120,13 @@ const LoginScreen: React.FC = () => {
               ) : (
                 <>
                   <Ionicons
-                    name="chatbubbles-outline"
+                    name="mail-outline" // THAY ĐỔI: Icon mail
                     size={18}
                     color={COLORS.textPrimary}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={styles.modalButtonTextSecondary}>
-                    Gửi qua SMS
+                    Gửi mã qua Email
                   </Text>
                 </>
               )}
@@ -231,7 +231,17 @@ const LoginScreen: React.FC = () => {
             {/* Nút Tiếp tục / Đăng nhập */}
             <TouchableOpacity
               style={styles.continueButton}
-              onPress={() => setIsModalVisible(true)}
+              onPress={() => {
+                if (phone.length !== 10) {
+                  Alert.alert(
+                    "Lỗi",
+                    "Số điện thoại phải có đúng 10 chữ số để tiếp tục."
+                  );
+                  phoneInputRef.current?.focus();
+                } else {
+                  setIsModalVisible(true);
+                }
+              }}
             >
               <Text style={styles.continueButtonText}>
                 {isFocused ? "Tiếp tục" : "Đăng nhập"}

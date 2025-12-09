@@ -149,7 +149,7 @@ const OtpInput = forwardRef<OtpInputHandle, OtpInputProps>(
   }
 );
 
-const PaymentScreen = ({ navigation, route }) => {
+const PaymentScreen = ({ navigation, route }: any) => {
   const {
     trip,
     selectedSeats,
@@ -323,6 +323,8 @@ const PaymentScreen = ({ navigation, route }) => {
       userId: user.taiKhoanId,
       email: customerInfo.email,
       route: trip?.tuyenDuong?.tenTuyen,
+      routeId: trip?.tuyenDuong?._id,
+      ngayKhoiHanh: trip?.ngayKhoiHanh,
       departureDate: departureDate,
       selectedPickup: selectedPickup,
     };
