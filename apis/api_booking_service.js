@@ -1,6 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-const API_BASE_URL = "http://192.168.1.12:3000/api/v1";
+const API_BASE_URL = "http://192.168.1.19:3000/api/v1";
 
 const apibooking = createApiManager(API_BASE_URL);
 
@@ -37,7 +37,7 @@ export const api_booking_service = {
   },
   checkBillStatus: async (maHoaDon) => {
     return apibooking.get(`/payment/check-status`, {
-        params: { maHoaDon: maHoaDon }
+      params: { maHoaDon: maHoaDon },
     });
   },
   createVnpayPayment: async (paymentData) => {
@@ -46,5 +46,4 @@ export const api_booking_service = {
   createBookingAndPaymentVNPAY: async (bookingData) => {
     return apibooking.post("/payment/create-booking-and-payment", bookingData);
   },
- 
 };

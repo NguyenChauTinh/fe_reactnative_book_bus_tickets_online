@@ -139,7 +139,8 @@ export const ChatModal = ({
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+          // Sửa dòng dưới đây: Đổi 90 thành 0 hoặc 10
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
           <View style={styles.inputContainer}>
             <TextInput

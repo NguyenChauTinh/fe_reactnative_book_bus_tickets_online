@@ -43,7 +43,10 @@ const LoginScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phone, method: method });
+      await Api_Auth_Customer.requestLoginOtp({
+        soDienThoai: phone,
+        method: method,
+      });
 
       setIsModalVisible(false);
       navigation.navigate("VerificationCode", {
@@ -68,7 +71,7 @@ const LoginScreen: React.FC = () => {
     }
   };
 
- return (
+  return (
     <View style={styles.safeArea}>
       <Modal
         visible={isModalVisible}
@@ -89,7 +92,7 @@ const LoginScreen: React.FC = () => {
             {/* Nút 1: Gửi qua Zalo/SMS (Phương thức: phone) */}
             <TouchableOpacity
               style={styles.modalButtonPrimary}
-              onPress={() => handleRequestOtp('phone')} // THAY ĐỔI: Gửi method 'phone'
+              onPress={() => handleRequestOtp("phone")} // THAY ĐỔI: Gửi method 'phone'
               disabled={isLoading}
             >
               {isLoading ? (
@@ -112,7 +115,7 @@ const LoginScreen: React.FC = () => {
             {/* Nút 2: Gửi qua Email (Phương thức: email) */}
             <TouchableOpacity
               style={styles.modalButtonSecondary}
-              onPress={() => handleRequestOtp('email')} // THAY ĐỔI: Gửi method 'email'
+              onPress={() => handleRequestOtp("email")} // THAY ĐỔI: Gửi method 'email'
               disabled={isLoading}
             >
               {isLoading ? (
@@ -249,14 +252,14 @@ const LoginScreen: React.FC = () => {
             </TouchableOpacity>
 
             {/* Dấu gạch "hoặc" */}
-            <View style={styles.separatorContainer}>
+            {/* <View style={styles.separatorContainer}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>hoặc</Text>
               <View style={styles.separatorLine} />
-            </View>
+            </View> */}
 
             {/* Đăng nhập mạng xã hội */}
-            <TouchableOpacity style={styles.socialButton}>
+            {/* <TouchableOpacity style={styles.socialButton}>
               <Ionicons name="logo-google" size={22} color="#DB4437" />
               <Text style={styles.socialButtonText}>Tiếp tục với Google</Text>
             </TouchableOpacity>
@@ -264,7 +267,7 @@ const LoginScreen: React.FC = () => {
             <TouchableOpacity style={styles.socialButton}>
               <Ionicons name="logo-apple" size={24} color={COLORS.black} />
               <Text style={styles.socialButtonText}>Tiếp tục với Apple</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* --- Footer (Đăng ký) --- */}

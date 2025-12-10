@@ -1,6 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-const API_BASE_URL = "http://192.168.1.12:3000/api/v1";
+const API_BASE_URL = "http://192.168.1.19:3000/api/v1";
 
 const apiClient = createApiManager(API_BASE_URL);
 
@@ -34,7 +34,7 @@ export const Api_Auth_Customer = {
   },
   getRecentSearches: async () => {
     return apiClient.get("/tai-khoan-khach-hang/recent-searches");
-  }
+  },
 };
 
 export const Api_KhachHang = {
