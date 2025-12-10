@@ -226,7 +226,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           {/* --- Phần thân (Form) --- */}
           <View style={styles.body}>
             <Text style={styles.infoText}>
-              Nhập mã xác thực được gửi đến số
+              Nhập mã xác thực được gửi để xác minh tài khoản số điện thoại
               <Text style={{ fontWeight: "bold" }}>
                 {" "}
                 +84
@@ -234,7 +234,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
                   ? phoneNumber.substring(1)
                   : phoneNumber}{" "}
               </Text>
-              qua tin nhắn Zalo
+              qua { fromScreen === "email" ? "ở email đăng ký" : "tin nhắn SMS/Zalo"}
             </Text>
 
             {/* --- Ô nhập mã OTP --- */}
