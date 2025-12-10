@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -13,7 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Api_Auth_Customer } from "../../../apis/api_auth.js";
 
@@ -77,18 +78,19 @@ const Register: React.FC = () => {
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleRegister = async () => {
-    if (!fullName || !phone) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ Họ tên và Số điện thoại.");
-      return;
-    }
-
+const [isModalVisible, setIsModalVisible] = useState(false);
+  const handleRequestOtp = async (method: "phone" | "email") => {
     if (isLoading) return;
     setIsLoading(true);
 
     try {
-      await Api_Auth_Customer.requestRegisterOtp({ soDienThoai: phone });
+      await Api_Auth_Customer.requestRegisterOtp({ 
+        soDienThoai: phone, 
+        email: email, 
+        method: method
+      });
+
+      setIsModalVisible(false);
 
       navigation.navigate("VerificationCode", {
         phoneNumber: phone,
@@ -97,8 +99,11 @@ const Register: React.FC = () => {
         email: email,
         dob: dob,
         gender: gender,
+        method: method,
       });
     } catch (error: any) {
+
+      setIsModalVisible(false);
       Alert.alert(
         "Lỗi",
         error.response?.data?.message ||
@@ -107,6 +112,19 @@ const Register: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  const handleRegister = () => {
+    if (!fullName || !phone || !email) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ họ tên, số điện thoại và email.");
+      return;
+    }
+    
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+       Alert.alert("Lỗi", "Số điện thoại không hợp lệ (Phải có 10 chữ số).");
+      return;
+    }
+
+    setIsModalVisible(true);
   };
 
   /**
@@ -138,6 +156,82 @@ const Register: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>
+              Chọn phương thức nhận mã xác thực (OTP) cho số
+              <Text style={{ fontWeight: "bold" }}>
+                {" "}
+                +84{phone.startsWith("0") ? phone.substring(1) : phone}
+              </Text>
+              . Mã xác thực sẽ được dùng để hoàn tất đăng ký.
+            </Text>
+
+            {/* Nút 1: Gửi qua Zalo/SMS (Phương thức: phone) */}
+            <TouchableOpacity
+              style={styles.modalButtonPrimary}
+              onPress={() => handleRequestOtp('phone')}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="chatbubble-ellipses"
+                    size={18}
+                    color={COLORS.white}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.modalButtonTextPrimary}>
+                    Gửi mã qua Zalo/SMS
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Nút 2: Gửi qua Email (Phương thức: email) */}
+            <TouchableOpacity
+              style={styles.modalButtonSecondary}
+              onPress={() => handleRequestOtp('email')} // Dùng hàm mới
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.textPrimary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="mail-outline"
+                    size={18}
+                    color={COLORS.textPrimary}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.modalButtonTextSecondary}>
+                    Gửi mã qua Email
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Nút Hủy */}
+            <TouchableOpacity
+              style={styles.modalButtonTertiary}
+              onPress={() => setIsModalVisible(false)}
+              disabled={isLoading}
+            >
+              <Text style={styles.modalButtonTextTertiary}>
+                Hủy
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.primaryBlue}
@@ -288,13 +382,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
-  textInput: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 12, 
-    fontSize: 16,
-    color: COLORS.textPrimary,
-  },
   header: {
     backgroundColor: COLORS.primaryBlue,
     paddingHorizontal: 20,
@@ -338,7 +425,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: COLORS.white,
   },
-  textInput: {
+textInput: {
     flex: 1,
     paddingHorizontal: 15,
     paddingVertical: 12,
@@ -461,6 +548,74 @@ const styles = StyleSheet.create({
     color: COLORS.buttonBlue,
     fontWeight: "bold",
   },
+  modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 20,
+    },
+    modalContainer: {
+      width: "100%",
+      backgroundColor: COLORS.white,
+      borderRadius: 16,
+      padding: 24,
+      alignItems: "stretch",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: -2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    modalTitle: {
+      fontSize: 18,
+      color: COLORS.textPrimary,
+      textAlign: "center",
+      marginBottom: 24,
+      lineHeight: 26,
+    },
+    modalButtonPrimary: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: COLORS.primaryBlue, // Dùng primaryBlue cho Register
+      padding: 15,
+      borderRadius: 10,
+      marginBottom: 12,
+    },
+    modalButtonTextPrimary: {
+      color: COLORS.white,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    modalButtonSecondary: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: COLORS.white,
+      borderWidth: 1,
+      borderColor: COLORS.mediumGray,
+      padding: 15,
+      borderRadius: 10,
+      marginBottom: 12,
+    },
+    modalButtonTextSecondary: {
+      color: COLORS.textPrimary,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    modalButtonTertiary: {
+      alignItems: "center",
+      padding: 10,
+    },
+    modalButtonTextTertiary: {
+      color: COLORS.primaryBlue,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
 });
 
 export default Register;

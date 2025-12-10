@@ -46,7 +46,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
   navigation,
   route,
 }) => {
-  const { phoneNumber, fromScreen, method } =
+  const { phoneNumber, fromScreen, method, fullName, email, dob, gender } =
     route.params || {};
 
   const [code, setCode] = useState<string[]>(Array(6).fill(""));
@@ -114,10 +114,14 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
     try {
       if (fromScreen === "register") {
         await Api_Auth_Customer.requestRegisterOtp({
-          soDienThoai: phoneNumber, method: method
+          soDienThoai: phoneNumber,
+          method: method,
         });
       } else {
-        await Api_Auth_Customer.requestLoginOtp({ soDienThoai: phoneNumber, method: method });
+        await Api_Auth_Customer.requestLoginOtp({
+          soDienThoai: phoneNumber,
+          method: method,
+        });
       }
 
       Alert.alert("Thành công", "Mã xác thực mới đã được gửi.");
@@ -147,13 +151,12 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         const payload = {
           hoVaTen: fullName,
           soDienThoai: phoneNumber,
-          email: email,
-          ngaySinh: dob,
+          email: email, 
+          ngaySinh: dob, 
           gioiTinh: gender,
           otp: otpCode,
-          method: method
+          method: method,
         };
-
         await Api_Auth_Customer.completeRegistration(payload);
 
         Alert.alert("Thành công", "Đăng ký tài khoản thành công!");
@@ -162,7 +165,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         const payload = {
           soDienThoai: phoneNumber,
           otp: otpCode,
-          method: method
+          method: method,
         };
 
         const response = await Api_Auth_Customer.verifyLoginOtp(payload);
@@ -176,12 +179,12 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           setIsLoading(false);
           return;
         }
-       const user = {
+        const user = {
           khachHangId: response.khachHangId,
-          hoVaTen: response.hoVaTen, 
+          hoVaTen: response.hoVaTen,
           soDienThoai: phoneNumber,
-          email: response.email, 
-          taiKhoanId: userId
+          email: response.email,
+          taiKhoanId: userId,
         };
 
         await login(token, user, refreshToken);
