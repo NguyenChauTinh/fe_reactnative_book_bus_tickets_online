@@ -58,6 +58,21 @@ export default function RecentSearches({ refreshKey, onSelectRecentSearch }: Rec
             setIsLoading(false);
         }
     };
+     const clearAllHistory = async () => {
+        setIsLoading(true);
+        try {
+            const response = await Api_Auth_Customer.clearSearchHistory();
+            if (response.success) {
+                 setSearches([]);
+            } 
+        } catch (error) {
+            console.error("Lỗi khi xóa lịch sử tìm kiếm:", error);
+            setSearches([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (refreshKey > 0) { 
             fetchRecentSearches();
@@ -79,8 +94,8 @@ export default function RecentSearches({ refreshKey, onSelectRecentSearch }: Rec
   return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Tìm kiếm gần đây</Text>
-                <TouchableOpacity onPress={() => console.log('Xóa tất cả')}>
+                <Text style={styles.title}>Top tìm kiếm nhiều nhất</Text>
+                <TouchableOpacity onPress={() => clearAllHistory()}>
                     <Text style={styles.clearAll}>Xóa tất cả</Text>
                 </TouchableOpacity>
             </View>

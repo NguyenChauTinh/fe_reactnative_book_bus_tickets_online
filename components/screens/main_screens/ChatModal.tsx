@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -28,6 +29,7 @@ export const ChatModal = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  const { user: contextUser } = useAuth();
   const [messages, setMessages] = useState([
     {
       id: "1",
@@ -57,6 +59,7 @@ export const ChatModal = ({
     try {
       const response = await api_ai_service.sendMessageToAI(
         userMessage.text,
+        contextUser?.taiKhoanId,
         sessionId
       );
 
@@ -139,7 +142,7 @@ export const ChatModal = ({
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
           <View style={styles.inputContainer}>
             <TextInput

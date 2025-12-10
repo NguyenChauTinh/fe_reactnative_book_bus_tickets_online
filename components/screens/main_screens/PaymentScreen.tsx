@@ -1,24 +1,24 @@
 import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  NativeSyntheticEvent,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    NativeSyntheticEvent,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TextInputKeyPressEventData,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
@@ -500,7 +500,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.12:3000/payment-return")) {
+    if (url.includes("http://192.168.1.27:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 

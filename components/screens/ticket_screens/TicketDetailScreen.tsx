@@ -585,7 +585,7 @@ const TicketDetailScreen: React.FC = () => {
             <QRCode
               value={veXe?.maVe || "NO_TICKET_ID"}
               size={220}
-              logo={require("../../../assets/images/icon.png")} // ⚠️ THAY ĐƯỜNG DẪN NÀY
+              logo={require("../../../assets/images/icon.png")}
               logoSize={40}
               logoBackgroundColor="#FFFFFF"
             />
