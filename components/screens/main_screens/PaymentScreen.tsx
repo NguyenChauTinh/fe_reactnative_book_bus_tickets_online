@@ -500,7 +500,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.27:3000/payment-return")) {
+    if (url.includes("http://192.168.1.12:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 

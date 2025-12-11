@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     borderRadius: 8,
     alignItems: "center",
   },
@@ -509,6 +509,7 @@ const styles = StyleSheet.create({
   modalButtonFull: {
     width: "100%",
     backgroundColor: "#1E3A8A", // Xanh đậm
+    flex: 0
   },
 });
 
