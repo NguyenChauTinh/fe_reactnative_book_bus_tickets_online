@@ -151,8 +151,8 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
         const payload = {
           hoVaTen: fullName,
           soDienThoai: phoneNumber,
-          email: email, 
-          ngaySinh: dob, 
+          email: email,
+          ngaySinh: dob,
           gioiTinh: gender,
           otp: otpCode,
           method: method,
@@ -185,6 +185,7 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
           soDienThoai: phoneNumber,
           email: response.email,
           taiKhoanId: userId,
+          soLuongVeDaDat: response.soLuongVeDaDat || 0,
         };
 
         await login(token, user, refreshToken);
@@ -234,7 +235,8 @@ const VerificationCode: React.FC<{ navigation: any; route: any }> = ({
                   ? phoneNumber.substring(1)
                   : phoneNumber}{" "}
               </Text>
-              qua { fromScreen === "email" ? "ở email đăng ký" : "tin nhắn SMS/Zalo"}
+              qua{" "}
+              {fromScreen === "email" ? "ở email đăng ký" : "tin nhắn SMS/Zalo"}
             </Text>
 
             {/* --- Ô nhập mã OTP --- */}

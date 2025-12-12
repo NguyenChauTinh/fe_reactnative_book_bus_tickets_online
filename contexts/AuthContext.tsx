@@ -9,20 +9,21 @@ import React, {
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export interface User {
-  _id: string; 
+  _id: string;
   hoVaTen: string;
   email?: string;
   ngaySinh?: string;
   gioiTinh?: "Nam" | "Nữ" | "Khác";
-  soDienThoai: string; 
-  taiKhoanId: string; 
+  soDienThoai: string;
+  taiKhoanId: string;
+  soLuongVeDaDat?: number;
   refreshToken?: string;
 }
 
 interface AuthContextType {
   token: string | null;
   user: User | null;
-  isLoading: boolean; 
+  isLoading: boolean;
   login: (token: string, user: User, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -67,7 +68,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     bootstrapAsync();
   }, []);
 
-  const login = async (newToken: string, newUser: User, refreshToken: string) => {
+  const login = async (
+    newToken: string,
+    newUser: User,
+    refreshToken: string
+  ) => {
     setIsLoading(true);
     try {
       await AsyncStorage.setItem("userToken", newToken);

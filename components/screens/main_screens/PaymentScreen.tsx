@@ -1,24 +1,25 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
-    forwardRef,
-    useEffect,
-    useImperativeHandle,
-    useMemo,
-    useRef,
-    useState,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    NativeSyntheticEvent,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  NativeSyntheticEvent,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
@@ -183,10 +184,17 @@ const PaymentScreen = ({ navigation, route }: any) => {
     const fetchPromotions = async () => {
       setLoading(true);
       try {
+        const userString = JSON.parse(await AsyncStorage.getItem("userData"));
+
+        console.log("User Data from AsyncStorage:", userString);
+
         const response = await api_promotion_service.timKhuyenMaiApDung(
           trip.ngayKhoiHanh,
           trip.gioKhoiHanh,
-          selectedSeats.length
+          selectedSeats.length,
+          finalPrice,
+          // userString ? userString.soLuongVeDaDat : null
+          0
         );
         if (response.success) setPromotions(response.data || []);
       } catch (error) {
@@ -266,6 +274,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
     setSelectedPromoLine(line);
     setPromoInputValue(line ? line.ghiChu || line.campaignName : "");
     setIsDropdownOpen(false);
+
+    console.log("Selected Promotion Line:", line);
   };
 
   const createTicketInDatabase = async (
@@ -290,8 +300,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
       let ticketDiscount = 0;
 
       if (index < numTickets - 1) {
-        ticketDiscount = discountPerTicket; 
-        discountDistributed += ticketDiscount; 
+        ticketDiscount = discountPerTicket;
+        discountDistributed += ticketDiscount;
       } else {
         ticketDiscount = discountAmount - discountDistributed;
         ticketDiscount = Math.round(ticketDiscount * 1000) / 1000;
@@ -307,7 +317,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
         diemTra: selectedDropoff.name,
         giaVeCoBan: seat.price,
         phuThu: 0,
-        giamGia: ticketDiscount, 
+        giamGia: ticketDiscount,
         hinhThucThanhToan: null,
         trangThaiChiTiet:
           paymentMethod === "TAI_XE" ? "DAT_CHO" : "DA_THANH_TOAN",
@@ -317,7 +327,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
     const ticketPayload = {
       chiTiet: chiTietVe,
-      maGiamGia: selectedPromoLine ? selectedPromoLine.campaignId : null,
+      maGiamGia: selectedPromoLine ? selectedPromoLine.chiTiet._id : null,
+      tenGiamGia: selectedPromoLine ? selectedPromoLine.maLine : null,
       hinhThucThanhToan: null,
       nhanVienTao: "690471e2292bcd0f56f104e8",
       userId: user.taiKhoanId,
@@ -333,7 +344,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
       setLoading(true);
 
       const response = await api_booking_service.createTicket(ticketPayload);
-     
+
       if (response.success) {
         navigation.navigate("BookingSuccessScreen", {
           ticketInfo: response.data,
@@ -371,7 +382,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
       try {
         const numTickets = selectedSeats.length;
         let discountDistributed = 0;
-        const discountPerTicket = Math.round((discountAmount / numTickets) * 1000) / 1000;
+        const discountPerTicket =
+          Math.round((discountAmount / numTickets) * 1000) / 1000;
 
         const chiTietVe = selectedSeats.map((seat, index) => {
           let ticketDiscount = 0;
@@ -391,8 +403,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
             maChoNgoi: seat.number,
             diemDon: selectedPickup.name,
             diemTra: selectedDropoff.name,
-            diemDonTC: "", 
-            diemTraTC: "", 
+            diemDonTC: "",
+            diemTraTC: "",
             giaVeCoBan: seat.price,
             phuThu: 0,
             giamGia: ticketDiscount,
@@ -401,15 +413,17 @@ const PaymentScreen = ({ navigation, route }: any) => {
         });
 
         const bookingData = {
-            chiTiet: chiTietVe,
-            nhanVienTao: "690471e2292bcd0f56f104e8",
-            nhanVienId: "690471e2292bcd0f56f104e8",
-            userId: user?.taiKhoanId,
-            amount: finalPrice,
-            maGiamGia: selectedPromoLine ? selectedPromoLine?.campaignId : null,
+          chiTiet: chiTietVe,
+          nhanVienTao: "690471e2292bcd0f56f104e8",
+          nhanVienId: "690471e2292bcd0f56f104e8",
+          userId: user?.taiKhoanId,
+          amount: finalPrice,
+          maGiamGia: selectedPromoLine ? selectedPromoLine?.campaignId : null,
         };
 
-        const response = await api_booking_service.createBookingAndPaymentVNPAY(bookingData);
+        const response = await api_booking_service.createBookingAndPaymentVNPAY(
+          bookingData
+        );
 
         const paymentUrl = response.paymentUrl || response.data?.paymentUrl;
         const maHoaDon = response.maHoaDon || response.data?.maHoaDon;
@@ -419,7 +433,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
             paymentUrl: paymentUrl,
             maHoaDon: maHoaDon,
             finalPrice: finalPrice,
-            ticketInfo: null, 
+            ticketInfo: null,
             trip,
             departureLocation,
             destination,
@@ -429,13 +443,17 @@ const PaymentScreen = ({ navigation, route }: any) => {
             selectedSeats,
           });
         } else {
-            const msg = response.message || response.data?.message || "Không thể tạo liên kết thanh toán.";
-            Alert.alert("Lỗi", msg);
+          const msg =
+            response.message ||
+            response.data?.message ||
+            "Không thể tạo liên kết thanh toán.";
+          Alert.alert("Lỗi", msg);
         }
-
       } catch (error) {
         console.error("Lỗi VNPAY:", error);
-        const errorMsg = error.response?.data?.message || "Không thể kết nối đến máy chủ thanh toán.";
+        const errorMsg =
+          error.response?.data?.message ||
+          "Không thể kết nối đến máy chủ thanh toán.";
         Alert.alert("Thất bại", errorMsg);
       } finally {
         setLoading(false);
@@ -500,7 +518,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.12:3000/payment-return")) {
+    if (url.includes("http://192.168.1.4:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -518,7 +536,6 @@ const PaymentScreen = ({ navigation, route }: any) => {
         );
       }
     }
-
   };
 
   return (

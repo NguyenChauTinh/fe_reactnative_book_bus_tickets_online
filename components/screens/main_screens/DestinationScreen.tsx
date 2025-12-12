@@ -43,13 +43,14 @@ export default function DestinationScreen({ navigation, route }) {
       try {
         setLoading(true);
         const params = {
-          findType: "tra", 
-          relatedId: departureId, 
+          findType: "tra",
+          relatedId: departureId,
         };
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
-        const data = response?.data || (Array.isArray(response) ? response : []);
+        const data =
+          response?.data || (Array.isArray(response) ? response : []);
         setPopularLocations(data);
         setSearchResults([]);
       } catch (error) {
@@ -62,31 +63,59 @@ export default function DestinationScreen({ navigation, route }) {
     fetchPopularLocations();
   }, [departureId]);
 
+  // useEffect(() => {
+  //   const fetchSearchResults = async () => {
+  //     if (debouncedSearchQuery.trim() === "") {
+  //       setSearchResults([]);
+  //       setIsSearching(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       setIsSearching(true);
+  //       const response = await api_trip_schedule_service.timDiaDiemTheoTen(
+  //         debouncedSearchQuery
+  //       );
+  //       const data = response?.data || (Array.isArray(response) ? response : []);
+  //       setSearchResults(data);
+  //     } catch (error) {
+  //       console.error("Lỗi khi tìm địa điểm:", error.message);
+  //       setSearchResults([]);
+  //     } finally {
+  //       setIsSearching(false);
+  //     }
+  //   };
+
+  //   fetchSearchResults();
+  // }, [debouncedSearchQuery]);
+
   useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (debouncedSearchQuery.trim() === "") {
+    const filterSearchResults = () => {
+      const query = debouncedSearchQuery.trim().toLowerCase();
+
+      if (query === "") {
         setSearchResults([]);
         setIsSearching(false);
         return;
       }
 
-      try {
-        setIsSearching(true);
-        const response = await api_trip_schedule_service.timDiaDiemTheoTen(
-          debouncedSearchQuery
-        );
-        const data = response?.data || (Array.isArray(response) ? response : []);
-        setSearchResults(data);
-      } catch (error) {
-        console.error("Lỗi khi tìm địa điểm:", error.message);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
+      setIsSearching(true); // Thực hiện LỌC DỮ LIỆU CỤC BỘ trên popularLocations
+      const filteredResults = popularLocations.filter((location) => {
+        // Đảm bảo tenDiaDiem tồn tại và chuyển thành chữ thường để so sánh
+        const locationName = location.tenDiaDiem
+          ? location.tenDiaDiem.toLowerCase()
+          : "";
+        return locationName.includes(query);
+      });
 
-    fetchSearchResults();
-  }, [debouncedSearchQuery]);
+      setSearchResults(filteredResults);
+      setIsSearching(false); // Kết thúc tìm kiếm cục bộ
+    }; // Nếu có dữ liệu phổ biến, thì mới tiến hành lọc
+
+    if (!loading) {
+      filterSearchResults();
+    }
+  }, [debouncedSearchQuery, popularLocations, loading]);
 
   const handleLocationSelect = (location) => {
     onSelect(location);
@@ -158,7 +187,7 @@ export default function DestinationScreen({ navigation, route }) {
                   : "Không có địa điểm phổ biến."}
               </Text>
             }
-            keyboardShouldPersistTaps="handled" 
+            keyboardShouldPersistTaps="handled"
           />
         )}
       </View>

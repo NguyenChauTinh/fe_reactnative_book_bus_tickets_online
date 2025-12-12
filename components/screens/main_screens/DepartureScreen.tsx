@@ -39,7 +39,7 @@ export default function DepartureScreen({ navigation, route }) {
   useEffect(() => {
     const fetchPopularLocations = async () => {
       try {
-        setLoading(true); 
+        setLoading(true);
         const params = {
           findType: "don",
           relatedId: destinationId,
@@ -47,7 +47,8 @@ export default function DepartureScreen({ navigation, route }) {
         const response = await api_trip_schedule_service.getDiaDiemKetNoi(
           params
         );
-        const data = response?.data || (Array.isArray(response) ? response : []);
+        const data =
+          response?.data || (Array.isArray(response) ? response : []);
         setPopularLocations(data);
         setSearchResults([]);
       } catch (error) {
@@ -60,32 +61,57 @@ export default function DepartureScreen({ navigation, route }) {
     fetchPopularLocations();
   }, [destinationId]);
 
+  // useEffect(() => {
+  //   const fetchSearchResults = async () => {
+  //     console.log(searchQuery);
+  //     if (debouncedSearchQuery.trim() === "") {
+  //       setSearchResults([]);
+  //       setIsSearching(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       setIsSearching(true);
+  //       const response = await api_trip_schedule_service.timDiaDiemTheoTen(
+  //         debouncedSearchQuery
+  //       );
+  //       const data = response?.data || (Array.isArray(response) ? response : []);
+  //       setSearchResults(data);
+  //     } catch (error) {
+  //       console.error("Lỗi khi tìm địa điểm:", error.message);
+  //       setSearchResults([]);
+  //     } finally {
+  //       setIsSearching(false);
+  //     }
+  //   };
+
+  //   fetchSearchResults();
+  // }, [debouncedSearchQuery]);
+
+  // BỎ QUA HOÀN TOÀN HÀM fetchSearchResults (và cuộc gọi API bên trong nó)
+
   useEffect(() => {
-    const fetchSearchResults = async () => {
-      console.log(searchQuery);
-      if (debouncedSearchQuery.trim() === "") {
-        setSearchResults([]); 
-        setIsSearching(false);
-        return;
-      }
+    // 1. Kiểm tra debouncedSearchQuery
+    if (debouncedSearchQuery.trim() === "") {
+      setSearchResults([]); // Thiết lập kết quả tìm kiếm rỗng
+      return;
+    }
 
-      try {
-        setIsSearching(true); 
-        const response = await api_trip_schedule_service.timDiaDiemTheoTen(
-          debouncedSearchQuery
-        );
-        const data = response?.data || (Array.isArray(response) ? response : []);
-        setSearchResults(data);
-      } catch (error) {
-        console.error("Lỗi khi tìm địa điểm:", error.message);
-        setSearchResults([]); 
-      } finally {
-        setIsSearching(false); 
-      }
-    };
+    // 2. Thực hiện LỌC DỮ LIỆU CỤC BỘ
 
-    fetchSearchResults();
-  }, [debouncedSearchQuery]); 
+    // Giả định bạn chỉ muốn lọc trong danh sách phổ biến ban đầu
+    const filteredResults = popularLocations.filter((location) =>
+      // Lọc dựa trên tên địa điểm (Không phân biệt chữ hoa, chữ thường và có thể không dấu)
+      location.tenDiaDiem
+        .toLowerCase()
+        .includes(debouncedSearchQuery.toLowerCase().trim())
+    );
+
+    setSearchResults(filteredResults);
+
+    // Đặt isSearching thành false ngay lập tức vì không phải chờ API
+    setIsSearching(false);
+  }, [debouncedSearchQuery, popularLocations]); // THÊM popularLocations vào dependency
 
   const handleLocationSelect = (location) => {
     onSelect(location);
@@ -103,8 +129,8 @@ export default function DepartureScreen({ navigation, route }) {
   );
 
   const displayedLocations = searchQuery.trim()
-    ? searchResults
-    : popularLocations;
+    ? searchResults // Sẽ là kết quả lọc cục bộ
+    : popularLocations; // Sẽ là danh sách phổ biến ban đầu
 
   if (loading) {
     return (
@@ -117,7 +143,6 @@ export default function DepartureScreen({ navigation, route }) {
 
   return (
     <View style={styles.container} edges={["top", "left", "right"]}>
-
       <View style={styles.header}>
         <BackButton onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>Nơi xuất phát</Text>
@@ -156,7 +181,7 @@ export default function DepartureScreen({ navigation, route }) {
                   : "Không có địa điểm phổ biến."}
               </Text>
             }
-            keyboardShouldPersistTaps="handled" 
+            keyboardShouldPersistTaps="handled"
           />
         )}
       </View>
