@@ -1,6 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-const API_BASE_URL = "http://192.168.1.29:3000/api/v1";
+const API_BASE_URL = "http://192.168.1.9:3000/api/v1";
 
 const apibooking = createApiManager(API_BASE_URL);
 
@@ -31,7 +31,6 @@ export const api_booking_service = {
   getNotificationsByUserId: async (userId) => {
     return apibooking.get(`/notifications/user/${userId}`);
   },
-
   markNotificationAsRead: async (notificationId) => {
     return apibooking.put(`/notifications/${notificationId}/read`);
   },

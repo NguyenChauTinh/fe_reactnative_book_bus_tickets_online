@@ -24,6 +24,8 @@ import TripInfoScreen from "@/components/screens/main_screens/TripInfoScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import CancelFlowScreen from "@/components/screens/ticket_screens/CancelFlowScreen";
+import RePaymentQRCodeScreen from "@/components/screens/ticket_screens/RePaymentQRCodeScreen";
+import RePaymentSuccessScreen from "@/components/screens/ticket_screens/RePaymentSuccessScreen";
 import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -81,7 +83,30 @@ export type RootStackParamList = {
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
   CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
   TicketScreen: undefined;
-  QRCodeScreen: { paymentUrl: string; maHoaDon: string; finalPrice: number; [key: string]: any}
+  QRCodeScreen: {
+    paymentUrl: string;
+    maHoaDon: string;
+    finalPrice: number;
+    [key: string]: any;
+  };
+  RePaymentQRCodeScreen: {
+    paymentUrl: string;
+    maHoaDon: string;
+    finalPrice: number;
+    ticketInfo: any;
+    trip: any;
+    departureLocation: any;
+    destination: any;
+    departureDate: string;
+  };
+  RePaymentSuccessScreen: {
+    ticketInfo: any;
+    trip: any;
+    departureLocation: any;
+    destination: any;
+    departureDate: string;
+    finalPrice: number;
+  };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -327,10 +352,20 @@ const RootNavigator: React.FC = () => {
             component={TicketDetailScreen}
             options={{ headerShown: false }}
           />
-           <Stack.Screen
+          <Stack.Screen
             name="CancelFlowScreen"
             component={CancelFlowScreen}
-            options={{ headerShown: false }} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="RePaymentQRCodeScreen"
+            component={RePaymentQRCodeScreen} // Nhớ import file này vào
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="RePaymentSuccessScreen"
+            component={RePaymentSuccessScreen} // Nhớ import file này vào
+            options={{ headerShown: false }}
           />
         </>
       )}
@@ -340,7 +375,7 @@ const RootNavigator: React.FC = () => {
 export default function App() {
   return (
     <SocketProvider>
-       <AuthProvider>
+      <AuthProvider>
         <RootNavigator />
       </AuthProvider>
     </SocketProvider>

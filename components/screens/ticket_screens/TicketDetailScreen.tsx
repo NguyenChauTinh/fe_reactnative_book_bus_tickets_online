@@ -205,6 +205,37 @@ const TicketDetailScreen: React.FC = () => {
     });
   };
 
+  const handleRePayment = async () => {
+    setLoading(true);
+    try {
+      const chiTietIds = veXe.chiTiet.map((ct) => ct._id);
+      const currentFormattedDate = formatDateString(chuyenXe.ngayKhoiHanh);
+      const response = await api_booking_service.createVnpayPayment({
+        maVe: veXe.maVe,
+        chiTietVeIds: chiTietIds,
+        amount: veXe.tongTien,
+      });
+
+      if (response.paymentUrl) {
+        navigation.navigate("RePaymentQRCodeScreen", {
+          paymentUrl: response.paymentUrl,
+          maHoaDon: response.maHoaDon,
+          finalPrice: veXe.tongTien,
+
+          ticketInfo: veXe,
+          trip: chuyenXe,
+          departureLocation: tuyenDuong.diemDon,
+          destination: tuyenDuong.diemTra,
+          departureDate: currentFormattedDate,
+        });
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể khởi tạo thanh toán. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ===========================================
   // 9. RENDER CÁC THÀNH PHẦN
   // ===========================================
@@ -455,14 +486,33 @@ const TicketDetailScreen: React.FC = () => {
                 <MaterialCommunityIcons name="qrcode" size={20} color="#333" />
                 <Text style={styles.qrButtonText}>Xem QR vé</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.locationButtonDisabled} disabled>
-                <MaterialCommunityIcons
-                  name="bus-marker"
-                  size={20}
-                  color="#AAA"
-                />
-                <Text style={styles.locationButtonText}>Xem vị trí xe</Text>
-              </TouchableOpacity>
+              {veXe.trangThaiThanhToan === "CHUA_THANH_TOAN" ? (
+                <TouchableOpacity
+                  style={[styles.qrButton, { backgroundColor: "#27ae60" }]}
+                  onPress={handleRePayment}
+                >
+                  <MaterialCommunityIcons
+                    name="credit-card-outline"
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text style={[styles.qrButtonText, { color: "#fff" }]}>
+                    Thanh toán VNPay
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.locationButtonDisabled}
+                  disabled
+                >
+                  <MaterialCommunityIcons
+                    name="bus-marker"
+                    size={20}
+                    color="#AAA"
+                  />
+                  <Text style={styles.locationButtonText}>Xem vị trí xe</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
