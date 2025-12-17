@@ -518,7 +518,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.4:3000/payment-return")) {
+    if (url.includes("http://192.168.1.29:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 
@@ -753,7 +753,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[
                 styles.option,
                 selectedPaymentMethod === "MOMO" && styles.selectedOption,
@@ -767,7 +767,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   Sử dụng ví điện tử MoMo để thanh toán.
                 </Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </ScrollView>
           <View style={styles.bottomBar}>
             <View style={styles.priceContainer}>

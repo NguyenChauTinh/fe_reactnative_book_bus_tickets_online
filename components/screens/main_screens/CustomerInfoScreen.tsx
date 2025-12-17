@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -17,6 +19,7 @@ import { Path, Polygon, Rect, Svg } from "react-native-svg";
 import BookingTimeline from "../main_screens/BookingTimeline";
 
 import { Ionicons } from "@expo/vector-icons";
+import { Api_Auth_Customer } from "../../../apis/api_auth";
 import { useAuth } from "../../../contexts/AuthContext";
 
 const BackIcon = () => (
@@ -71,6 +74,48 @@ export default function CustomerInfoScreen({ navigation, route }) {
   // const [agreedToTerms, setAgreedToTerms] = useState(false); // Biến này chưa dùng, tạm ẩn
   const [loading, setLoading] = useState(false);
 
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [verifying, setVerifying] = useState(false);
+
+  const [otpCode, setOtpCode] = useState(new Array(6).fill(""));
+
+  // [MỚI] Ref để điều khiển focus của 6 ô input
+  const inputRefs = useRef([]);
+
+  const handleOtpChange = (text, index) => {
+    const newOtp = [...otpCode];
+    newOtp[index] = text;
+    setOtpCode(newOtp);
+
+    // Nếu nhập xong 1 ký tự, tự động chuyển sang ô tiếp theo
+    if (text.length === 1 && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  // [MỚI] Xử lý khi nhấn Backspace (xóa)
+  const handleOtpKeyPress = (e, index) => {
+    if (e.nativeEvent.key === "Backspace") {
+      // Nếu ô hiện tại rỗng và không phải ô đầu tiên -> lùi về ô trước
+      if (otpCode[index] === "" && index > 0) {
+        inputRefs.current[index - 1].focus();
+        // Xóa luôn giá trị ô trước đó để trải nghiệm mượt hơn
+        const newOtp = [...otpCode];
+        newOtp[index - 1] = "";
+        setOtpCode(newOtp);
+      }
+    }
+  };
+
+  // [MỚI] Tự động xác nhận khi nhập đủ 6 số
+  useEffect(() => {
+    const otpString = otpCode.join("");
+    if (otpString.length === 6 && !verifying) {
+      handleVerifyOtp();
+    }
+  }, [otpCode]);
+
   const handleInputChange = (field, value) => {
     setCustomerInfo((prev) => ({
       ...prev,
@@ -106,10 +151,12 @@ export default function CustomerInfoScreen({ navigation, route }) {
     }
   };
 
-  const handleContinue = () => {
-    // TODO: Thêm kiểm tra validation (tên, sđt, email) ở đây trước khi chuyển
-    // Ví dụ: if (customerInfo.name.trim().length === 0) { ... }
+  const isValidPhoneNumber = (phone) => {
+    const regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+    return regex.test(phone);
+  };
 
+  const goToNextScreen = () => {
     navigation.navigate("TripInfoScreen", {
       trip,
       selectedSeats,
@@ -122,6 +169,100 @@ export default function CustomerInfoScreen({ navigation, route }) {
       departureDate,
       returnDate,
     });
+  };
+
+  const handleContinue = async () => {
+    // Validate dữ liệu
+    if (!customerInfo.name.trim() || !customerInfo.email.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ tên và email.");
+      return;
+    }
+    if (!isValidPhoneNumber(customerInfo.phone)) {
+      Alert.alert("Lỗi", "Số điện thoại không đúng định dạng Việt Nam.");
+      return;
+    }
+
+    // Nếu user đang đăng nhập và số điện thoại nhập vào TRÙNG với số của user
+    if (user && customerInfo.phone === user.soDienThoai) {
+      goToNextScreen();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await Api_Auth_Customer.requestOtpCus({
+        soDienThoai: customerInfo.phone,
+      });
+
+      console.log("Debug Response Request:", response); // In ra để kiểm tra cấu trúc
+
+      // [FIX LỖI] Kiểm tra an toàn bằng ?.
+      // Chấp nhận cả trường hợp response là Axios object hoặc data raw
+      const isSuccess =
+        response?.data?.success ||
+        response?.success ||
+        response?.status === 200;
+
+      if (isSuccess) {
+        setModalVisible(true);
+      } else {
+        const msg =
+          response?.data?.message || response?.message || "Không thể gửi OTP.";
+        Alert.alert("Lỗi", msg);
+      }
+    } catch (error) {
+      console.log("Lỗi gửi OTP:", error);
+      const msg =
+        error.response?.data?.message ||
+        error.message ||
+        "Lỗi kết nối máy chủ.";
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otpString = otpCode.join(""); // [SỬA] Chuyển mảng thành chuỗi
+
+    if (otpString.length < 6) {
+      // Không cần alert ở đây nữa vì UI đã chặn nhập thiếu rồi,
+      // nhưng giữ lại để clear logic
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      const response = await Api_Auth_Customer.verifyOtpCus({
+        soDienThoai: customerInfo.phone,
+        otp: otpString, // [SỬA] Gửi chuỗi OTP
+      });
+
+      // ... (Phần xử lý response bên dưới giữ nguyên)
+      const isSuccess =
+        response?.data?.success ||
+        response?.success ||
+        response?.status === 200;
+
+      if (isSuccess) {
+        setModalVisible(false);
+        setOtpCode(new Array(6).fill("")); // [SỬA] Reset về mảng rỗng
+        Alert.alert("Thành công", "Xác thực số điện thoại thành công!", [
+          { text: "OK", onPress: () => goToNextScreen() },
+        ]);
+      } else {
+        const msg =
+          response?.data?.message || response?.message || "Mã OTP không đúng.";
+        Alert.alert("Xác thực thất bại", msg);
+        // [MỚI] Nếu sai, clear OTP để nhập lại
+        setOtpCode(new Array(6).fill(""));
+        inputRefs.current[0].focus();
+      }
+    } catch (error) {
+      // ... (Giữ nguyên)
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const isFormValid =
@@ -154,6 +295,66 @@ export default function CustomerInfoScreen({ navigation, route }) {
           </View>
 
           <BookingTimeline currentStep={4} />
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>Xác thực số điện thoại</Text>
+                <Text style={styles.modalSubText}>
+                  Mã OTP đã được gửi đến số {customerInfo.phone}
+                </Text>
+
+                {/* [SỬA] Thay thế TextInput cũ bằng View chứa 6 ô */}
+                <View style={styles.otpContainer}>
+                  {otpCode.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (inputRefs.current[index] = ref)}
+                      style={[
+                        styles.otpBox,
+                        digit !== "" && styles.otpBoxFilled, // Style khi có chữ
+                        // Thêm border màu xanh nếu đang focus (Tùy chọn nâng cao)
+                      ]}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      value={digit}
+                      onChangeText={(text) => handleOtpChange(text, index)}
+                      onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                      autoFocus={index === 0} // Chỉ focus ô đầu tiên
+                      selectTextOnFocus={true} // Chọn text khi focus để dễ sửa
+                    />
+                  ))}
+                </View>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.modalBtnCancel]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.modalBtnTextCancel}>Hủy</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.modalBtnConfirm]}
+                    onPress={handleVerifyOtp}
+                    disabled={verifying}
+                  >
+                    {verifying ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <Text style={styles.modalBtnTextConfirm}>Xác nhận</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
           <KeyboardAvoidingView
             style={{ flex: 1 }} // Quan trọng: Đảm bảo nó chiếm đủ không gian
             behavior={Platform.OS === "ios" ? "padding" : "height"} // Dùng 'padding' cho iOS, 'height' cho Android (hoặc 'height' cho cả hai)
@@ -241,12 +442,16 @@ export default function CustomerInfoScreen({ navigation, route }) {
             <TouchableOpacity
               style={[
                 styles.continueButton,
-                !isFormValid && styles.disabledButton, // Thêm style disable
+                !isFormValid && styles.disabledButton,
               ]}
-              onPress={handleContinue}
-              disabled={!isFormValid} // Thêm prop disable
+              onPress={handleContinue} // Đổi thành handleContinue thay vì chuyển trang trực tiếp
+              disabled={!isFormValid || loading}
             >
-              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.continueButtonText}>Tiếp tục</Text>
+              )}
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -397,5 +602,94 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalView: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
+  },
+  modalSubText: {
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#666",
+  },
+  otpInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    letterSpacing: 5, // Làm rộng khoảng cách các số OTP
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+  },
+  modalBtn: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 12,
+    elevation: 2,
+    alignItems: "center",
+  },
+  modalBtnCancel: {
+    backgroundColor: "#f5f5f5",
+  },
+  modalBtnConfirm: {
+    backgroundColor: "#007AFF",
+  },
+  modalBtnTextCancel: {
+    color: "#333",
+    fontWeight: "bold",
+  },
+  modalBtnTextConfirm: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  otpContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+  },
+  otpBox: {
+    width: 45,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+  },
+  otpBoxFilled: {
+    borderColor: "#007AFF", // Đổi màu viền khi có số
+    backgroundColor: "#fff",
   },
 });

@@ -1,6 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-const API_BASE_URL = "http://192.168.1.4:3000/api/v1";
+const API_BASE_URL = "http://192.168.1.29:3000/api/v1";
 
 const apiClient = createApiManager(API_BASE_URL);
 
@@ -37,6 +37,13 @@ export const Api_Auth_Customer = {
   },
   clearSearchHistory: async () => {
     return apiClient.post("/tai-khoan-khach-hang/xoa-lich-su");
+  },
+  requestOtpCus: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/request-otp-cus", data);
+  },
+
+  verifyOtpCus: async (data) => {
+    return apiClient.post("/tai-khoan-khach-hang/check/verify-cus", data);
   },
 };
 

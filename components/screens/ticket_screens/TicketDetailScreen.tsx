@@ -560,11 +560,11 @@ const TicketDetailScreen: React.FC = () => {
       </ScrollView>
 
       {/* 8. THANH BUTTONS DƯỚI CÙNG */}
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <TouchableOpacity style={styles.footerButtonSecondary}>
           <Text style={styles.footerButtonSecondaryText}>Đặt lại</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* MODAL QR CODE */}
       <Modal
