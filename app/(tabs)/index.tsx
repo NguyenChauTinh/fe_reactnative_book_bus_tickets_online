@@ -24,6 +24,8 @@ import TripInfoScreen from "@/components/screens/main_screens/TripInfoScreen";
 import MainLayout from "@/components/screens/MainLayout";
 import NotificationScreen from "@/components/screens/notification_screens/NotificationScreen";
 import CancelFlowScreen from "@/components/screens/ticket_screens/CancelFlowScreen";
+import RePaymentQRCodeScreen from "@/components/screens/ticket_screens/RePaymentQRCodeScreen";
+import RePaymentSuccessScreen from "@/components/screens/ticket_screens/RePaymentSuccessScreen";
 import TicketDetailScreen from "@/components/screens/ticket_screens/TicketDetailScreen";
 import TicketScreen from "@/components/screens/ticket_screens/TicketScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -87,6 +89,24 @@ export type RootStackParamList = {
     maHoaDon: string;
     finalPrice: number;
     [key: string]: any;
+  };
+  RePaymentQRCodeScreen: {
+    paymentUrl: string;
+    maHoaDon: string;
+    finalPrice: number;
+    ticketInfo: any;
+    trip: any;
+    departureLocation: any;
+    destination: any;
+    departureDate: string;
+  };
+  RePaymentSuccessScreen: {
+    ticketInfo: any;
+    trip: any;
+    departureLocation: any;
+    destination: any;
+    departureDate: string;
+    finalPrice: number;
   };
 };
 
@@ -334,8 +354,20 @@ const RootNavigator: React.FC = () => {
             options={{ headerShown: false }}
           />
           <Stack.Screen
+          <Stack.Screen
             name="CancelFlowScreen"
             component={CancelFlowScreen}
+            options={{ headerShown: false }}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="RePaymentQRCodeScreen"
+            component={RePaymentQRCodeScreen} // Nhớ import file này vào
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="RePaymentSuccessScreen"
+            component={RePaymentSuccessScreen} // Nhớ import file này vào
             options={{ headerShown: false }}
           />
         </>

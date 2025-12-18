@@ -31,7 +31,6 @@ export const api_booking_service = {
   getNotificationsByUserId: async (userId) => {
     return apibooking.get(`/notifications/user/${userId}`);
   },
-
   markNotificationAsRead: async (notificationId) => {
     return apibooking.put(`/notifications/${notificationId}/read`);
   },
