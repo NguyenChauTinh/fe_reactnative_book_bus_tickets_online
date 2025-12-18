@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 import BookingTimeline from "../main_screens/BookingTimeline";
 
 const BackIcon = () => (
@@ -99,6 +100,7 @@ export default function DropoffPointScreen({ navigation, route }) {
   const [dropoffPoints, setDropoffPoints] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' for earliest, 'desc' for latest
   const [loading, setLoading] = useState(true);
+  const { startTracking, logStep } = useAnalytics();
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -163,6 +165,7 @@ export default function DropoffPointScreen({ navigation, route }) {
 
   const handleContinue = () => {
     if (selectedDropoff) {
+      logStep(); // Bước 5
       navigation.navigate("CustomerInfoScreen", {
         trip,
         selectedSeats,

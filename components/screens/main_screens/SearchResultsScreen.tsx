@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api_trip_schedule_service } from "../../../apis/api_trip_schedule_service";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -137,7 +138,13 @@ interface Trip {
   [key: string]: any;
 }
 
-export default function SearchResultsScreen({ navigation, route }: { navigation: any; route: any }) {
+export default function SearchResultsScreen({
+  navigation,
+  route,
+}: {
+  navigation: any;
+  route: any;
+}) {
   const { departureLocation, destination, departureDate, returnDate } =
     route.params;
 
@@ -147,6 +154,7 @@ export default function SearchResultsScreen({ navigation, route }: { navigation:
   const [sortCriteria, setSortCriteria] = useState("time_asc");
   const [isTimeModalVisible, setIsTimeModalVisible] = useState(false);
   const [timeFilter, setTimeFilter] = useState(0);
+  const { startTracking, logStep } = useAnalytics();
 
   const [todayInfo] = useState(() => {
     const now = new Date();
@@ -177,7 +185,12 @@ export default function SearchResultsScreen({ navigation, route }: { navigation:
       const diemDenId = destination?._id;
       setLoading(true);
       if (!diemDiId || !diemDenId || !todayInfo.formattedSearchDate) {
-        console.warn("Dữ liệu tìm kiếm không đủ. Dừng fetch.", departureLocation, destination, todayInfo.formattedSearchDate);
+        console.warn(
+          "Dữ liệu tìm kiếm không đủ. Dừng fetch.",
+          departureLocation,
+          destination,
+          todayInfo.formattedSearchDate
+        );
         setLoading(false);
         return;
       }
@@ -198,7 +211,7 @@ export default function SearchResultsScreen({ navigation, route }: { navigation:
       }
     };
 
-      fetchBusTrips();
+    fetchBusTrips();
   }, [
     departureDate,
     departureLocation,
@@ -215,7 +228,7 @@ export default function SearchResultsScreen({ navigation, route }: { navigation:
       processedTrips = processedTrips.filter((trip) => {
         const tripDate = trip.ngayKhoiHanh.split("T")[0];
         if (tripDate !== todayInfo.todayString) {
-          return true; 
+          return true;
         }
         return trip.gioKhoiHanh > filterTime;
       });
@@ -248,6 +261,8 @@ export default function SearchResultsScreen({ navigation, route }: { navigation:
 
   // --- CÁC HÀM XỬ LÝ (handlers) (Giữ nguyên) ---
   const handleSeatSelection = (trip: Trip) => {
+    logStep(); // Bước 2
+
     navigation.navigate("SeatSelectionScreen", {
       trip,
       departureLocation,

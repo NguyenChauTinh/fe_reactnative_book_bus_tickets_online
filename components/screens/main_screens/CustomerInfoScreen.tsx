@@ -21,6 +21,7 @@ import BookingTimeline from "../main_screens/BookingTimeline";
 import { Ionicons } from "@expo/vector-icons";
 import { Api_Auth_Customer } from "../../../apis/api_auth";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -82,6 +83,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
 
   // [MỚI] Ref để điều khiển focus của 6 ô input
   const inputRefs = useRef([]);
+  const { startTracking, logStep } = useAnalytics();
 
   const handleOtpChange = (text, index) => {
     const newOtp = [...otpCode];
@@ -157,6 +159,7 @@ export default function CustomerInfoScreen({ navigation, route }) {
   };
 
   const goToNextScreen = () => {
+    logStep(); // Bước 6
     navigation.navigate("TripInfoScreen", {
       trip,
       selectedSeats,

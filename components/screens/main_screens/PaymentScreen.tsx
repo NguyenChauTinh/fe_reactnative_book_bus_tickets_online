@@ -27,6 +27,7 @@ import { Api_Auth_Customer } from "../../../apis/api_auth";
 import { api_booking_service } from "../../../apis/api_booking_service";
 import { api_promotion_service } from "../../../apis/api_promotion_service";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 import PaymentCountdown from "./PaymentCountdown";
 
 const BackIcon = () => (
@@ -179,6 +180,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [countdown, setCountdown] = useState(59);
   const otpInputRef = useRef<OtpInputHandle>(null);
+  const { startTracking, logStep, endTracking } = useAnalytics();
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -346,6 +348,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
       const response = await api_booking_service.createTicket(ticketPayload);
 
       if (response.success) {
+        endTracking(true);
         navigation.navigate("BookingSuccessScreen", {
           ticketInfo: response.data,
           trip,
@@ -518,7 +521,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const handleWebViewNavigationStateChange = (navState: any) => {
     const { url } = navState;
 
-    if (url.includes("http://192.168.1.29:3000/payment-return")) {
+    if (url.includes("http://192.168.1.22:3000/payment-return")) {
       setShowGateway(false);
       setPaymentUrl(null);
 

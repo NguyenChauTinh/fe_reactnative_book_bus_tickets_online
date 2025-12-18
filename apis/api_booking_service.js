@@ -1,6 +1,6 @@
 import createApiManager from "./Api_Manager.js";
 
-const API_BASE_URL = "http://192.168.1.29:3000/api/v1";
+const API_BASE_URL = "http://192.168.1.22:3000/api/v1";
 
 const apibooking = createApiManager(API_BASE_URL);
 
@@ -45,5 +45,8 @@ export const api_booking_service = {
   },
   createBookingAndPaymentVNPAY: async (bookingData) => {
     return apibooking.post("/payment/create-booking-and-payment", bookingData);
+  },
+  logPerformance: async (logData) => {
+    return apibooking.post("/analytics/log-performance", logData);
   },
 };

@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Path, Rect, Svg } from "react-native-svg";
 import { api_booking_service } from "../../../apis/api_booking_service";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 import BookingTimeline from "../main_screens/BookingTimeline";
 const BackIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -195,12 +196,14 @@ export default function SeatSelectionScreen({ navigation, route }) {
     route.params;
   const [selectedCabins, setSelectedCabins] = useState([]);
 
-
   const [loading, setLoading] = useState(true);
   const [occupiedSeats, setOccupiedSeats] = useState([]);
 
+  const { startTracking, logStep } = useAnalytics();
+
   const handleContinue = () => {
     if (selectedCabins.length > 0) {
+      logStep(); // Bước 3
       navigation.navigate("PickupPointScreen", {
         trip,
         selectedSeats: selectedCabins,

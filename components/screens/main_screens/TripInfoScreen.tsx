@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 import BookingTimeline from "../main_screens/BookingTimeline";
 
 const BackIcon = () => (
@@ -90,8 +91,10 @@ export default function TripInfoScreen({ navigation, route }) {
   const insurancePrice = insuranceSelected ? 20000 * selectedSeats.length : 0;
   const finalPrice = totalPrice + insurancePrice;
   const seatNumbers = selectedSeats.map((seat) => seat.number).join(", ");
+  const { startTracking, logStep } = useAnalytics();
 
   const handleContinue = () => {
+    logStep(); // Bước 7
     navigation.navigate("PaymentScreen", {
       trip,
       selectedSeats,
@@ -100,7 +103,7 @@ export default function TripInfoScreen({ navigation, route }) {
       customerInfo,
       insuranceSelected,
       totalPrice,
-      finalPrice, 
+      finalPrice,
       departureLocation,
       destination,
       departureDate,

@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { api_ai_service } from "../../../apis/api_ai_service";
+import { useAnalytics } from "../../../contexts/BookingAnalyticsContext";
 
 const HISTORY_KEY = "CHAT_HISTORY_KEY";
 const { width } = Dimensions.get("window");
@@ -272,6 +273,7 @@ export const ChatModal = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  const { startTracking, logStep, endTracking } = useAnalytics();
   const { user: contextUser } = useAuth();
   // Khởi tạo tin nhắn chào mừng
   const initialMessage = {
@@ -316,8 +318,11 @@ export const ChatModal = ({
     // --- LOGIC MỚI: Chỉ lưu lịch sử nếu đây là tin nhắn đầu tiên của user ---
     // (messages.length === 1 vì lúc đầu chỉ có 1 tin bot chào)
     if (messages.length === 1) {
+      startTracking("AI_CHATBOT");
       saveToHistory(textToSend.trim());
     }
+
+    logStep();
 
     const userMessage = {
       id: Math.random().toString(),
@@ -340,6 +345,13 @@ export const ChatModal = ({
       if (!response.success) throw new Error(response.message);
 
       const rawReply = response.data?.reply || response.reply;
+
+      if (
+        rawReply.toLowerCase().includes("đặt vé thành công") ||
+        rawReply.toLowerCase().includes("tôi đã đặt vé thành công")
+      ) {
+        endTracking(true); // true = Thành công
+      }
 
       // 1. TÁCH SƠ ĐỒ GHẾ (Code cũ giữ nguyên)
       let botText = rawReply;
@@ -441,13 +453,27 @@ export const ChatModal = ({
     );
   };
 
+  const handleCloseModal = () => {
+    // Gọi endTracking với false (không thành công/bỏ dở)
+    // Hàm endTracking trong Context cần check: nếu chưa start thì bỏ qua
+    endTracking(false);
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={handleCloseModal}
+    >
       <SafeAreaView style={styles.modalContainer}>
         {/* Header (Giữ nguyên) */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Trợ lý đặt xe</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={handleCloseModal}
+            style={styles.closeButton}
+          >
             <Text style={styles.closeButtonText}>Đóng</Text>
           </TouchableOpacity>
         </View>

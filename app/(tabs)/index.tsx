@@ -31,6 +31,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { StyleSheet } from "react-native";
 import { AuthProvider, useAuth } from "../../contexts/AuthContext";
+import { AnalyticsProvider } from "../../contexts/BookingAnalyticsContext";
 import { SocketProvider } from "../../contexts/SocketContext";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -81,7 +82,12 @@ export type RootStackParamList = {
   TicketDetailScreen: { veXeId: string; chuyenXeId: string };
   CancelFlowScreen: { veXeId: string; chiTietIds: string[] };
   TicketScreen: undefined;
-  QRCodeScreen: { paymentUrl: string; maHoaDon: string; finalPrice: number; [key: string]: any}
+  QRCodeScreen: {
+    paymentUrl: string;
+    maHoaDon: string;
+    finalPrice: number;
+    [key: string]: any;
+  };
 };
 
 // Stack Navigator cho phần Contact/Friends
@@ -327,10 +333,10 @@ const RootNavigator: React.FC = () => {
             component={TicketDetailScreen}
             options={{ headerShown: false }}
           />
-           <Stack.Screen
+          <Stack.Screen
             name="CancelFlowScreen"
             component={CancelFlowScreen}
-            options={{ headerShown: false }} 
+            options={{ headerShown: false }}
           />
         </>
       )}
@@ -339,11 +345,13 @@ const RootNavigator: React.FC = () => {
 };
 export default function App() {
   return (
-    <SocketProvider>
-       <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
-    </SocketProvider>
+    <AnalyticsProvider>
+      <SocketProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </SocketProvider>
+    </AnalyticsProvider>
   );
 }
 

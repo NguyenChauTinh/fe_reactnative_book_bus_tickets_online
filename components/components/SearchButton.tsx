@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useAnalytics } from "../../contexts/BookingAnalyticsContext";
 
 type Location = {
   _id: string;
@@ -30,6 +31,7 @@ export default function SearchButton({
   onDepartureSelect,
   onDestinationSelect,
 }: SearchButtonProps) {
+  const { startTracking, logStep } = useAnalytics();
   const handleSearch = () => {
     if (departureLocation == null) {
       navigation.navigate("DepartureScreen", {
@@ -68,6 +70,9 @@ export default function SearchButton({
       });
       return;
     }
+
+    startTracking("MANUAL"); // Bắt đầu tính giờ
+    logStep(); // Bước 1
 
     navigation.navigate("SearchResultsScreen", {
       departureLocation,
