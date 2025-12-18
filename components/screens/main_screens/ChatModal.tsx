@@ -1,10 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"; // Import Icon ghế
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
+import { Api_Auth_Customer } from "../../../apis/api_auth";
+
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -39,7 +42,7 @@ const SeatMapRender = ({
   onSelectSeat: (text: string) => void;
 }) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<string>(""); // Lưu tầng đang xem
+  const [activeTab, setActiveTab] = useState<string>("");
 
   if (!data || !data.layout || !Array.isArray(data.layout)) {
     return (
@@ -67,7 +70,6 @@ const SeatMapRender = ({
     return { ...seat, cot: col };
   });
 
-  // Gom nhóm tầng
   const floors = processedLayout.reduce((acc: any, item: any) => {
     const rawFloor = item.tang ? String(item.tang) : "chung";
     const displayFloor = floorMapping[rawFloor] || rawFloor;
@@ -76,40 +78,34 @@ const SeatMapRender = ({
     return acc;
   }, {});
 
-  // Sắp xếp tầng: lower/1 lên trước
   const sortedFloorKeys = Object.keys(floors).sort((a, b) => {
     if (a === "lower" || a === "1") return -1;
     if (b === "lower" || b === "1") return 1;
     return 0;
   });
 
-  // Set tab mặc định lần đầu render
   useEffect(() => {
     if (sortedFloorKeys.length > 0 && activeTab === "") {
       setActiveTab(sortedFloorKeys[0]);
     }
   }, [sortedFloorKeys]);
 
-  // --- HÀM XỬ LÝ CHỌN GHẾ ---
   const handleToggleSeat = (seatCode: string) => {
     setSelectedSeats((prev) => {
       if (prev.includes(seatCode)) {
-        return prev.filter((s) => s !== seatCode); // Bỏ chọn
+        return prev.filter((s) => s !== seatCode);
       } else {
-        return [...prev, seatCode]; // Chọn thêm
+        return [...prev, seatCode];
       }
     });
   };
 
-  // --- HÀM XÁC NHẬN ---
   const handleConfirm = () => {
     if (selectedSeats.length === 0) return;
-    // Gửi 1 câu hoàn chỉnh cho Bot xử lý
     const seatString = selectedSeats.join(", ");
     onSelectSeat(`Tôi chọn ghế ${seatString}`);
   };
 
-  // Hàm vẽ lưới (Chỉ vẽ tầng đang active)
   const renderGrid = (floorKey: string) => {
     if (!floors[floorKey]) return null;
     const { seats } = floors[floorKey];
@@ -139,7 +135,6 @@ const SeatMapRender = ({
               }
 
               const isBooked = seat.isBooked;
-              // Check xem ghế này đang được user chọn (trong phiên này) hay không
               const isSelected = selectedSeats.includes(seat.maSoGhe);
               const shortName = seat.maSoGhe.split("(")[0];
 
@@ -149,7 +144,7 @@ const SeatMapRender = ({
                   style={[
                     styles.seatItem,
                     isBooked ? styles.seatBooked : styles.seatAvailable,
-                    isSelected && styles.seatSelected, // Style đè lên nếu đang chọn
+                    isSelected && styles.seatSelected,
                   ]}
                   disabled={isBooked}
                   onPress={() => handleToggleSeat(seat.maSoGhe)}
@@ -182,8 +177,6 @@ const SeatMapRender = ({
   return (
     <View style={styles.mapContainer}>
       <Text style={styles.busTypeLabel}>{busType}</Text>
-
-      {/* 1. THANH TAB CHUYỂN TẦNG */}
       <View style={styles.tabContainer}>
         {sortedFloorKeys.map((key) => (
           <TouchableOpacity
@@ -205,13 +198,9 @@ const SeatMapRender = ({
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* 2. LƯỚI GHẾ (Chỉ hiện tầng active) */}
       <View style={styles.gridContainer}>
         {activeTab !== "" && renderGrid(activeTab)}
       </View>
-
-      {/* 3. NÚT XÁC NHẬN (Chỉ hiện khi có chọn ghế) */}
       {selectedSeats.length > 0 && (
         <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
           <Text style={styles.confirmButtonText}>
@@ -236,7 +225,6 @@ const ActionButtonsRender = ({
   return (
     <View style={styles.actionButtonsContainer}>
       {data.buttons.map((btn: any, index: number) => {
-        // Xác định style màu sắc dựa trên cấu hình server
         const isPrimary = btn.style === "PRIMARY";
         const isDanger = btn.style === "DANGER";
 
@@ -275,20 +263,154 @@ export const ChatModal = ({
 }) => {
   const { startTracking, logStep, endTracking } = useAnalytics();
   const { user: contextUser } = useAuth();
-  // Khởi tạo tin nhắn chào mừng
+
   const initialMessage = {
     id: "1",
     text: "Xin chào! Tôi có thể giúp bạn tìm và đặt vé xe. Bạn muốn đi đâu?",
     sender: "bot",
-    type: "text", // 'text' | 'seat_map'
+    type: "text",
   };
 
   const [messages, setMessages] = useState<any[]>([initialMessage]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [sessionId] = useState(() => Math.random().toString(36).substring(2));
+  const [sessionId, setSessionId] = useState(() =>
+    Math.random().toString(36).substring(2)
+  );
   const flatListRef = useRef<FlatList>(null);
+
+  const [otpVisible, setOtpVisible] = useState(false); // Hiển thị Modal OTP
+  const [otpCode, setOtpCode] = useState(new Array(6).fill("")); // Mảng 6 số
+  const [phoneToVerify, setPhoneToVerify] = useState(""); // SĐT cần xác thực
+  const [verifying, setVerifying] = useState(false); // Loading khi xác thực
+  const inputRefs = useRef<Array<TextInput | null>>([]); // Ref cho ô nhập OTP
+  const [pendingActionValue, setPendingActionValue] = useState<string | null>(
+    null
+  ); // Lưu hành động "Xác nhận" để chạy sau khi OTP xong
+
+  const extractPhoneFromLastMessage = () => {
+    // Tìm tin nhắn bot cuối cùng
+    const lastBotMsg = [...messages].reverse().find((m) => m.sender === "bot");
+    if (!lastBotMsg) return null;
+
+    // Regex tìm SĐT VN (84 hoặc 0 + 9 số)
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+    const match = lastBotMsg.text.match(phoneRegex);
+    return match ? match[0] : null;
+  };
+
+  const handleOtpChange = (text: string, index: number) => {
+    const newOtp = [...otpCode];
+    newOtp[index] = text;
+    setOtpCode(newOtp);
+    if (text.length === 1 && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    // Tự động verify khi đủ 6 số
+    if (index === 5 && text.length === 1) {
+      // Gom code lại để gọi verify (chúng ta dùng useEffect hoặc gọi trực tiếp ở đây)
+      const fullCode = newOtp.join("");
+      // Gọi verify ngay (cần xử lý async cẩn thận)
+    }
+  };
+
+  const handleOtpKeyPress = (e: any, index: number) => {
+    if (
+      e.nativeEvent.key === "Backspace" &&
+      otpCode[index] === "" &&
+      index > 0
+    ) {
+      inputRefs.current[index - 1]?.focus();
+      const newOtp = [...otpCode];
+      newOtp[index - 1] = "";
+      setOtpCode(newOtp);
+    }
+  };
+
+  // Hàm Verify OTP
+  const handleVerifyOtp = async () => {
+    const otpString = otpCode.join("");
+    if (otpString.length < 6) return;
+
+    setVerifying(true);
+    try {
+      const response = await Api_Auth_Customer.verifyOtpCus({
+        soDienThoai: phoneToVerify,
+        otp: otpString,
+      });
+
+      const isSuccess =
+        response?.data?.success ||
+        response?.success ||
+        response?.status === 200;
+
+      if (isSuccess) {
+        setOtpVisible(false);
+        setOtpCode(new Array(6).fill(""));
+        Alert.alert("Thành công", "Xác thực số điện thoại thành công!");
+
+        // QUAN TRỌNG: Tiếp tục gửi tin nhắn "Xác nhận" cho Bot
+        if (pendingActionValue) {
+          handleSend(pendingActionValue);
+          setPendingActionValue(null);
+        }
+      } else {
+        Alert.alert("Lỗi", "Mã OTP không đúng.");
+        setOtpCode(new Array(6).fill(""));
+        inputRefs.current[0]?.focus();
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Xác thực thất bại. Vui lòng thử lại.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleActionPress = async (value: string) => {
+    // Chỉ chặn khi user bấm "Xác nhận" (Value này phải khớp với backend trả về)
+    // Backend của bạn trả về: value: "Xác nhận"
+    if (value === "Xác nhận") {
+      const detectedPhone = extractPhoneFromLastMessage();
+
+      if (!detectedPhone) {
+        // Không tìm thấy sđt trong tin nhắn -> Cho qua luôn (hoặc báo lỗi tùy logic)
+        handleSend(value);
+        return;
+      }
+
+      // 1. Kiểm tra: SĐT có trùng với User đang đăng nhập không?
+      if (contextUser && contextUser.soDienThoai === detectedPhone) {
+        // Trùng khớp -> Không cần OTP -> Gửi luôn
+        handleSend(value);
+        return;
+      }
+
+      // 2. Nếu không trùng -> Yêu cầu OTP
+      setPhoneToVerify(detectedPhone);
+      setPendingActionValue(value); // Lưu hành động để thực hiện sau khi OTP xong
+
+      try {
+        // Gọi API gửi OTP
+        const res = await Api_Auth_Customer.requestOtpCus({
+          soDienThoai: detectedPhone,
+        });
+        const isSuccess =
+          res?.data?.success || res?.success || res?.status === 200;
+
+        if (isSuccess) {
+          setOtpVisible(true); // Mở Modal OTP
+        } else {
+          Alert.alert("Lỗi", "Không thể gửi OTP đến số " + detectedPhone);
+        }
+      } catch (err) {
+        Alert.alert("Lỗi", "Lỗi kết nối khi gửi OTP.");
+      }
+    } else {
+      // Các nút khác (Hủy, Sửa...) -> Gửi bình thường
+      handleSend(value);
+    }
+  };
 
   useEffect(() => {
     loadHistory();
@@ -311,12 +433,18 @@ export const ChatModal = ({
     } catch (error) {}
   };
 
+  // [ĐÃ SỬA] Hàm xử lý Refresh ngay lập tức, không Alert
+  const handleRefresh = () => {
+    setMessages([initialMessage]);
+    setSessionId(Math.random().toString(36).substring(2));
+    setInputText("");
+    endTracking(false);
+  };
+
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || inputText;
     if (textToSend.trim().length === 0) return;
 
-    // --- LOGIC MỚI: Chỉ lưu lịch sử nếu đây là tin nhắn đầu tiên của user ---
-    // (messages.length === 1 vì lúc đầu chỉ có 1 tin bot chào)
     if (messages.length === 1) {
       startTracking("AI_CHATBOT");
       saveToHistory(textToSend.trim());
@@ -350,10 +478,9 @@ export const ChatModal = ({
         rawReply.toLowerCase().includes("đặt vé thành công") ||
         rawReply.toLowerCase().includes("tôi đã đặt vé thành công")
       ) {
-        endTracking(true); // true = Thành công
+        endTracking(true);
       }
 
-      // 1. TÁCH SƠ ĐỒ GHẾ (Code cũ giữ nguyên)
       let botText = rawReply;
       let seatMapData = null;
       if (rawReply.includes("<<<SEAT_MAP_DATA>>>")) {
@@ -365,12 +492,10 @@ export const ChatModal = ({
         } catch (e) {}
       }
 
-      // 2. [MỚI] TÁCH NÚT BẤM (Action Buttons)
       let actionData = null;
-      // Lưu ý: botText ở đây là text đã được xử lý (hoặc chưa) từ bước trên
       if (botText.includes("<<<ACTION_BUTTONS>>>")) {
         const parts = botText.split("<<<ACTION_BUTTONS>>>");
-        botText = parts[0].trim(); // Cập nhật lại lời thoại sạch
+        botText = parts[0].trim();
         const jsonPart = parts[1].split("<<<END_ACTION_BUTTONS>>>")[0];
         try {
           actionData = JSON.parse(jsonPart);
@@ -383,9 +508,8 @@ export const ChatModal = ({
         id: Math.random().toString(),
         text: botText,
         sender: "bot",
-        // Xác định type ưu tiên: nếu có seat map thì ưu tiên map, nếu có action thì action
         type: seatMapData ? "seat_map" : actionData ? "action_buttons" : "text",
-        data: seatMapData || actionData, // Lưu data tương ứng
+        data: seatMapData || actionData,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -403,7 +527,6 @@ export const ChatModal = ({
   };
 
   const handleSelectSeatFromMap = (seatCode: string) => {
-    // Khi user bấm vào ghế trên sơ đồ -> Tự động chat "Tôi chọn ghế A1"
     handleSend(`Tôi chọn ghế ${seatCode}`);
   };
 
@@ -415,7 +538,6 @@ export const ChatModal = ({
   const renderMessage = ({ item }: { item: any }) => {
     const isUser = item.sender === "user";
     const isSeatMap = !isUser && item.type === "seat_map";
-    // [MỚI] Check type action
     const isAction = !isUser && item.type === "action_buttons";
 
     return (
@@ -423,7 +545,7 @@ export const ChatModal = ({
         style={[
           styles.messageContainer,
           isUser ? styles.userMessage : styles.botMessage,
-          (isSeatMap || isAction) && styles.fullWidthMessage, // [SỬA] Cho phép cả Action cũng full width
+          (isSeatMap || isAction) && styles.fullWidthMessage,
         ]}
       >
         {isUser ? (
@@ -434,7 +556,6 @@ export const ChatModal = ({
           </View>
         )}
 
-        {/* Render Sơ đồ ghế */}
         {!isUser && item.type === "seat_map" && item.data && (
           <SeatMapRender
             data={item.data}
@@ -442,11 +563,10 @@ export const ChatModal = ({
           />
         )}
 
-        {/* [MỚI] Render Nút bấm */}
         {!isUser && item.type === "action_buttons" && item.data && (
           <ActionButtonsRender
             data={item.data}
-            onAction={(val) => handleSend(val)} // Khi bấm nút -> Gửi text (Xác nhận/Hủy)
+            onAction={(val) => handleActionPress(val)}
           />
         )}
       </View>
@@ -454,8 +574,6 @@ export const ChatModal = ({
   };
 
   const handleCloseModal = () => {
-    // Gọi endTracking với false (không thành công/bỏ dở)
-    // Hàm endTracking trong Context cần check: nếu chưa start thì bỏ qua
     endTracking(false);
     onClose();
   };
@@ -467,15 +585,23 @@ export const ChatModal = ({
       onRequestClose={handleCloseModal}
     >
       <SafeAreaView style={styles.modalContainer}>
-        {/* Header (Giữ nguyên) */}
+        {/* Header có nút Refresh */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Trợ lý đặt xe</Text>
-          <TouchableOpacity
-            onPress={handleCloseModal}
-            style={styles.closeButton}
-          >
-            <Text style={styles.closeButtonText}>Đóng</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={handleRefresh}
+              style={[styles.closeButton, { marginRight: 8 }]}
+            >
+              <AntDesign name="reload" size={22} color="#4A90E2" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleCloseModal}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <FlatList
@@ -497,7 +623,6 @@ export const ChatModal = ({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          {/* THANH GỢI Ý LỊCH SỬ (Chỉ hiện khi chưa loading) */}
           {!isLoading && searchHistory.length > 0 && (
             <View style={styles.historyContainer}>
               <Text style={styles.historyLabel}>Gợi ý:</Text>
@@ -515,7 +640,6 @@ export const ChatModal = ({
             </View>
           )}
 
-          {/* INPUT (Giữ nguyên) */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -536,12 +660,67 @@ export const ChatModal = ({
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
+
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={otpVisible}
+          onRequestClose={() => setOtpVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Xác thực SĐT</Text>
+              <Text style={styles.modalSubText}>
+                Nhập mã OTP gửi đến {phoneToVerify}
+              </Text>
+
+              <View style={styles.otpContainer}>
+                {otpCode.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => (inputRefs.current[index] = ref)}
+                    style={[styles.otpBox, digit !== "" && styles.otpBoxFilled]}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    value={digit}
+                    onChangeText={(text) => handleOtpChange(text, index)}
+                    onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalBtnCancel]}
+                  onPress={() => {
+                    setOtpVisible(false);
+                    setPendingActionValue(null);
+                  }}
+                >
+                  <Text style={styles.modalBtnTextCancel}>Hủy</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalBtnConfirm]}
+                  onPress={handleVerifyOtp}
+                  disabled={verifying}
+                >
+                  {verifying ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Text style={styles.modalBtnTextConfirm}>Xác nhận</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </Modal>
   );
 };
 
-// ... (Giữ nguyên component AiChatbot)
 export const AiChatbot = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -556,26 +735,11 @@ export const AiChatbot = () => {
   );
 };
 
-// [NEW] Styles cho Markdown (Bot)
 const markdownStyles = StyleSheet.create({
-  body: {
-    color: "#333",
-    fontSize: 16,
-  },
-  strong: {
-    fontWeight: "bold",
-    color: "#000",
-  },
-  list_item_bullet: {
-    color: "#333",
-    fontSize: 16,
-  },
-
-  // Xử lý khoảng cách giữa các đoạn văn
-  paragraph: {
-    marginTop: 0,
-    marginBottom: 8,
-  },
+  body: { color: "#333", fontSize: 16 },
+  strong: { fontWeight: "bold", color: "#000" },
+  list_item_bullet: { color: "#333", fontSize: 16 },
+  paragraph: { marginTop: 0, marginBottom: 8 },
 });
 
 const styles = StyleSheet.create({
@@ -587,7 +751,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 1,
     borderColor: "#eee",
-    // maxWidth: width * 0.85,
   },
   busTypeLabel: {
     fontSize: 14,
@@ -596,10 +759,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-  floorContainer: {
-    marginRight: 15,
-    alignItems: "center",
-  },
+  floorContainer: { marginRight: 15, alignItems: "center" },
   tabContainer: {
     flexDirection: "row",
     marginBottom: 10,
@@ -634,11 +794,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   seatGrid: {},
-  seatRow: {
-    flexDirection: "row",
-    marginBottom: 8,
-    justifyContent: "center",
-  },
+  seatRow: { flexDirection: "row", marginBottom: 8, justifyContent: "center" },
   seatPlaceholder: { width: 50, height: 50 },
   seatItem: {
     width: 50,
@@ -682,10 +838,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: "#f4f4f4",
-  },
+  modalContainer: { flex: 1, backgroundColor: "#f4f4f4" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -695,11 +848,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
   closeButton: { padding: 8 },
   closeButtonText: { fontSize: 16, color: "#4A90E2" },
   chatList: { flex: 1, paddingHorizontal: 10 },
@@ -715,10 +864,7 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
   },
-  userMessage: {
-    alignSelf: "flex-end",
-    backgroundColor: "#4A90E2",
-  },
+  userMessage: { alignSelf: "flex-end", backgroundColor: "#4A90E2" },
   botMessage: {
     alignSelf: "flex-start",
     backgroundColor: "white",
@@ -766,7 +912,6 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: { backgroundColor: "#a0a0a0" },
   sendButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-
   historyContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -791,37 +936,94 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginRight: 8,
   },
-  historyChipText: {
-    fontSize: 13,
-    color: "#333",
-  },
+  historyChipText: { fontSize: 13, color: "#333" },
   actionButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "center", // Căn giữa các nút
+    justifyContent: "center",
     marginTop: 10,
-    gap: 10, // Khoảng cách giữa 2 nút
+    gap: 10,
     paddingBottom: 5,
   },
   actionBtn: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: "#e0e0e0", // Màu mặc định (xám)
+    backgroundColor: "#e0e0e0",
     minWidth: 100,
     alignItems: "center",
   },
-  actionBtnPrimary: {
-    backgroundColor: "#4A90E2", // Màu xanh (Xác nhận)
+  actionBtnPrimary: { backgroundColor: "#4A90E2" },
+  actionBtnDanger: { backgroundColor: "#FF5252" },
+  actionBtnText: { fontSize: 14, fontWeight: "600", color: "#333" },
+  actionBtnTextLight: { color: "white" },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)", // Tối hơn chút để nổi bật trên nền chat
+    justifyContent: "center",
+    alignItems: "center",
   },
-  actionBtnDanger: {
-    backgroundColor: "#FF5252", // Màu đỏ (Hủy)
+  modalView: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  actionBtnText: {
-    fontSize: 14,
-    fontWeight: "600",
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
     color: "#333",
   },
-  actionBtnTextLight: {
-    color: "white", // Chữ trắng cho nút màu đậm
+  modalSubText: {
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#666",
   },
+  otpContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+    gap: 5, // Thêm gap nhỏ
+  },
+  otpBox: {
+    width: 40, // Nhỏ hơn chút cho vừa Modal
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "bold",
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+  },
+  otpBoxFilled: {
+    borderColor: "#007AFF",
+    backgroundColor: "#fff",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+  },
+  modalBtn: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 12,
+    elevation: 2,
+    alignItems: "center",
+  },
+  modalBtnCancel: { backgroundColor: "#f5f5f5" },
+  modalBtnConfirm: { backgroundColor: "#007AFF" },
+  modalBtnTextCancel: { color: "#333", fontWeight: "bold" },
+  modalBtnTextConfirm: { color: "white", fontWeight: "bold" },
 });
